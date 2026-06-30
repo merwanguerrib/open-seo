@@ -10,7 +10,7 @@ import type {
   LighthouseResult,
   StepPageResult,
 } from "@/server/lib/audit/types";
-import { buildEdgeRows } from "@/server/lib/audit/graph-edges";
+import { buildEdgeRows, resolveEdges } from "@/server/lib/audit/graph-edges";
 
 const DB_BATCH_SIZE = 100;
 type BatchStatement = Parameters<typeof db.batch>[0][number];
@@ -288,6 +288,26 @@ async function deleteAuditForProject(auditId: string, projectId: string) {
     .where(and(eq(audits.id, auditId), eq(audits.projectId, projectId)));
 }
 
+async function resolveAuditGraphEdges(auditId: string) {
+  const [edges, pages] = await Promise.all([
+    db.query.auditPageLinks.findMany({
+      where: eq(auditPageLinks.auditId, auditId),
+      columns: { id: true, toUrl: true },
+    }),
+    db.query.auditPages.findMany({
+      where: eq(auditPages.auditId, auditId),
+      columns: { id: true, url: true, statusCode: true },
+    }),
+  ]);
+  const resolved = resolveEdges(edges, pages);
+  await executeInBatches(resolved, (row) =>
+    db
+      .update(auditPageLinks)
+      .set({ toPageId: row.toPageId, isBroken: row.isBroken })
+      .where(eq(auditPageLinks.id, row.id)),
+  );
+}
+
 export const AuditRepository = {
   createAudit,
   updateAuditProgress,
@@ -301,4 +321,5 @@ export const AuditRepository = {
   getAuditResultsForProject,
   getLighthouseResultById,
   deleteAuditForProject,
+  resolveAuditGraphEdges,
 } as const;

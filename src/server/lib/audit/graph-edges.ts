@@ -29,3 +29,20 @@ export function buildEdgeRows(
   }
   return rows;
 }
+
+export function resolveEdges(
+  edges: Array<{ id: string; toUrl: string }>,
+  pages: Array<{ id: string; url: string; statusCode: number | null }>,
+): Array<{ id: string; toPageId: string | null; isBroken: boolean }> {
+  const byUrl = new Map(pages.map((p) => [p.url, p]));
+  return edges.map((edge) => {
+    const target = byUrl.get(edge.toUrl) ?? null;
+    const isBroken =
+      target?.statusCode != null && target.statusCode >= 400;
+    return {
+      id: edge.id,
+      toPageId: target?.id ?? null,
+      isBroken: Boolean(isBroken),
+    };
+  });
+}

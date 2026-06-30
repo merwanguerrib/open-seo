@@ -314,4 +314,8 @@ async function finalizeAudit(args: {
     });
     await AuditProgressKV.clear(auditId);
   });
+
+  await step.do("resolve-graph", async () => {
+    await AuditRepository.resolveAuditGraphEdges(auditId);
+  });
 }
