@@ -55,6 +55,11 @@ export interface PageAnalysis {
   internalLinks: string[];
   externalLinks: string[];
 
+  // Internal links with anchor text, for the page graph
+  internalLinkDetails: Array<{ url: string; anchorText: string | null }>;
+  // Cleaned visible body text (for optional R2 storage / Graphify)
+  cleanedText: string;
+
   // Structured data
   hasStructuredData: boolean;
 
@@ -105,6 +110,8 @@ export interface StepPageResult {
   images: Array<{ src: string | null; alt: string | null }>;
   internalLinks: string[];
   externalLinks: string[];
+  internalLinkDetails: Array<{ url: string; anchorText: string | null }>;
+  cleanedText: string;
   hasStructuredData: boolean;
   hreflangTags: string[];
   isIndexable: boolean;
