@@ -126,7 +126,7 @@ using the existing audit guards:
 ```
 {
   nodes: [{ id, url, title, statusCode, clickDepth?, wordCount,
-            internalLinkCount, isIndexable, isOrphan }],
+            internalLinkCount, isIndexable }],
   edges: [{ from, to, anchorText, isBroken }],
   meta:  { auditId, startUrl, pagesCrawled, generatedAt }
 }
@@ -157,8 +157,10 @@ New tab on the existing audit-results page; component `AuditGraphView`.
 
 ### Client-side metrics (graphology, no extra server call)
 
-- **Orphan pages:** in-degree 0 (excluding the start URL).
-- **Click depth:** BFS from the start URL; flag pages at depth ≥ N.
+- **Orphan pages:** in-degree 0 (excluding the start URL). Derived client-side from
+  edges; not a server payload field, to keep a single source of truth.
+- **Click depth:** BFS from the start URL; flag pages at depth ≥ 3 (configurable
+  threshold in the UI).
 - **Internal PageRank:** `graphology-metrics`; link-equity distribution.
 - **Hubs / authorities:** top nodes by out-/in-degree.
 - **Broken internal links:** edges with `isBroken`.
@@ -169,7 +171,7 @@ A panel beside the graph turning metrics into actions; each insight highlights t
 relevant nodes when clicked:
 
 - Orphan pages (unreachable via internal links) + suggestion.
-- Pages deeper than 3 clicks from home.
+- Pages deeper than the click-depth threshold (default 3) from home.
 - Broken internal links (source → target table).
 - High-content but low-PageRank pages (`wordCount` high × PageRank low) =
   under-linked.
