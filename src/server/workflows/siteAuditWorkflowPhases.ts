@@ -296,6 +296,13 @@ async function finalizeAudit(args: {
       allPages,
       lighthouseResults,
     );
+  });
+
+  await step.do("resolve-graph", async () => {
+    await AuditRepository.resolveAuditGraphEdges(auditId);
+  });
+
+  await step.do("complete", async () => {
     await AuditRepository.completeAudit(auditId, workflowInstanceId, {
       pagesCrawled: allPages.length,
       pagesTotal: allPages.length,
@@ -313,9 +320,5 @@ async function finalizeAudit(args: {
       },
     });
     await AuditProgressKV.clear(auditId);
-  });
-
-  await step.do("resolve-graph", async () => {
-    await AuditRepository.resolveAuditGraphEdges(auditId);
   });
 }
