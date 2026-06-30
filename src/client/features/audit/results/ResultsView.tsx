@@ -11,23 +11,27 @@ import {
   PagesTable,
   PerformanceTable,
 } from "@/client/features/audit/results/ResultsTables";
+import { AuditGraphView } from "@/client/features/audit/graph/AuditGraphView";
+import type { AuditGraphPayload } from "@/server/lib/audit/types";
 
-type ResultsTab = "pages" | "performance";
+type ResultsTab = "pages" | "performance" | "graph";
 
 export function ResultsView({
   projectId,
   data,
   onTabChange,
   tab,
+  graphPayload,
 }: {
   projectId: string;
   data: AuditResultsData;
   tab: string;
   onTabChange: (tab: ResultsTab) => void;
+  graphPayload: AuditGraphPayload | null;
 }) {
   const { audit, pages, lighthouse } = data;
   const hasPerformanceTab = lighthouse.length > 0;
-  const activeTab = hasPerformanceTab ? tab : "pages";
+  const activeTab = (hasPerformanceTab ? tab : "pages") as ResultsTab;
   const stats = useResultStats(pages, lighthouse);
 
   return (
@@ -66,6 +70,14 @@ export function ResultsView({
               pages={pages}
             />
           )}
+          {activeTab === "graph" &&
+            (graphPayload ? (
+              <AuditGraphView payload={graphPayload} />
+            ) : (
+              <p className="text-sm text-base-content/60 py-4">
+                Graph unavailable for this run
+              </p>
+            ))}
         </div>
       </div>
     </>
@@ -133,33 +145,32 @@ function ResultsHeader({
 }) {
   const tabs: Array<{ tab: ResultsTab; label: string }> = [
     { tab: "pages", label: `Pages (${pageCount})` },
-    { tab: "performance", label: `Performance (${lighthouseCount})` },
+    ...(hasPerformanceTab
+      ? [{ tab: "performance" as ResultsTab, label: `Performance (${lighthouseCount})` }]
+      : []),
+    { tab: "graph", label: "Graph" },
   ];
 
   return (
     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-      {hasPerformanceTab ? (
-        <div role="tablist" className="tabs tabs-box w-fit">
-          {tabs.map(({ label, tab }) => {
-            const isActive = activeTab === tab;
+      <div role="tablist" className="tabs tabs-box w-fit">
+        {tabs.map(({ label, tab }) => {
+          const isActive = activeTab === tab;
 
-            return (
-              <button
-                key={tab}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                className={`tab ${isActive ? "tab-active" : ""}`}
-                onClick={() => onTabChange(tab)}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
-      ) : (
-        <h3 className="text-base font-medium">Pages ({pageCount})</h3>
-      )}
+          return (
+            <button
+              key={tab}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              className={`tab ${isActive ? "tab-active" : ""}`}
+              onClick={() => onTabChange(tab)}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
 
       <ExportDropdown onExport={onExport} />
     </div>

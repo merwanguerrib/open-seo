@@ -6,6 +6,7 @@ import {
   getAuditResults,
   getAuditStatus,
   getCrawlProgress,
+  getAuditGraph,
 } from "@/serverFunctions/audit";
 import { auditSearchSchema } from "@/types/schemas/audit";
 import { LaunchView } from "@/client/features/audit/launch/LaunchView";
@@ -72,7 +73,7 @@ function AuditDetail({
   auditId: string;
   tab: string;
   onBack: () => void;
-  onTabChange: (tab: "pages" | "performance") => void;
+  onTabChange: (tab: "pages" | "performance" | "graph") => void;
 }) {
   const statusQuery = useQuery({
     queryKey: ["audit-status", projectId, auditId],
@@ -90,6 +91,12 @@ function AuditDetail({
   const resultsQuery = useQuery({
     queryKey: ["audit-results", projectId, auditId],
     queryFn: () => getAuditResults({ data: { projectId, auditId } }),
+    enabled: isComplete,
+  });
+
+  const graphQuery = useQuery({
+    queryKey: ["audit-graph", projectId, auditId],
+    queryFn: () => getAuditGraph({ data: { projectId, auditId } }),
     enabled: isComplete,
   });
 
@@ -182,6 +189,7 @@ function AuditDetail({
             data={resultsQuery.data}
             tab={tab}
             onTabChange={onTabChange}
+            graphPayload={graphQuery.data ?? null}
           />
         )}
       </div>
