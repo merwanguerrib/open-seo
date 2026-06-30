@@ -10,11 +10,13 @@ export type LighthouseStrategy = "auto" | "all" | "manual" | "none";
 export interface AuditConfig {
   maxPages: number;
   lighthouseStrategy: LighthouseStrategy;
+  captureContent: boolean;
 }
 
 const auditConfigSchema = z.object({
   maxPages: z.number().int().min(10).max(10_000),
   lighthouseStrategy: z.enum(["auto", "all", "manual", "none"]),
+  captureContent: z.boolean().default(false),
 });
 
 const auditConfigCodec = jsonCodec(auditConfigSchema);
@@ -116,4 +118,5 @@ export interface StepPageResult {
   hreflangTags: string[];
   isIndexable: boolean;
   responseTimeMs: number;
+  contentR2Key?: string | null;
 }

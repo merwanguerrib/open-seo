@@ -22,9 +22,11 @@ async function startAudit(input: {
   startUrl: string;
   maxPages?: number;
   lighthouseStrategy?: LighthouseStrategy;
+  captureContent?: boolean;
 }) {
   const maxPages = clampAuditMaxPages(input.maxPages);
   const lighthouseStrategy = input.lighthouseStrategy ?? "auto";
+  const captureContent = input.captureContent ?? false;
   const reservation = getEstimatedAuditCapacity({
     maxPages,
     lighthouseStrategy,
@@ -39,7 +41,7 @@ async function startAudit(input: {
   }
 
   const auditId = crypto.randomUUID();
-  const config: AuditConfig = { maxPages, lighthouseStrategy };
+  const config: AuditConfig = { maxPages, lighthouseStrategy, captureContent };
   const startUrl = await normalizeAndValidateStartUrl(input.startUrl);
 
   await AuditRepository.createAudit({

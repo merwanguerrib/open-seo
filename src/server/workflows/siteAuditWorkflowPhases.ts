@@ -15,6 +15,7 @@ import type {
 } from "@/server/lib/audit/types";
 import { captureServerEvent } from "@/server/lib/posthog";
 import { runCrawlPhase } from "@/server/workflows/siteAuditWorkflowCrawl";
+import { putTextToR2 } from "@/server/lib/r2";
 
 const LIGHTHOUSE_URL_BATCH_SIZE = 10;
 
@@ -75,6 +76,18 @@ export async function runAuditPhases(
     robots,
     sitemapUrls: discovery.sitemapUrls,
   });
+
+  if (config.captureContent) {
+    await step.do("store-page-content", async () => {
+      for (const page of allPages) {
+        if (!page.cleanedText) continue;
+        const key = `audits/${auditId}/content/${page.id}.txt`;
+        const uploaded = await putTextToR2(key, page.cleanedText);
+        page.contentR2Key = uploaded.key;
+      }
+    });
+  }
+
   const lighthouseResults = await runLighthousePhase(step, {
     auditId,
     workflowInstanceId,

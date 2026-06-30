@@ -162,6 +162,7 @@ async function batchWriteResults(
       hreflangTagsJson: JSON.stringify(page.hreflangTags),
       isIndexable: page.isIndexable,
       responseTimeMs: page.responseTimeMs,
+      contentR2Key: page.contentR2Key ?? null,
     }),
   );
 
