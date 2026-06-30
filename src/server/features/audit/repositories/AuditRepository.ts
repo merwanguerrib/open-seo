@@ -4,12 +4,13 @@
  */
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { audits, auditLighthouseResults, auditPages } from "@/db/schema";
+import { audits, auditLighthouseResults, auditPages, auditPageLinks } from "@/db/schema";
 import type {
   AuditConfig,
   LighthouseResult,
   StepPageResult,
 } from "@/server/lib/audit/types";
+import { buildEdgeRows } from "@/server/lib/audit/graph-edges";
 
 const DB_BATCH_SIZE = 100;
 type BatchStatement = Parameters<typeof db.batch>[0][number];
@@ -163,6 +164,13 @@ async function batchWriteResults(
       responseTimeMs: page.responseTimeMs,
     }),
   );
+
+  const edgeRows = buildEdgeRows(auditId, pages);
+  if (edgeRows.length > 0) {
+    await executeInBatches(edgeRows, (row) =>
+      db.insert(auditPageLinks).values(row).onConflictDoNothing(),
+    );
+  }
 
   if (lighthouseResults.length === 0) {
     return;
