@@ -282,6 +282,25 @@ async function getLighthouseResultById(input: {
   };
 }
 
+async function getAuditGraphData(auditId: string, projectId: string) {
+  const audit = await getAuditForProject(auditId, projectId);
+  if (!audit) return null;
+  const [pages, edges] = await Promise.all([
+    db.query.auditPages.findMany({
+      where: eq(auditPages.auditId, auditId),
+      columns: {
+        id: true, url: true, title: true, statusCode: true,
+        wordCount: true, internalLinkCount: true, isIndexable: true,
+      },
+    }),
+    db.query.auditPageLinks.findMany({
+      where: eq(auditPageLinks.auditId, auditId),
+      columns: { fromPageId: true, toPageId: true, anchorText: true, isBroken: true },
+    }),
+  ]);
+  return { audit, pages, edges };
+}
+
 async function deleteAuditForProject(auditId: string, projectId: string) {
   await db
     .delete(audits)
@@ -322,4 +341,5 @@ export const AuditRepository = {
   getLighthouseResultById,
   deleteAuditForProject,
   resolveAuditGraphEdges,
+  getAuditGraphData,
 } as const;

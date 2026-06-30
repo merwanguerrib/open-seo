@@ -87,6 +87,32 @@ export interface LighthouseResult {
   payloadSizeBytes?: number | null;
 }
 
+export interface AuditGraphNode {
+  id: string;
+  url: string;
+  title: string | null;
+  statusCode: number | null;
+  wordCount: number;
+  internalLinkCount: number;
+  isIndexable: boolean;
+}
+export interface AuditGraphEdge {
+  from: string;
+  to: string;
+  anchorText: string | null;
+  isBroken: boolean;
+}
+export interface AuditGraphPayload {
+  nodes: AuditGraphNode[];
+  edges: AuditGraphEdge[];
+  meta: {
+    auditId: string;
+    startUrl: string;
+    pagesCrawled: number;
+    generatedAt: string;
+  };
+}
+
 export interface StepPageResult {
   id: string;
   url: string;

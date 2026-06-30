@@ -36,6 +36,11 @@ export const getCrawlProgressSchema = z.object({
   auditId: z.string().min(1),
 });
 
+export const getAuditGraphSchema = z.object({
+  projectId: z.string(),
+  auditId: z.string(),
+});
+
 // ─── URL search params schema for /p/$projectId/audit ────────────────────────
 
 const auditTabs = ["pages", "performance"] as const;

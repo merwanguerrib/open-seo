@@ -8,6 +8,7 @@ import { isHostedServerAuthMode } from "@/server/lib/runtime-env";
 import { requireProjectContext } from "@/serverFunctions/middleware";
 import {
   deleteAuditSchema,
+  getAuditGraphSchema,
   getAuditHistorySchema,
   getAuditResultsSchema,
   getAuditStatusSchema,
@@ -87,4 +88,11 @@ export const deleteAudit = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await AuditService.remove(data.auditId, context.projectId);
     return { success: true };
+  });
+
+export const getAuditGraph = createServerFn({ method: "POST" })
+  .middleware(requireProjectContext)
+  .inputValidator((data: unknown) => getAuditGraphSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    return AuditService.getGraph(data.auditId, context.projectId);
   });

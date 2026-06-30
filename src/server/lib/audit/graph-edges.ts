@@ -1,4 +1,4 @@
-import type { StepPageResult } from "./types";
+import type { AuditGraphNode, AuditGraphPayload, StepPageResult } from "./types";
 
 export interface EdgeRow {
   id: string;
@@ -28,6 +28,36 @@ export function buildEdgeRows(
     }
   }
   return rows;
+}
+
+export function buildAuditGraphPayload(input: {
+  auditId: string;
+  startUrl: string;
+  pages: AuditGraphNode[];
+  edges: Array<{
+    fromPageId: string;
+    toPageId: string | null;
+    anchorText: string | null;
+    isBroken: boolean;
+  }>;
+}): AuditGraphPayload {
+  return {
+    nodes: input.pages,
+    edges: input.edges
+      .filter((e) => e.toPageId !== null)
+      .map((e) => ({
+        from: e.fromPageId,
+        to: e.toPageId as string,
+        anchorText: e.anchorText,
+        isBroken: e.isBroken,
+      })),
+    meta: {
+      auditId: input.auditId,
+      startUrl: input.startUrl,
+      pagesCrawled: input.pages.length,
+      generatedAt: new Date().toISOString(),
+    },
+  };
 }
 
 export function resolveEdges(

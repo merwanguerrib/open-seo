@@ -14,6 +14,7 @@ import {
   type LighthouseStrategy,
 } from "@/server/lib/audit/types";
 import { normalizeAndValidateStartUrl } from "@/server/lib/audit/url-policy";
+import { buildAuditGraphPayload } from "@/server/lib/audit/graph-edges";
 
 async function startAudit(input: {
   actorUserId: string;
@@ -161,6 +162,21 @@ async function getCrawlProgress(auditId: string, projectId: string) {
   return AuditProgressKV.getCrawledUrls(auditId);
 }
 
+async function getGraph(auditId: string, projectId: string) {
+  const data = await AuditRepository.getAuditGraphData(auditId, projectId);
+  if (!data) return null;
+  return buildAuditGraphPayload({
+    auditId,
+    startUrl: data.audit.startUrl,
+    pages: data.pages.map((p) => ({
+      id: p.id, url: p.url, title: p.title, statusCode: p.statusCode,
+      wordCount: p.wordCount, internalLinkCount: p.internalLinkCount,
+      isIndexable: p.isIndexable,
+    })),
+    edges: data.edges,
+  });
+}
+
 async function remove(auditId: string, projectId: string) {
   const audit = await AuditRepository.getAuditForProject(auditId, projectId);
   if (!audit) {
@@ -196,4 +212,5 @@ export const AuditService = {
   getResults,
   getHistory,
   remove,
+  getGraph,
 } as const;

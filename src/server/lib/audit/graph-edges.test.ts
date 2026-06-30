@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildEdgeRows, resolveEdges } from "./graph-edges";
+import { buildEdgeRows, resolveEdges, buildAuditGraphPayload } from "./graph-edges";
 import type { StepPageResult } from "./types";
 
 const page = (id: string, links: Array<[string, string | null]>) =>
@@ -52,5 +52,27 @@ describe("resolveEdges", () => {
       { id: "e2", toPageId: "p2", isBroken: true },
       { id: "e3", toPageId: null, isBroken: false },
     ]);
+  });
+});
+
+describe("buildAuditGraphPayload", () => {
+  it("maps pages to nodes and resolved edges to edges (skipping unresolved)", () => {
+    const payload = buildAuditGraphPayload({
+      auditId: "a1",
+      startUrl: "https://s.com/",
+      pages: [
+        { id: "p1", url: "https://s.com/", title: "Home", statusCode: 200, wordCount: 10, internalLinkCount: 1, isIndexable: true },
+        { id: "p2", url: "https://s.com/a", title: "A", statusCode: 200, wordCount: 5, internalLinkCount: 0, isIndexable: true },
+      ],
+      edges: [
+        { fromPageId: "p1", toPageId: "p2", anchorText: "A", isBroken: false },
+        { fromPageId: "p1", toPageId: null, anchorText: null, isBroken: false },
+      ],
+    });
+    expect(payload.nodes).toHaveLength(2);
+    expect(payload.edges).toEqual([
+      { from: "p1", to: "p2", anchorText: "A", isBroken: false },
+    ]);
+    expect(payload.meta.pagesCrawled).toBe(2);
   });
 });
