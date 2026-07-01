@@ -22,13 +22,10 @@ interface InsightInput {
   depthThreshold?: number;
 }
 
-function median(values: number[]): number {
+function percentile(values: number[], p: number): number {
   if (values.length === 0) return 0;
   const sorted = [...values].sort((a, b) => a - b);
-  const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 === 0
-    ? (sorted[mid - 1] + sorted[mid]) / 2
-    : sorted[mid];
+  return sorted[Math.floor(p * (sorted.length - 1))];
 }
 
 export function computeAuditInsights(input: InsightInput): AuditInsight[] {
@@ -84,28 +81,34 @@ export function computeAuditInsights(input: InsightInput): AuditInsight[] {
     });
   }
 
-  // Under-linked rich pages: above-median word count but below-median PageRank.
-  const medianWords = median(payload.nodes.map((n) => n.wordCount));
-  const medianPr = median(Object.values(metrics.pagerank));
-  const underLinked = payload.nodes.filter(
-    (n) =>
-      n.wordCount >= medianWords &&
-      (metrics.pagerank[n.id] ?? 0) <= medianPr,
+  // Under-linked rich pages: top-quartile word count but bottom-quartile PageRank,
+  // restricted to indexable 200-status pages.
+  const candidates = payload.nodes.filter(
+    (n) => n.isIndexable && n.statusCode === 200,
   );
-  if (underLinked.length > 0) {
-    insights.push({
-      id: "under-linked-rich-pages",
-      title: "Under-linked content pages",
-      description: `${underLinked.length} content-heavy page(s) receive little internal link equity - consider linking to them more.`,
-      severity: "info",
-      nodeIds: underLinked.map((n) => n.id),
-      csvHeaders: ["URL", "Word count", "PageRank"],
-      csvRows: underLinked.map((n) => [
-        n.url,
-        n.wordCount,
-        metrics.pagerank[n.id] ?? 0,
-      ]),
-    });
+  if (candidates.length > 0) {
+    const words = candidates.map((n) => n.wordCount);
+    const prs = candidates.map((n) => metrics.pagerank[n.id] ?? 0);
+    const p75Words = percentile(words, 0.75);
+    const p25Pr = percentile(prs, 0.25);
+    const underLinked = candidates.filter(
+      (n) => n.wordCount > p75Words && (metrics.pagerank[n.id] ?? 0) < p25Pr,
+    );
+    if (underLinked.length > 0) {
+      insights.push({
+        id: "under-linked-rich-pages",
+        title: "Under-linked content pages",
+        description: `${underLinked.length} content-heavy page(s) receive little internal link equity - consider linking to them more.`,
+        severity: "info",
+        nodeIds: underLinked.map((n) => n.id),
+        csvHeaders: ["URL", "Word count", "PageRank"],
+        csvRows: underLinked.map((n) => [
+          n.url,
+          n.wordCount,
+          metrics.pagerank[n.id] ?? 0,
+        ]),
+      });
+    }
   }
 
   // Hub pages: most inbound internal links (top 5).

@@ -65,6 +65,7 @@ export function AuditGraphView({ payload }: { payload: AuditGraphPayload }) {
       });
       forceAtlas2.assign(graph, { iterations: 100 });
       renderer = new Sigma(graph, containerRef.current, {
+        zIndex: true,
         nodeReducer: (node: string, data: Record<string, unknown>) => {
           const h = highlightRef.current;
           return {

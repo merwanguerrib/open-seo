@@ -60,6 +60,7 @@ export function AuditInsightsPanel({
             <button
               type="button"
               className="btn btn-ghost btn-xs mt-2"
+              aria-label={`Export ${insight.title} as CSV`}
               onClick={() => exportInsight(insight)}
             >
               Export CSV
