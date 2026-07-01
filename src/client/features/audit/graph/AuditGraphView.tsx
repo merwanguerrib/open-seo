@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useRef } from "react";
-import Sigma from "sigma";
-import forceAtlas2 from "graphology-layout-forceatlas2";
 import {
   buildGraphologyGraph,
   computeGraphMetrics,
@@ -29,14 +27,29 @@ export function AuditGraphView({ payload }: { payload: AuditGraphPayload }) {
 
   useEffect(() => {
     if (!containerRef.current || graph.order === 0) return;
-    graph.forEachNode((n) => {
-      graph.setNodeAttribute(n, "x", Math.random());
-      graph.setNodeAttribute(n, "y", Math.random());
-      graph.setNodeAttribute(n, "size", 4);
-    });
-    forceAtlas2.assign(graph, { iterations: 100 });
-    const renderer = new Sigma(graph, containerRef.current);
-    return () => renderer.kill();
+    // Sigma + the WebGL layout reference browser-only globals
+    // (WebGL2RenderingContext), so load them lazily on the client only —
+    // a static import would be evaluated during SSR and crash the worker.
+    let renderer: { kill: () => void } | null = null;
+    let cancelled = false;
+    void (async () => {
+      const [{ default: Sigma }, { default: forceAtlas2 }] = await Promise.all([
+        import("sigma"),
+        import("graphology-layout-forceatlas2"),
+      ]);
+      if (cancelled || !containerRef.current) return;
+      graph.forEachNode((n) => {
+        graph.setNodeAttribute(n, "x", Math.random());
+        graph.setNodeAttribute(n, "y", Math.random());
+        graph.setNodeAttribute(n, "size", 4);
+      });
+      forceAtlas2.assign(graph, { iterations: 100 });
+      renderer = new Sigma(graph, containerRef.current);
+    })();
+    return () => {
+      cancelled = true;
+      renderer?.kill();
+    };
   }, [graph]);
 
   return (
