@@ -43,7 +43,7 @@ export function computeAuditInsights(input: InsightInput): AuditInsight[] {
     insights.push({
       id: "orphans",
       title: "Orphan pages",
-      description: `${metrics.orphans.length} page(s) with no inbound internal links — unreachable through the site's link graph.`,
+      description: `${metrics.orphans.length} page(s) with no inbound internal links, unreachable through the site's link graph.`,
       severity: "warning",
       nodeIds: metrics.orphans,
       csvHeaders: ["URL", "Title"],
@@ -96,7 +96,7 @@ export function computeAuditInsights(input: InsightInput): AuditInsight[] {
     insights.push({
       id: "under-linked-rich-pages",
       title: "Under-linked content pages",
-      description: `${underLinked.length} content-heavy page(s) receive little internal link equity — consider linking to them more.`,
+      description: `${underLinked.length} content-heavy page(s) receive little internal link equity - consider linking to them more.`,
       severity: "info",
       nodeIds: underLinked.map((n) => n.id),
       csvHeaders: ["URL", "Word count", "PageRank"],
@@ -118,7 +118,7 @@ export function computeAuditInsights(input: InsightInput): AuditInsight[] {
     insights.push({
       id: "hub-pages",
       title: "Hub pages",
-      description: `Top ${hubs.length} page(s) by inbound internal links — key pages to preserve.`,
+      description: `Top ${hubs.length} page(s) by inbound internal links: key pages to preserve.`,
       severity: "info",
       nodeIds: hubs.map((h) => h.id),
       csvHeaders: ["URL", "Inbound internal links"],
