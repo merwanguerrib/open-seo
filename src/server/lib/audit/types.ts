@@ -95,6 +95,9 @@ export interface AuditGraphNode {
   wordCount: number;
   internalLinkCount: number;
   isIndexable: boolean;
+  h1Count: number;
+  externalLinkCount: number;
+  canonicalUrl: string | null;
 }
 export interface AuditGraphEdge {
   from: string;

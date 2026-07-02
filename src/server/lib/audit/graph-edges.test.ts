@@ -61,8 +61,8 @@ describe("buildAuditGraphPayload", () => {
       auditId: "a1",
       startUrl: "https://s.com/",
       pages: [
-        { id: "p1", url: "https://s.com/", title: "Home", statusCode: 200, wordCount: 10, internalLinkCount: 1, isIndexable: true },
-        { id: "p2", url: "https://s.com/a", title: "A", statusCode: 200, wordCount: 5, internalLinkCount: 0, isIndexable: true },
+        { id: "p1", url: "https://s.com/", title: "Home", statusCode: 200, wordCount: 10, internalLinkCount: 1, isIndexable: true, h1Count: 1, externalLinkCount: 0, canonicalUrl: null },
+        { id: "p2", url: "https://s.com/a", title: "A", statusCode: 200, wordCount: 5, internalLinkCount: 0, isIndexable: true, h1Count: 1, externalLinkCount: 0, canonicalUrl: null },
       ],
       edges: [
         { fromPageId: "p1", toPageId: "p2", anchorText: "A", isBroken: false },
@@ -74,5 +74,25 @@ describe("buildAuditGraphPayload", () => {
       { from: "p1", to: "p2", anchorText: "A", isBroken: false },
     ]);
     expect(payload.meta.pagesCrawled).toBe(2);
+  });
+
+  it("passes h1Count, externalLinkCount, canonicalUrl through to nodes", () => {
+    const payload = buildAuditGraphPayload({
+      auditId: "a1",
+      startUrl: "https://s.com/",
+      pages: [
+        {
+          id: "p1", url: "https://s.com/", title: "Home", statusCode: 200,
+          wordCount: 10, internalLinkCount: 1, isIndexable: true,
+          h1Count: 2, externalLinkCount: 3, canonicalUrl: "https://s.com/",
+        },
+      ],
+      edges: [],
+    });
+    expect(payload.nodes[0]).toMatchObject({
+      h1Count: 2,
+      externalLinkCount: 3,
+      canonicalUrl: "https://s.com/",
+    });
   });
 });

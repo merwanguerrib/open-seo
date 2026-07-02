@@ -172,6 +172,8 @@ async function getGraph(auditId: string, projectId: string) {
       id: p.id, url: p.url, title: p.title, statusCode: p.statusCode,
       wordCount: p.wordCount, internalLinkCount: p.internalLinkCount,
       isIndexable: p.isIndexable,
+      h1Count: p.h1Count, externalLinkCount: p.externalLinkCount,
+      canonicalUrl: p.canonicalUrl,
     })),
     edges: data.edges,
   });

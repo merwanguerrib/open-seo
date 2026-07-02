@@ -20,6 +20,9 @@ const node = (
   wordCount,
   internalLinkCount: 0,
   isIndexable,
+  h1Count: 1,
+  externalLinkCount: 0,
+  canonicalUrl: null,
 });
 
 const payload: AuditGraphPayload = {

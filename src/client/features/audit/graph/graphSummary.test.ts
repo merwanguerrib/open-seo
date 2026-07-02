@@ -5,8 +5,8 @@ import type { AuditGraphPayload } from "@/server/lib/audit/types";
 
 const payload: AuditGraphPayload = {
   nodes: [
-    { id: "home", url: "https://s.com/", title: "Home", statusCode: 200, wordCount: 9, internalLinkCount: 1, isIndexable: true },
-    { id: "orphan", url: "https://s.com/o", title: "O", statusCode: 200, wordCount: 1, internalLinkCount: 0, isIndexable: true },
+    { id: "home", url: "https://s.com/", title: "Home", statusCode: 200, wordCount: 9, internalLinkCount: 1, isIndexable: true, h1Count: 1, externalLinkCount: 0, canonicalUrl: null },
+    { id: "orphan", url: "https://s.com/o", title: "O", statusCode: 200, wordCount: 1, internalLinkCount: 0, isIndexable: true, h1Count: 1, externalLinkCount: 0, canonicalUrl: null },
   ],
   edges: [{ from: "home", to: "orphan", anchorText: null, isBroken: true }],
   meta: { auditId: "a1", startUrl: "https://s.com/", pagesCrawled: 2, generatedAt: "x" },

@@ -291,6 +291,7 @@ async function getAuditGraphData(auditId: string, projectId: string) {
       columns: {
         id: true, url: true, title: true, statusCode: true,
         wordCount: true, internalLinkCount: true, isIndexable: true,
+        h1Count: true, externalLinkCount: true, canonicalUrl: true,
       },
     }),
     db.query.auditPageLinks.findMany({
