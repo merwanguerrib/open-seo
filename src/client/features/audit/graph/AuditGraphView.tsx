@@ -114,6 +114,11 @@ export function AuditGraphView({ payload }: { payload: AuditGraphPayload }) {
     rendererRef.current?.refresh();
   }, [highlightedIds]);
 
+  useEffect(() => {
+    setSelection(null);
+    setSelectedNodeId(null);
+  }, [payload]);
+
   const selectedCategory =
     selection?.kind === "category" ? selection.id : null;
   const selectedInsightId =

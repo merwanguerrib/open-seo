@@ -4,7 +4,7 @@ function Row({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="flex justify-between gap-3 py-1 text-sm">
       <span className="text-base-content/60">{label}</span>
-      <span className="text-right font-medium">{value}</span>
+      <span className="text-right font-medium break-all min-w-0">{value}</span>
     </div>
   );
 }
