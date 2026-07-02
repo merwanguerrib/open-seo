@@ -15,6 +15,8 @@ import {
 } from "@/server/lib/audit/types";
 import { normalizeAndValidateStartUrl } from "@/server/lib/audit/url-policy";
 import { buildAuditGraphPayload } from "@/server/lib/audit/graph-edges";
+import { buildGraphifyExportFiles } from "@/server/lib/audit/graphify-export";
+import { getTextFromR2 } from "@/server/lib/r2";
 
 async function startAudit(input: {
   actorUserId: string;
@@ -181,6 +183,46 @@ async function getGraph(auditId: string, projectId: string) {
   });
 }
 
+async function exportForGraphify(auditId: string, projectId: string) {
+  const data = await AuditRepository.getGraphifyExportData(auditId, projectId);
+  if (!data) throw new AppError("NOT_FOUND");
+
+  const withContent = data.pages.filter((p) => p.contentR2Key != null);
+  if (withContent.length === 0) {
+    throw new AppError(
+      "CONFLICT",
+      "This audit has no captured page content. Re-run it with content capture enabled.",
+    );
+  }
+
+  const texts = await Promise.all(
+    data.pages.map(async (page) => {
+      if (!page.contentR2Key) return null;
+      try {
+        return await getTextFromR2(page.contentR2Key);
+      } catch {
+        return null; // a missing/unreadable object just drops that page
+      }
+    }),
+  );
+
+  const files = buildGraphifyExportFiles({
+    auditId,
+    startUrl: data.audit.startUrl,
+    generatedAt: new Date().toISOString(),
+    pages: data.pages.map((page, index) => ({
+      id: page.id,
+      url: page.url,
+      title: page.title,
+      statusCode: page.statusCode,
+      text: texts[index],
+    })),
+    edges: data.edges,
+  });
+
+  return { files };
+}
+
 async function remove(auditId: string, projectId: string) {
   const audit = await AuditRepository.getAuditForProject(auditId, projectId);
   if (!audit) {
@@ -217,4 +259,5 @@ export const AuditService = {
   getHistory,
   remove,
   getGraph,
+  exportForGraphify,
 } as const;

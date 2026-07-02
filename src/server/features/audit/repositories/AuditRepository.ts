@@ -302,6 +302,28 @@ async function getAuditGraphData(auditId: string, projectId: string) {
   return { audit, pages, edges };
 }
 
+async function getGraphifyExportData(auditId: string, projectId: string) {
+  const audit = await getAuditForProject(auditId, projectId);
+  if (!audit) return null;
+  const [pages, edges] = await Promise.all([
+    db.query.auditPages.findMany({
+      where: eq(auditPages.auditId, auditId),
+      columns: {
+        id: true,
+        url: true,
+        title: true,
+        statusCode: true,
+        contentR2Key: true,
+      },
+    }),
+    db.query.auditPageLinks.findMany({
+      where: eq(auditPageLinks.auditId, auditId),
+      columns: { fromPageId: true, toPageId: true, anchorText: true },
+    }),
+  ]);
+  return { audit, pages, edges };
+}
+
 async function deleteAuditForProject(auditId: string, projectId: string) {
   await db
     .delete(audits)
@@ -343,4 +365,5 @@ export const AuditRepository = {
   deleteAuditForProject,
   resolveAuditGraphEdges,
   getAuditGraphData,
+  getGraphifyExportData,
 } as const;

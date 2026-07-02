@@ -42,6 +42,11 @@ export const getAuditGraphSchema = z.object({
   auditId: z.string(),
 });
 
+export const exportAuditForGraphifySchema = z.object({
+  projectId: z.string().min(1),
+  auditId: z.string().min(1),
+});
+
 // ─── URL search params schema for /p/$projectId/audit ────────────────────────
 
 const auditTabs = ["pages", "performance", "graph"] as const;
