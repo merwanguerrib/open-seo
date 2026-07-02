@@ -11,6 +11,8 @@ import {
   deriveCategory,
 } from "@/client/features/audit/graph/pageCategories";
 import { buildNodeDetail } from "@/client/features/audit/graph/nodeDetail";
+import { computeStructuralClusters } from "@/client/features/audit/graph/structuralClusters";
+import { AuditClustersPanel } from "@/client/features/audit/graph/AuditClustersPanel";
 import { AuditInsightsPanel } from "@/client/features/audit/graph/AuditInsightsPanel";
 import { AuditCategoryLegend } from "@/client/features/audit/graph/AuditCategoryLegend";
 import { AuditNodeDetailPanel } from "@/client/features/audit/graph/AuditNodeDetailPanel";
@@ -21,7 +23,10 @@ import {
 import { buildCsv, downloadCsv, downloadJson } from "@/client/lib/csv";
 import type { AuditGraphPayload } from "@/server/lib/audit/types";
 
-type Selection = { kind: "insight" | "category"; id: string } | null;
+type Selection =
+  | { kind: "insight" | "category" | "cluster"; id: string }
+  | null;
+type ColorMode = "category" | "community";
 
 export function AuditGraphView({ payload }: { payload: AuditGraphPayload }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -52,6 +57,11 @@ export function AuditGraphView({ payload }: { payload: AuditGraphPayload }) {
     [payload, graph, metrics],
   );
   const categories = useMemo(() => computeCategories(payload), [payload]);
+  const [colorMode, setColorMode] = useState<ColorMode>("category");
+  const structural = useMemo(
+    () => computeStructuralClusters(payload, graph, metrics.pagerank),
+    [payload, graph, metrics],
+  );
 
   const highlightedIds = useMemo(() => {
     if (!selection) return new Set<string>();
@@ -59,12 +69,16 @@ export function AuditGraphView({ payload }: { payload: AuditGraphPayload }) {
       const selected = insights.find((i) => i.id === selection.id);
       return new Set(selected?.nodeIds ?? []);
     }
+    if (selection.kind === "cluster") {
+      const cluster = structural.clusters.find((c) => c.id === selection.id);
+      return new Set(cluster?.nodeIds ?? []);
+    }
     return new Set(
       payload.nodes
         .filter((n) => deriveCategory(n.url) === selection.id)
         .map((n) => n.id),
     );
-  }, [selection, insights, payload]);
+  }, [selection, insights, structural, payload]);
 
   const nodeDetail = useMemo(
     () =>
@@ -76,8 +90,12 @@ export function AuditGraphView({ payload }: { payload: AuditGraphPayload }) {
 
   const highlightRef = useRef<Set<string>>(highlightedIds);
   highlightRef.current = highlightedIds;
-  const colorsRef = useRef(categories.colorByNodeId);
-  colorsRef.current = categories.colorByNodeId;
+  const activeColors =
+    colorMode === "community"
+      ? structural.colorByNodeId
+      : categories.colorByNodeId;
+  const colorsRef = useRef(activeColors);
+  colorsRef.current = activeColors;
 
   useEffect(() => {
     if (!containerRef.current || graph.order === 0) return;
@@ -128,8 +146,16 @@ export function AuditGraphView({ payload }: { payload: AuditGraphPayload }) {
   }, [highlightedIds]);
 
   useEffect(() => {
+    graph.forEachNode((n) => {
+      graph.setNodeAttribute(n, "color", colorsRef.current.get(n) ?? "#999999");
+    });
+    rendererRef.current?.refresh();
+  }, [activeColors, graph]);
+
+  useEffect(() => {
     setSelection(null);
     setSelectedNodeId(null);
+    setColorMode("category");
   }, [payload]);
 
   const selectedCategory =
@@ -164,13 +190,43 @@ export function AuditGraphView({ payload }: { payload: AuditGraphPayload }) {
       </div>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[300px_1fr]">
         <div className="max-h-[600px] space-y-4 overflow-y-auto">
-          <AuditCategoryLegend
-            legend={categories.legend}
-            selectedCategory={selectedCategory}
-            onSelect={(category) =>
-              setSelection(category ? { kind: "category", id: category } : null)
-            }
-          />
+          <div className="join w-full">
+            <button
+              type="button"
+              className={`btn join-item btn-xs flex-1 ${colorMode === "category" ? "btn-active" : ""}`}
+              onClick={() => setColorMode("category")}
+            >
+              Categories
+            </button>
+            <button
+              type="button"
+              className={`btn join-item btn-xs flex-1 ${colorMode === "community" ? "btn-active" : ""}`}
+              onClick={() => setColorMode("community")}
+            >
+              Communities
+            </button>
+          </div>
+          {colorMode === "category" ? (
+            <AuditCategoryLegend
+              legend={categories.legend}
+              selectedCategory={selectedCategory}
+              onSelect={(category) =>
+                setSelection(
+                  category ? { kind: "category", id: category } : null,
+                )
+              }
+            />
+          ) : (
+            <AuditClustersPanel
+              clusters={structural.clusters}
+              selectedClusterId={
+                selection?.kind === "cluster" ? selection.id : null
+              }
+              onSelect={(id) =>
+                setSelection(id ? { kind: "cluster", id } : null)
+              }
+            />
+          )}
           <AuditInsightsPanel
             insights={insights}
             selectedId={selectedInsightId}
