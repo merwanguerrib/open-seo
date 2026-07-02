@@ -10,6 +10,7 @@ export const startAuditSchema = z.object({
     .enum(["auto", "all", "manual", "none"])
     .optional()
     .default("auto"),
+  captureContent: z.boolean().optional().default(false),
 });
 
 export const getAuditStatusSchema = z.object({

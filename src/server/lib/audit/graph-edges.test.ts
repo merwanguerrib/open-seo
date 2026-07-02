@@ -95,4 +95,15 @@ describe("buildAuditGraphPayload", () => {
       canonicalUrl: "https://s.com/",
     });
   });
+
+  it("carries contentCaptured into the payload meta", () => {
+    const payload = buildAuditGraphPayload({
+      auditId: "a",
+      startUrl: "https://s.com/",
+      pages: [],
+      edges: [],
+      contentCaptured: true,
+    });
+    expect(payload.meta.contentCaptured).toBe(true);
+  });
 });

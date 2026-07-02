@@ -40,6 +40,7 @@ export function buildAuditGraphPayload(input: {
     anchorText: string | null;
     isBroken: boolean;
   }>;
+  contentCaptured?: boolean;
 }): AuditGraphPayload {
   return {
     nodes: input.pages,
@@ -56,6 +57,7 @@ export function buildAuditGraphPayload(input: {
       startUrl: input.startUrl,
       pagesCrawled: input.pages.length,
       generatedAt: new Date().toISOString(),
+      contentCaptured: input.contentCaptured ?? false,
     },
   };
 }

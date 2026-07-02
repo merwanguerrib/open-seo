@@ -112,6 +112,24 @@ function LaunchOptions({ launchForm, commitMaxPagesInput }: Props) {
       <p className="text-xs text-base-content/50">
         Enter any value from {MIN_PAGES} to {MAX_PAGES_LIMIT}.
       </p>
+      <label className="label cursor-pointer justify-start gap-2 p-0">
+        <launchForm.Field name="captureContent">
+          {(field) => (
+            <input
+              type="checkbox"
+              className="toggle toggle-sm toggle-primary"
+              checked={Boolean(field.state.value)}
+              onChange={(event) => field.handleChange(event.target.checked)}
+            />
+          )}
+        </launchForm.Field>
+        <span
+          className="text-sm font-medium text-base-content/80"
+          title="Stores each page's text so you can export the crawl for Graphify semantic clustering."
+        >
+          Capture page content
+        </span>
+      </label>
     </div>
   );
 }

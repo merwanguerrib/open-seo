@@ -168,6 +168,8 @@ async function getGraph(auditId: string, projectId: string) {
   return buildAuditGraphPayload({
     auditId,
     startUrl: data.audit.startUrl,
+    contentCaptured:
+      parseAuditConfig(data.audit.config)?.captureContent ?? false,
     pages: data.pages.map((p) => ({
       id: p.id, url: p.url, title: p.title, statusCode: p.statusCode,
       wordCount: p.wordCount, internalLinkCount: p.internalLinkCount,

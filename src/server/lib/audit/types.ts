@@ -113,6 +113,7 @@ export interface AuditGraphPayload {
     startUrl: string;
     pagesCrawled: number;
     generatedAt: string;
+    contentCaptured?: boolean;
   };
 }
 

@@ -36,6 +36,7 @@ export const startAudit = createServerFn({ method: "POST" })
       startUrl: data.startUrl,
       maxPages: data.maxPages,
       lighthouseStrategy: data.lighthouseStrategy,
+      captureContent: data.captureContent,
     });
 
     waitUntil(
