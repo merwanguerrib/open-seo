@@ -458,6 +458,23 @@ export const auditPageLinks = sqliteTable(
   ],
 );
 
+// Semantic cluster assignment per page, re-imported from Graphify (Phase 3)
+export const auditPageClusters = sqliteTable(
+  "audit_page_clusters",
+  {
+    id: text("id").primaryKey(),
+    auditId: text("audit_id")
+      .notNull()
+      .references(() => audits.id, { onDelete: "cascade" }),
+    pageId: text("page_id")
+      .notNull()
+      .references(() => auditPages.id, { onDelete: "cascade" }),
+    clusterLabel: text("cluster_label").notNull(),
+    source: text("source").notNull(), // 'graphify'
+  },
+  (table) => [index("audit_page_clusters_audit_id_idx").on(table.auditId)],
+);
+
 // One row per Lighthouse test (mobile + desktop per page).
 export const auditLighthouseResults = sqliteTable(
   "audit_lighthouse_results",
