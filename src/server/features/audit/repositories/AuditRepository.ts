@@ -4,7 +4,13 @@
  */
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { audits, auditLighthouseResults, auditPages, auditPageLinks } from "@/db/schema";
+import {
+  audits,
+  auditLighthouseResults,
+  auditPages,
+  auditPageClusters,
+  auditPageLinks,
+} from "@/db/schema";
 import type {
   AuditConfig,
   LighthouseResult,
@@ -285,7 +291,7 @@ async function getLighthouseResultById(input: {
 async function getAuditGraphData(auditId: string, projectId: string) {
   const audit = await getAuditForProject(auditId, projectId);
   if (!audit) return null;
-  const [pages, edges] = await Promise.all([
+  const [pages, edges, clusters] = await Promise.all([
     db.query.auditPages.findMany({
       where: eq(auditPages.auditId, auditId),
       columns: {
@@ -298,8 +304,12 @@ async function getAuditGraphData(auditId: string, projectId: string) {
       where: eq(auditPageLinks.auditId, auditId),
       columns: { fromPageId: true, toPageId: true, anchorText: true, isBroken: true },
     }),
+    db.query.auditPageClusters.findMany({
+      where: eq(auditPageClusters.auditId, auditId),
+      columns: { pageId: true, clusterLabel: true },
+    }),
   ]);
-  return { audit, pages, edges };
+  return { audit, pages, edges, clusters };
 }
 
 async function getGraphifyExportData(auditId: string, projectId: string) {
@@ -322,6 +332,24 @@ async function getGraphifyExportData(auditId: string, projectId: string) {
     }),
   ]);
   return { audit, pages, edges };
+}
+
+async function replaceGraphifyClusters(
+  auditId: string,
+  rows: Array<{ pageId: string; clusterLabel: string }>,
+) {
+  await db
+    .delete(auditPageClusters)
+    .where(eq(auditPageClusters.auditId, auditId));
+  await executeInBatches(rows, (row) =>
+    db.insert(auditPageClusters).values({
+      id: `audit_page_clusters:${auditId}:${row.pageId}`,
+      auditId,
+      pageId: row.pageId,
+      clusterLabel: row.clusterLabel,
+      source: "graphify",
+    }),
+  );
 }
 
 async function deleteAuditForProject(auditId: string, projectId: string) {
@@ -366,4 +394,5 @@ export const AuditRepository = {
   resolveAuditGraphEdges,
   getAuditGraphData,
   getGraphifyExportData,
+  replaceGraphifyClusters,
 } as const;

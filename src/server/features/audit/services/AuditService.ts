@@ -16,6 +16,10 @@ import {
 import { normalizeAndValidateStartUrl } from "@/server/lib/audit/url-policy";
 import { buildAuditGraphPayload } from "@/server/lib/audit/graph-edges";
 import { buildGraphifyExportFiles } from "@/server/lib/audit/graphify-export";
+import {
+  graphifyGraphJsonSchema,
+  mapGraphifyClustersToPages,
+} from "@/server/lib/audit/graphify-import";
 import { getTextFromR2 } from "@/server/lib/r2";
 
 async function startAudit(input: {
@@ -180,7 +184,44 @@ async function getGraph(auditId: string, projectId: string) {
       canonicalUrl: p.canonicalUrl,
     })),
     edges: data.edges,
+    clusters: data.clusters,
   });
+}
+
+async function importGraphifyClusters(
+  auditId: string,
+  projectId: string,
+  graphJsonRaw: unknown,
+) {
+  const audit = await AuditRepository.getAuditForProject(auditId, projectId);
+  if (!audit) throw new AppError("NOT_FOUND");
+
+  const parsed = graphifyGraphJsonSchema.safeParse(graphJsonRaw);
+  if (!parsed.success) {
+    throw new AppError(
+      "VALIDATION_ERROR",
+      "This file does not look like a Graphify graph.json export.",
+    );
+  }
+
+  const data = await AuditRepository.getAuditGraphData(auditId, projectId);
+  if (!data) throw new AppError("NOT_FOUND");
+
+  const rows = mapGraphifyClustersToPages({
+    graphJson: parsed.data,
+    pages: data.pages.map((p) => ({ id: p.id, url: p.url })),
+  });
+  if (rows.length === 0) {
+    // Do not wipe existing clusters on a non-matching file (spec: no
+    // overwrite when the import is invalid for this audit).
+    throw new AppError(
+      "VALIDATION_ERROR",
+      "No Graphify nodes matched this audit's pages. Was the export generated from this audit?",
+    );
+  }
+
+  await AuditRepository.replaceGraphifyClusters(auditId, rows);
+  return { imported: rows.length };
 }
 
 async function exportForGraphify(auditId: string, projectId: string) {
@@ -260,4 +301,5 @@ export const AuditService = {
   remove,
   getGraph,
   exportForGraphify,
+  importGraphifyClusters,
 } as const;

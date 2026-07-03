@@ -98,6 +98,7 @@ export interface AuditGraphNode {
   h1Count: number;
   externalLinkCount: number;
   canonicalUrl: string | null;
+  semanticCluster?: string | null;
 }
 export interface AuditGraphEdge {
   from: string;

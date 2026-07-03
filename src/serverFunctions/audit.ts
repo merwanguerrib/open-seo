@@ -14,6 +14,7 @@ import {
   getAuditResultsSchema,
   getAuditStatusSchema,
   getCrawlProgressSchema,
+  importGraphifyClustersSchema,
   startAuditSchema,
 } from "@/types/schemas/audit";
 
@@ -104,4 +105,15 @@ export const exportAuditForGraphify = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => exportAuditForGraphifySchema.parse(data))
   .handler(async ({ data, context }) => {
     return AuditService.exportForGraphify(data.auditId, context.projectId);
+  });
+
+export const importGraphifyClusters = createServerFn({ method: "POST" })
+  .middleware(requireProjectContext)
+  .inputValidator((data: unknown) => importGraphifyClustersSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    return AuditService.importGraphifyClusters(
+      data.auditId,
+      context.projectId,
+      data.graphJson,
+    );
   });

@@ -96,6 +96,30 @@ describe("buildAuditGraphPayload", () => {
     });
   });
 
+  it("attaches semantic cluster labels to nodes when clusters are provided", () => {
+    const page = {
+      id: "p1",
+      url: "https://s.com/",
+      title: "Home",
+      statusCode: 200,
+      wordCount: 10,
+      internalLinkCount: 0,
+      isIndexable: true,
+      h1Count: 1,
+      externalLinkCount: 0,
+      canonicalUrl: null,
+    };
+    const payload = buildAuditGraphPayload({
+      auditId: "a",
+      startUrl: "https://s.com/",
+      pages: [page, { ...page, id: "p2", url: "https://s.com/b" }],
+      edges: [],
+      clusters: [{ pageId: "p1", clusterLabel: "Docs" }],
+    });
+    expect(payload.nodes.find((n) => n.id === "p1")?.semanticCluster).toBe("Docs");
+    expect(payload.nodes.find((n) => n.id === "p2")?.semanticCluster).toBeNull();
+  });
+
   it("carries contentCaptured into the payload meta", () => {
     const payload = buildAuditGraphPayload({
       auditId: "a",

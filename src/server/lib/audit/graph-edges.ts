@@ -41,9 +41,16 @@ export function buildAuditGraphPayload(input: {
     isBroken: boolean;
   }>;
   contentCaptured?: boolean;
+  clusters?: Array<{ pageId: string; clusterLabel: string }>;
 }): AuditGraphPayload {
+  const clusterByPageId = new Map(
+    (input.clusters ?? []).map((c) => [c.pageId, c.clusterLabel]),
+  );
   return {
-    nodes: input.pages,
+    nodes: input.pages.map((page) => ({
+      ...page,
+      semanticCluster: clusterByPageId.get(page.id) ?? null,
+    })),
     edges: input.edges
       .filter((e) => e.toPageId !== null)
       .map((e) => ({
