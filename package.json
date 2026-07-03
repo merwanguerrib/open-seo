@@ -82,6 +82,7 @@
     "dataforseo-client": "^2.0.19",
     "drizzle-orm": "^0.44.4",
     "fast-xml-parser": "^5.4.1",
+    "fflate": "^0.8.3",
     "graphology": "^0.26.0",
     "graphology-communities-louvain": "^2.0.2",
     "graphology-layout-forceatlas2": "^0.10.1",

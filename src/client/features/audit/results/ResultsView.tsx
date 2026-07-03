@@ -72,7 +72,7 @@ export function ResultsView({
           )}
           {activeTab === "graph" &&
             (graphPayload ? (
-              <AuditGraphView payload={graphPayload} />
+              <AuditGraphView payload={graphPayload} projectId={projectId} />
             ) : (
               <p className="text-sm text-base-content/60 py-4">
                 Graph unavailable for this run

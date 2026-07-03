@@ -21,6 +21,12 @@ import {
   buildGraphExportJson,
 } from "@/client/features/audit/graph/graphExport";
 import { buildCsv, downloadCsv, downloadJson } from "@/client/lib/csv";
+import {
+  buildGraphifyZip,
+  downloadZip,
+} from "@/client/features/audit/graph/graphifyZip";
+import { exportAuditForGraphify } from "@/serverFunctions/audit";
+import { toast } from "sonner";
 import type { AuditGraphPayload } from "@/server/lib/audit/types";
 
 type Selection =
@@ -28,7 +34,13 @@ type Selection =
   | null;
 type ColorMode = "category" | "community";
 
-export function AuditGraphView({ payload }: { payload: AuditGraphPayload }) {
+export function AuditGraphView({
+  payload,
+  projectId,
+}: {
+  payload: AuditGraphPayload;
+  projectId: string;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<{ refresh: () => void; kill: () => void } | null>(
     null,
@@ -171,6 +183,24 @@ export function AuditGraphView({ payload }: { payload: AuditGraphPayload }) {
     downloadJson("audit-graph.json", buildGraphExportJson(payload, graph, metrics));
   };
 
+  const [isExportingGraphify, setIsExportingGraphify] = useState(false);
+  const contentCaptured = payload.meta.contentCaptured === true;
+  const exportGraphify = async () => {
+    setIsExportingGraphify(true);
+    try {
+      const { files } = await exportAuditForGraphify({
+        data: { projectId, auditId: payload.meta.auditId },
+      });
+      downloadZip("graphify-input.zip", buildGraphifyZip(files));
+    } catch {
+      toast.error(
+        "Graphify export failed. Try re-running the audit with content capture enabled.",
+      );
+    } finally {
+      setIsExportingGraphify(false);
+    }
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3">
@@ -186,6 +216,19 @@ export function AuditGraphView({ payload }: { payload: AuditGraphPayload }) {
           <button type="button" className="btn btn-ghost btn-xs" onClick={exportJson}>
             Export JSON
           </button>
+          <div
+            className={contentCaptured ? "" : "tooltip tooltip-left"}
+            data-tip="Re-run an audit with content capture enabled"
+          >
+            <button
+              type="button"
+              className="btn btn-ghost btn-xs"
+              disabled={!contentCaptured || isExportingGraphify}
+              onClick={() => void exportGraphify()}
+            >
+              Export for Graphify
+            </button>
+          </div>
         </div>
       </div>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[300px_1fr]">
@@ -250,6 +293,22 @@ export function AuditGraphView({ payload }: { payload: AuditGraphPayload }) {
           )}
         </div>
       </div>
+      {contentCaptured && (
+        <div className="rounded-lg border border-base-300 bg-base-200/20 p-3 text-xs text-base-content/70">
+          <p className="font-medium text-base-content/80">
+            Semantic clustering with Graphify (runs on your machine)
+          </p>
+          <p className="mt-1">
+            Download the export, unzip it, then run:{" "}
+            <code className="rounded bg-base-300 px-1 py-0.5">
+              graphify ./graphify-input --directed --html
+            </code>
+            . You can re-import the resulting{" "}
+            <code className="rounded bg-base-300 px-1 py-0.5">graph.json</code>{" "}
+            to color this graph by semantic community.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
