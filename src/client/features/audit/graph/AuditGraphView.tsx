@@ -12,6 +12,7 @@ import {
 } from "@/client/features/audit/graph/pageCategories";
 import { buildNodeDetail } from "@/client/features/audit/graph/nodeDetail";
 import { computeStructuralClusters } from "@/client/features/audit/graph/structuralClusters";
+import { computeSemanticClusters } from "@/client/features/audit/graph/semanticClusters";
 import { AuditClustersPanel } from "@/client/features/audit/graph/AuditClustersPanel";
 import { AuditInsightsPanel } from "@/client/features/audit/graph/AuditInsightsPanel";
 import { AuditCategoryLegend } from "@/client/features/audit/graph/AuditCategoryLegend";
@@ -25,14 +26,18 @@ import {
   buildGraphifyZip,
   downloadZip,
 } from "@/client/features/audit/graph/graphifyZip";
-import { exportAuditForGraphify } from "@/serverFunctions/audit";
+import {
+  exportAuditForGraphify,
+  importGraphifyClusters,
+} from "@/serverFunctions/audit";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { AuditGraphPayload } from "@/server/lib/audit/types";
 
 type Selection =
-  | { kind: "insight" | "category" | "cluster"; id: string }
+  | { kind: "insight" | "category" | "cluster" | "semantic"; id: string }
   | null;
-type ColorMode = "category" | "community";
+type ColorMode = "category" | "community" | "semantic";
 
 export function AuditGraphView({
   payload,
@@ -74,6 +79,8 @@ export function AuditGraphView({
     () => computeStructuralClusters(payload, graph, metrics.pagerank),
     [payload, graph, metrics],
   );
+  const semantic = useMemo(() => computeSemanticClusters(payload), [payload]);
+  const hasSemantic = semantic.legend.length > 0;
 
   const highlightedIds = useMemo(() => {
     if (!selection) return new Set<string>();
@@ -84,6 +91,15 @@ export function AuditGraphView({
     if (selection.kind === "cluster") {
       const cluster = structural.clusters.find((c) => c.id === selection.id);
       return new Set(cluster?.nodeIds ?? []);
+    }
+    if (selection.kind === "semantic") {
+      return new Set(
+        payload.nodes
+          .filter(
+            (n) => (n.semanticCluster ?? "(unclustered)") === selection.id,
+          )
+          .map((n) => n.id),
+      );
     }
     return new Set(
       payload.nodes
@@ -105,7 +121,9 @@ export function AuditGraphView({
   const activeColors =
     colorMode === "community"
       ? structural.colorByNodeId
-      : categories.colorByNodeId;
+      : colorMode === "semantic"
+        ? semantic.colorByNodeId
+        : categories.colorByNodeId;
   const colorsRef = useRef(activeColors);
   colorsRef.current = activeColors;
 
@@ -167,7 +185,12 @@ export function AuditGraphView({
   useEffect(() => {
     setSelection(null);
     setSelectedNodeId(null);
-    setColorMode("category");
+    setColorMode((mode) =>
+      mode === "semantic" &&
+      payload.nodes.some((n) => n.semanticCluster != null)
+        ? "semantic"
+        : "category",
+    );
   }, [payload]);
 
   const selectedCategory =
@@ -185,6 +208,30 @@ export function AuditGraphView({
 
   const [isExportingGraphify, setIsExportingGraphify] = useState(false);
   const contentCaptured = payload.meta.contentCaptured === true;
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isImporting, setIsImporting] = useState(false);
+
+  const onImportFile = async (file: File) => {
+    setIsImporting(true);
+    try {
+      const graphJson: unknown = JSON.parse(await file.text());
+      const { imported } = await importGraphifyClusters({
+        data: { projectId, auditId: payload.meta.auditId, graphJson },
+      });
+      toast.success(`Imported semantic clusters for ${imported} pages.`);
+      await queryClient.invalidateQueries({ queryKey: ["audit-graph"] });
+      setColorMode("semantic");
+    } catch (error) {
+      toast.error(
+        error instanceof SyntaxError
+          ? "That file is not valid JSON."
+          : "Import failed. Use the graph.json produced by graphify on this audit's export.",
+      );
+    } finally {
+      setIsImporting(false);
+    }
+  };
   const exportGraphify = async () => {
     setIsExportingGraphify(true);
     try {
@@ -229,6 +276,25 @@ export function AuditGraphView({
               Export for Graphify
             </button>
           </div>
+          <button
+            type="button"
+            className="btn btn-ghost btn-xs"
+            disabled={isImporting}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            Import Graphify clusters
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              event.target.value = "";
+              if (file) void onImportFile(file);
+            }}
+          />
         </div>
       </div>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[300px_1fr]">
@@ -248,8 +314,28 @@ export function AuditGraphView({
             >
               Communities
             </button>
+            {hasSemantic && (
+              <button
+                type="button"
+                className={`btn join-item btn-xs flex-1 ${colorMode === "semantic" ? "btn-active" : ""}`}
+                onClick={() => setColorMode("semantic")}
+              >
+                Semantic
+              </button>
+            )}
           </div>
-          {colorMode === "category" ? (
+          {colorMode === "semantic" ? (
+            <AuditCategoryLegend
+              title="Semantic communities (Graphify)"
+              legend={semantic.legend}
+              selectedCategory={
+                selection?.kind === "semantic" ? selection.id : null
+              }
+              onSelect={(id) =>
+                setSelection(id ? { kind: "semantic", id } : null)
+              }
+            />
+          ) : colorMode === "category" ? (
             <AuditCategoryLegend
               legend={categories.legend}
               selectedCategory={selectedCategory}

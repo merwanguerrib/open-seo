@@ -4,16 +4,18 @@ export function AuditCategoryLegend({
   legend,
   selectedCategory,
   onSelect,
+  title = "Page categories",
 }: {
   legend: CategoryLegendEntry[];
   selectedCategory: string | null;
   onSelect: (category: string | null) => void;
+  title?: string;
 }) {
   if (legend.length === 0) return null;
   return (
     <div className="space-y-1">
       <div className="text-xs font-semibold uppercase text-base-content/50">
-        Page categories
+        {title}
       </div>
       {legend.map((entry) => {
         const isSelected = entry.category === selectedCategory;
