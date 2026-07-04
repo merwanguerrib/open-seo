@@ -1,13 +1,16 @@
 import {
+  BarChart3,
   Bookmark,
   Bot,
   ClipboardCheck,
   FileText,
   Globe,
   Link2,
+  MapPin,
   MessageSquare,
   Search,
   Sparkles,
+  Swords,
   TrendingUp,
 } from "lucide-react";
 import { linkOptions } from "@tanstack/react-router";
@@ -50,10 +53,28 @@ const projectNavItems = [
     matchSegment: "/backlinks",
   },
   {
+    to: "/p/$projectId/serp-competitors" as const,
+    label: "SERP Competitors",
+    icon: Swords,
+    matchSegment: "/serp-competitors",
+  },
+  {
     to: "/p/$projectId/audit" as const,
     label: "Site Audit",
     icon: ClipboardCheck,
     matchSegment: "/audit",
+  },
+  {
+    to: "/p/$projectId/gsc" as const,
+    label: "Search Console",
+    icon: BarChart3,
+    matchSegment: "/gsc",
+  },
+  {
+    to: "/p/$projectId/local" as const,
+    label: "Local SEO",
+    icon: MapPin,
+    matchSegment: "/local",
   },
   {
     to: "/p/$projectId/brand-lookup" as const,
@@ -113,12 +134,27 @@ export function getProjectNavGroups(projectId: string) {
       type: "group" as const,
       label: "Domain",
       icon: Globe,
-      matchSegments: ["/domain", "/backlinks", "/audit"],
+      matchSegments: ["/domain", "/backlinks", "/serp-competitors", "/audit"],
       items: [
         bySegment("/domain"),
         bySegment("/backlinks"),
+        bySegment("/serp-competitors"),
         bySegment("/audit"),
       ],
+    },
+    {
+      type: "group" as const,
+      label: "Search Console",
+      icon: BarChart3,
+      matchSegments: ["/gsc"],
+      items: [bySegment("/gsc")],
+    },
+    {
+      type: "group" as const,
+      label: "Local",
+      icon: MapPin,
+      matchSegments: ["/local"],
+      items: [bySegment("/local")],
     },
     {
       type: "group" as const,
