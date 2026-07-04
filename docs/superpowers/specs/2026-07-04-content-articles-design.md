@@ -16,12 +16,16 @@ The work is split into three phases, each with its own spec:
   article from a keyword via a durable Cloudflare Workflow, store it as an
   editable draft per project, and expose published articles through a public
   headless REST API authenticated by per-project API keys.
-- **Phase 2 — Editorial calendar + review window + auto-publish:** the app
-  proposes topics from site analysis, schedules generation on a cadence, and
-  publishes automatically after a review window.
-- **Phase 3 — GSC self-improvement loop:** daily rank monitoring per article,
-  automatic title rewrites, content refreshes, and internal-link boosts for
-  page-2 articles.
+- **Phase 2 — Autonomous content plan + editorial calendar + auto-publish:**
+  the app discovers winnable topics on its own (site analysis + keyword data
+  with volume/difficulty floors), organizes them as topic clusters (pillar +
+  satellite articles with bidirectional internal links), fills an editorial
+  calendar weeks ahead at a user-set cadence (N articles/week), and publishes
+  automatically after a review window.
+- **Phase 3 — GSC self-repair loop:** per-article journey timeline (written →
+  published → live/gathering data → monitored weekly) and a weekly repair
+  pass: title rewrites when CTR is low, internal depth relinks, full content
+  refreshes for decaying posts, and archiving of dead articles.
 
 Phase 1 deliberately builds the durable pipeline (not a one-shot server
 function) because phases 2 and 3 reuse it unattended.
@@ -56,8 +60,10 @@ status            text not null default 'queued'
 slug              text not null            -- unique per project
 title             text
 meta_description  text
+author            text                     -- E-E-A-T byline, editable in the editor
 markdown          text                     -- full article body (markdown)
 brief             text                     -- JSON: intent, angle, outline, entities, questions
+faq               text                     -- JSON: [{question, answer}] — FAQ section + FAQPage JSON-LD
 source_urls       text                     -- JSON: SERP URLs used for grounding
 workflow_run_id   text                     -- Workflow instance id for status polling
 error             text                     -- failure message when status = 'failed'
@@ -93,20 +99,27 @@ created as `queued` before the workflow starts). Steps, each durable and
 retryable:
 
 1. **fetch-serp** — DataForSEO live organic SERP for (keyword, location,
-   language), top 10 results. Persists `source_urls`.
+   language), top 10 results, including People Also Ask questions and the AI
+   Overview content when present. Persists `source_urls`.
 2. **parse-competitors** — on-page content parsing of the top 3–5 organic
    results to capture the angle, depth, and structure that already rank.
    Failures on individual URLs are tolerated (skip and continue with ≥1
    parsed page).
 3. **build-brief** — LLM call (OpenRouter): classify intent, pick the angle,
    produce an H2/H3 outline, list entities to cover and questions to answer
-   (from PAA when present). Persists `brief` JSON.
+   (from PAA and the AI Overview when present). Persists `brief` JSON.
 4. **write-article** — LLM call with a stronger model
    (`OPENROUTER_CONTENT_MODEL`, defaulting to `anthropic/claude-sonnet-5`): full
-   markdown article in the project's language — title, meta description,
-   outline-driven sections, FAQ. Persists `title`, `meta_description`,
-   `markdown`, and a slugified `slug` (deduplicated per project with a numeric
-   suffix).
+   markdown article in the project's language. Required article shape:
+   - title and meta description;
+   - an **answer-first opening block** (40–60 words directly answering the
+     query, targeting featured snippets / position 0);
+   - outline-driven H2/H3 sections;
+   - **in-text citations of independent sources** (linked, drawn from the
+     parsed SERP pages and any sources they reference);
+   - a FAQ section, also persisted as structured `faq` JSON.
+   Persists `title`, `meta_description`, `markdown`, `faq`, and a slugified
+   `slug` (deduplicated per project with a numeric suffix).
 5. **save-draft** — flips status to `draft`, clears `error`.
 
 Any step exhausting retries marks the article `failed` with a human-readable
@@ -152,7 +165,10 @@ Public REST endpoints (TanStack server routes under `src/routes/api/content/`):
   identified by the bearer key. Fields: `slug`, `title`, `metaDescription`,
   `publishedAt`, `updatedAt`.
 - `GET /api/content/v1/articles/:slug` — full article: adds `markdown`,
-  `html` (markdown rendered server-side), `keyword`.
+  `html` (markdown rendered server-side), `keyword`, `author`, `faq`, and
+  `jsonLd` — ready-to-embed structured data (`BlogPosting` built from
+  title/meta/author/dates, plus `FAQPage` when the article has a FAQ), so
+  consuming sites are rich-result eligible without extra work.
 
 Auth: `Authorization: Bearer <key>`; the key's hash resolves the project.
 Revoked/unknown keys → 401. Only `published` articles are visible. Responses
@@ -177,14 +193,20 @@ set `last_used_at` on the key. Simple pagination via `?limit=` / `?cursor=`
 
 - Unit: brief prompt assembly (competitor content → prompt inputs), slug
   generation/dedupe, API-key hashing + bearer auth resolution, published-only
-  filtering in the headless API.
+  filtering in the headless API, JSON-LD generation (BlogPosting + FAQPage
+  shapes).
 - E2E (light): content list page renders; generate button creates a queued
   article row.
 
 ## Out of scope (later phases)
 
-- Topic suggestions from site analysis, editorial calendar, cadence,
-  auto-publish and review window (phase 2).
-- GSC-driven title rewrites, refreshes, internal-link boosts (phase 3).
-- CMS integrations (WordPress, Shopify, …) and hosted blog rendering.
-- Images in articles.
+- Autonomous topic discovery, topic clusters (pillar + satellites), editorial
+  calendar, cadence, auto-publish and review window (phase 2).
+- GSC-driven weekly self-repair: title rewrites, content refreshes, internal
+  depth relinks, archiving dead articles; per-article journey timeline
+  (phase 3).
+- CMS integrations (WordPress, Shopify, …) and hosted blog rendering —
+  canonical/Open Graph tags and XML sitemaps belong to the consuming site (or
+  to a hosted blog if ever built).
+- Images / in-article media, IndexNow instant indexing (PilotScribe lists
+  these as "coming soon" too).
