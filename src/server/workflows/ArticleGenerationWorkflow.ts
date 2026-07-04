@@ -151,14 +151,25 @@ export class ArticleGenerationWorkflow extends WorkflowEntrypoint<
             ),
           );
           const pages: CompetitorPage[] = [];
-          for (const outcome of settled) {
-            if (outcome.status !== "fulfilled") continue;
+          const failures: string[] = [];
+          for (const [index, outcome] of settled.entries()) {
+            if (outcome.status !== "fulfilled") {
+              const reason =
+                outcome.reason instanceof Error
+                  ? outcome.reason.message
+                  : String(outcome.reason);
+              failures.push(`${targets[index]?.url}: ${reason}`);
+              continue;
+            }
             if (!outcome.value.text.trim()) continue;
             pages.push({ url: outcome.value.url, text: outcome.value.text });
           }
           if (pages.length === 0) {
+            // Step callbacks run "remote" in the Workflows engine, where
+            // console output is not reliably surfaced — carry the first
+            // per-URL failure in the error itself.
             throw new Error(
-              "Could not read any of the top-ranking pages for grounding",
+              `Could not read any of the top-ranking pages for grounding (${failures[0] ?? "no pages to parse"})`,
             );
           }
           return pages;
