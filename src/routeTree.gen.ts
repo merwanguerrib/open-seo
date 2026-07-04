@@ -42,13 +42,16 @@ import { Route as ProjectPProjectIdRankTrackingRouteImport } from './routes/_pro
 import { Route as ProjectPProjectIdPromptExplorerRouteImport } from './routes/_project/p/$projectId/prompt-explorer'
 import { Route as ProjectPProjectIdKeywordsRouteImport } from './routes/_project/p/$projectId/keywords'
 import { Route as ProjectPProjectIdDomainRouteImport } from './routes/_project/p/$projectId/domain'
+import { Route as ProjectPProjectIdContentRouteImport } from './routes/_project/p/$projectId/content'
 import { Route as ProjectPProjectIdBrandLookupRouteImport } from './routes/_project/p/$projectId/brand-lookup'
 import { Route as ProjectPProjectIdBacklinksRouteImport } from './routes/_project/p/$projectId/backlinks'
 import { Route as ProjectPProjectIdAuditRouteImport } from './routes/_project/p/$projectId/audit'
 import { Route as ProjectPProjectIdRankTrackingIndexRouteImport } from './routes/_project/p/$projectId/rank-tracking/index'
+import { Route as ProjectPProjectIdContentIndexRouteImport } from './routes/_project/p/$projectId/content/index'
 import { Route as ProjectPProjectIdAuditIndexRouteImport } from './routes/_project/p/$projectId/audit/index'
 import { Route as ApiContentV1ArticlesSlugRouteImport } from './routes/api/content/v1/articles.$slug'
 import { Route as ProjectPProjectIdRankTrackingConfigIdRouteImport } from './routes/_project/p/$projectId/rank-tracking/$configId'
+import { Route as ProjectPProjectIdContentArticleIdRouteImport } from './routes/_project/p/$projectId/content/$articleId'
 import { Route as ProjectPProjectIdAuditIssuesResultIdRouteImport } from './routes/_project/p/$projectId/audit/issues/$resultId'
 
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
@@ -220,6 +223,12 @@ const ProjectPProjectIdDomainRoute = ProjectPProjectIdDomainRouteImport.update({
   path: '/domain',
   getParentRoute: () => ProjectPProjectIdRouteRoute,
 } as any)
+const ProjectPProjectIdContentRoute =
+  ProjectPProjectIdContentRouteImport.update({
+    id: '/content',
+    path: '/content',
+    getParentRoute: () => ProjectPProjectIdRouteRoute,
+  } as any)
 const ProjectPProjectIdBrandLookupRoute =
   ProjectPProjectIdBrandLookupRouteImport.update({
     id: '/brand-lookup',
@@ -243,6 +252,12 @@ const ProjectPProjectIdRankTrackingIndexRoute =
     path: '/',
     getParentRoute: () => ProjectPProjectIdRankTrackingRoute,
   } as any)
+const ProjectPProjectIdContentIndexRoute =
+  ProjectPProjectIdContentIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => ProjectPProjectIdContentRoute,
+  } as any)
 const ProjectPProjectIdAuditIndexRoute =
   ProjectPProjectIdAuditIndexRouteImport.update({
     id: '/',
@@ -260,6 +275,12 @@ const ProjectPProjectIdRankTrackingConfigIdRoute =
     id: '/$configId',
     path: '/$configId',
     getParentRoute: () => ProjectPProjectIdRankTrackingRoute,
+  } as any)
+const ProjectPProjectIdContentArticleIdRoute =
+  ProjectPProjectIdContentArticleIdRouteImport.update({
+    id: '/$articleId',
+    path: '/$articleId',
+    getParentRoute: () => ProjectPProjectIdContentRoute,
   } as any)
 const ProjectPProjectIdAuditIssuesResultIdRoute =
   ProjectPProjectIdAuditIssuesResultIdRouteImport.update({
@@ -292,6 +313,7 @@ export interface FileRoutesByFullPath {
   '/p/$projectId/audit': typeof ProjectPProjectIdAuditRouteWithChildren
   '/p/$projectId/backlinks': typeof ProjectPProjectIdBacklinksRoute
   '/p/$projectId/brand-lookup': typeof ProjectPProjectIdBrandLookupRoute
+  '/p/$projectId/content': typeof ProjectPProjectIdContentRouteWithChildren
   '/p/$projectId/domain': typeof ProjectPProjectIdDomainRoute
   '/p/$projectId/keywords': typeof ProjectPProjectIdKeywordsRoute
   '/p/$projectId/prompt-explorer': typeof ProjectPProjectIdPromptExplorerRoute
@@ -301,9 +323,11 @@ export interface FileRoutesByFullPath {
   '/api/content/v1/articles': typeof ApiContentV1ArticlesRouteWithChildren
   '/api/gsc/oauth/callback': typeof ApiGscOauthCallbackRoute
   '/p/$projectId/': typeof ProjectPProjectIdIndexRoute
+  '/p/$projectId/content/$articleId': typeof ProjectPProjectIdContentArticleIdRoute
   '/p/$projectId/rank-tracking/$configId': typeof ProjectPProjectIdRankTrackingConfigIdRoute
   '/api/content/v1/articles/$slug': typeof ApiContentV1ArticlesSlugRoute
   '/p/$projectId/audit/': typeof ProjectPProjectIdAuditIndexRoute
+  '/p/$projectId/content/': typeof ProjectPProjectIdContentIndexRoute
   '/p/$projectId/rank-tracking/': typeof ProjectPProjectIdRankTrackingIndexRoute
   '/p/$projectId/audit/issues/$resultId': typeof ProjectPProjectIdAuditIssuesResultIdRoute
 }
@@ -337,9 +361,11 @@ export interface FileRoutesByTo {
   '/api/content/v1/articles': typeof ApiContentV1ArticlesRouteWithChildren
   '/api/gsc/oauth/callback': typeof ApiGscOauthCallbackRoute
   '/p/$projectId': typeof ProjectPProjectIdIndexRoute
+  '/p/$projectId/content/$articleId': typeof ProjectPProjectIdContentArticleIdRoute
   '/p/$projectId/rank-tracking/$configId': typeof ProjectPProjectIdRankTrackingConfigIdRoute
   '/api/content/v1/articles/$slug': typeof ApiContentV1ArticlesSlugRoute
   '/p/$projectId/audit': typeof ProjectPProjectIdAuditIndexRoute
+  '/p/$projectId/content': typeof ProjectPProjectIdContentIndexRoute
   '/p/$projectId/rank-tracking': typeof ProjectPProjectIdRankTrackingIndexRoute
   '/p/$projectId/audit/issues/$resultId': typeof ProjectPProjectIdAuditIssuesResultIdRoute
 }
@@ -372,6 +398,7 @@ export interface FileRoutesById {
   '/_project/p/$projectId/audit': typeof ProjectPProjectIdAuditRouteWithChildren
   '/_project/p/$projectId/backlinks': typeof ProjectPProjectIdBacklinksRoute
   '/_project/p/$projectId/brand-lookup': typeof ProjectPProjectIdBrandLookupRoute
+  '/_project/p/$projectId/content': typeof ProjectPProjectIdContentRouteWithChildren
   '/_project/p/$projectId/domain': typeof ProjectPProjectIdDomainRoute
   '/_project/p/$projectId/keywords': typeof ProjectPProjectIdKeywordsRoute
   '/_project/p/$projectId/prompt-explorer': typeof ProjectPProjectIdPromptExplorerRoute
@@ -381,9 +408,11 @@ export interface FileRoutesById {
   '/api/content/v1/articles': typeof ApiContentV1ArticlesRouteWithChildren
   '/api/gsc/oauth/callback': typeof ApiGscOauthCallbackRoute
   '/_project/p/$projectId/': typeof ProjectPProjectIdIndexRoute
+  '/_project/p/$projectId/content/$articleId': typeof ProjectPProjectIdContentArticleIdRoute
   '/_project/p/$projectId/rank-tracking/$configId': typeof ProjectPProjectIdRankTrackingConfigIdRoute
   '/api/content/v1/articles/$slug': typeof ApiContentV1ArticlesSlugRoute
   '/_project/p/$projectId/audit/': typeof ProjectPProjectIdAuditIndexRoute
+  '/_project/p/$projectId/content/': typeof ProjectPProjectIdContentIndexRoute
   '/_project/p/$projectId/rank-tracking/': typeof ProjectPProjectIdRankTrackingIndexRoute
   '/_project/p/$projectId/audit/issues/$resultId': typeof ProjectPProjectIdAuditIssuesResultIdRoute
 }
@@ -413,6 +442,7 @@ export interface FileRouteTypes {
     | '/p/$projectId/audit'
     | '/p/$projectId/backlinks'
     | '/p/$projectId/brand-lookup'
+    | '/p/$projectId/content'
     | '/p/$projectId/domain'
     | '/p/$projectId/keywords'
     | '/p/$projectId/prompt-explorer'
@@ -422,9 +452,11 @@ export interface FileRouteTypes {
     | '/api/content/v1/articles'
     | '/api/gsc/oauth/callback'
     | '/p/$projectId/'
+    | '/p/$projectId/content/$articleId'
     | '/p/$projectId/rank-tracking/$configId'
     | '/api/content/v1/articles/$slug'
     | '/p/$projectId/audit/'
+    | '/p/$projectId/content/'
     | '/p/$projectId/rank-tracking/'
     | '/p/$projectId/audit/issues/$resultId'
   fileRoutesByTo: FileRoutesByTo
@@ -458,9 +490,11 @@ export interface FileRouteTypes {
     | '/api/content/v1/articles'
     | '/api/gsc/oauth/callback'
     | '/p/$projectId'
+    | '/p/$projectId/content/$articleId'
     | '/p/$projectId/rank-tracking/$configId'
     | '/api/content/v1/articles/$slug'
     | '/p/$projectId/audit'
+    | '/p/$projectId/content'
     | '/p/$projectId/rank-tracking'
     | '/p/$projectId/audit/issues/$resultId'
   id:
@@ -492,6 +526,7 @@ export interface FileRouteTypes {
     | '/_project/p/$projectId/audit'
     | '/_project/p/$projectId/backlinks'
     | '/_project/p/$projectId/brand-lookup'
+    | '/_project/p/$projectId/content'
     | '/_project/p/$projectId/domain'
     | '/_project/p/$projectId/keywords'
     | '/_project/p/$projectId/prompt-explorer'
@@ -501,9 +536,11 @@ export interface FileRouteTypes {
     | '/api/content/v1/articles'
     | '/api/gsc/oauth/callback'
     | '/_project/p/$projectId/'
+    | '/_project/p/$projectId/content/$articleId'
     | '/_project/p/$projectId/rank-tracking/$configId'
     | '/api/content/v1/articles/$slug'
     | '/_project/p/$projectId/audit/'
+    | '/_project/p/$projectId/content/'
     | '/_project/p/$projectId/rank-tracking/'
     | '/_project/p/$projectId/audit/issues/$resultId'
   fileRoutesById: FileRoutesById
@@ -756,6 +793,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectPProjectIdDomainRouteImport
       parentRoute: typeof ProjectPProjectIdRouteRoute
     }
+    '/_project/p/$projectId/content': {
+      id: '/_project/p/$projectId/content'
+      path: '/content'
+      fullPath: '/p/$projectId/content'
+      preLoaderRoute: typeof ProjectPProjectIdContentRouteImport
+      parentRoute: typeof ProjectPProjectIdRouteRoute
+    }
     '/_project/p/$projectId/brand-lookup': {
       id: '/_project/p/$projectId/brand-lookup'
       path: '/brand-lookup'
@@ -784,6 +828,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectPProjectIdRankTrackingIndexRouteImport
       parentRoute: typeof ProjectPProjectIdRankTrackingRoute
     }
+    '/_project/p/$projectId/content/': {
+      id: '/_project/p/$projectId/content/'
+      path: '/'
+      fullPath: '/p/$projectId/content/'
+      preLoaderRoute: typeof ProjectPProjectIdContentIndexRouteImport
+      parentRoute: typeof ProjectPProjectIdContentRoute
+    }
     '/_project/p/$projectId/audit/': {
       id: '/_project/p/$projectId/audit/'
       path: '/'
@@ -804,6 +855,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/p/$projectId/rank-tracking/$configId'
       preLoaderRoute: typeof ProjectPProjectIdRankTrackingConfigIdRouteImport
       parentRoute: typeof ProjectPProjectIdRankTrackingRoute
+    }
+    '/_project/p/$projectId/content/$articleId': {
+      id: '/_project/p/$projectId/content/$articleId'
+      path: '/$articleId'
+      fullPath: '/p/$projectId/content/$articleId'
+      preLoaderRoute: typeof ProjectPProjectIdContentArticleIdRouteImport
+      parentRoute: typeof ProjectPProjectIdContentRoute
     }
     '/_project/p/$projectId/audit/issues/$resultId': {
       id: '/_project/p/$projectId/audit/issues/$resultId'
@@ -856,6 +914,23 @@ const ProjectPProjectIdAuditRouteWithChildren =
     ProjectPProjectIdAuditRouteChildren,
   )
 
+interface ProjectPProjectIdContentRouteChildren {
+  ProjectPProjectIdContentArticleIdRoute: typeof ProjectPProjectIdContentArticleIdRoute
+  ProjectPProjectIdContentIndexRoute: typeof ProjectPProjectIdContentIndexRoute
+}
+
+const ProjectPProjectIdContentRouteChildren: ProjectPProjectIdContentRouteChildren =
+  {
+    ProjectPProjectIdContentArticleIdRoute:
+      ProjectPProjectIdContentArticleIdRoute,
+    ProjectPProjectIdContentIndexRoute: ProjectPProjectIdContentIndexRoute,
+  }
+
+const ProjectPProjectIdContentRouteWithChildren =
+  ProjectPProjectIdContentRoute._addFileChildren(
+    ProjectPProjectIdContentRouteChildren,
+  )
+
 interface ProjectPProjectIdRankTrackingRouteChildren {
   ProjectPProjectIdRankTrackingConfigIdRoute: typeof ProjectPProjectIdRankTrackingConfigIdRoute
   ProjectPProjectIdRankTrackingIndexRoute: typeof ProjectPProjectIdRankTrackingIndexRoute
@@ -878,6 +953,7 @@ interface ProjectPProjectIdRouteRouteChildren {
   ProjectPProjectIdAuditRoute: typeof ProjectPProjectIdAuditRouteWithChildren
   ProjectPProjectIdBacklinksRoute: typeof ProjectPProjectIdBacklinksRoute
   ProjectPProjectIdBrandLookupRoute: typeof ProjectPProjectIdBrandLookupRoute
+  ProjectPProjectIdContentRoute: typeof ProjectPProjectIdContentRouteWithChildren
   ProjectPProjectIdDomainRoute: typeof ProjectPProjectIdDomainRoute
   ProjectPProjectIdKeywordsRoute: typeof ProjectPProjectIdKeywordsRoute
   ProjectPProjectIdPromptExplorerRoute: typeof ProjectPProjectIdPromptExplorerRoute
@@ -892,6 +968,7 @@ const ProjectPProjectIdRouteRouteChildren: ProjectPProjectIdRouteRouteChildren =
     ProjectPProjectIdAuditRoute: ProjectPProjectIdAuditRouteWithChildren,
     ProjectPProjectIdBacklinksRoute: ProjectPProjectIdBacklinksRoute,
     ProjectPProjectIdBrandLookupRoute: ProjectPProjectIdBrandLookupRoute,
+    ProjectPProjectIdContentRoute: ProjectPProjectIdContentRouteWithChildren,
     ProjectPProjectIdDomainRoute: ProjectPProjectIdDomainRoute,
     ProjectPProjectIdKeywordsRoute: ProjectPProjectIdKeywordsRoute,
     ProjectPProjectIdPromptExplorerRoute: ProjectPProjectIdPromptExplorerRoute,

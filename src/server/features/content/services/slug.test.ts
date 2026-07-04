@@ -9,7 +9,9 @@ describe("slugify", () => {
   });
 
   it("strips diacritics and punctuation", () => {
-    expect(slugify("Élément clé : l'audit SEO !")).toBe("element-cle-l-audit-seo");
+    expect(slugify("Élément clé : l'audit SEO !")).toBe(
+      "element-cle-l-audit-seo",
+    );
   });
 
   it("falls back when nothing survives", () => {

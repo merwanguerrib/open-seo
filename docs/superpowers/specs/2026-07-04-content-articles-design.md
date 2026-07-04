@@ -32,14 +32,14 @@ function) because phases 2 and 3 reuse it unattended.
 
 ## Decisions (from brainstorming)
 
-| Decision | Choice |
-| --- | --- |
-| Scope | Full pipeline cloned in phases; phase 1 = generation + headless API |
-| Output | In-app article library **and** public headless API from phase 1 |
-| Trigger | "Generate article" from keyword research / saved keywords (keyword + location + language) |
-| Architecture | Cloudflare Workflow (`ArticleGenerationWorkflow`), same pattern as `RankCheckWorkflow` |
-| SERP grounding | DataForSEO live organic SERP + on-page content parsing of top results |
-| LLM | OpenRouter (existing `src/server/lib/openrouter.ts` infra), dedicated model env var |
+| Decision       | Choice                                                                                    |
+| -------------- | ----------------------------------------------------------------------------------------- |
+| Scope          | Full pipeline cloned in phases; phase 1 = generation + headless API                       |
+| Output         | In-app article library **and** public headless API from phase 1                           |
+| Trigger        | "Generate article" from keyword research / saved keywords (keyword + location + language) |
+| Architecture   | Cloudflare Workflow (`ArticleGenerationWorkflow`), same pattern as `RankCheckWorkflow`    |
+| SERP grounding | DataForSEO live organic SERP + on-page content parsing of top results                     |
+| LLM            | OpenRouter (existing `src/server/lib/openrouter.ts` infra), dedicated model env var       |
 
 ## Data model
 
@@ -118,8 +118,8 @@ retryable:
    - **in-text citations of independent sources** (linked, drawn from the
      parsed SERP pages and any sources they reference);
    - a FAQ section, also persisted as structured `faq` JSON.
-   Persists `title`, `meta_description`, `markdown`, `faq`, and a slugified
-   `slug` (deduplicated per project with a numeric suffix).
+     Persists `title`, `meta_description`, `markdown`, `faq`, and a slugified
+     `slug` (deduplicated per project with a numeric suffix).
 5. **save-draft** — flips status to `draft`, clears `error`.
 
 Any step exhausting retries marks the article `failed` with a human-readable

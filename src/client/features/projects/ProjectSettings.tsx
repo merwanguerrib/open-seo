@@ -3,6 +3,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
+import { ContentApiKeysCard } from "@/client/features/content/ContentApiKeysCard";
 import { SearchConsoleConnectionCard } from "@/client/features/gsc/SearchConsoleConnectionCard";
 import { getStandardErrorMessage } from "@/client/lib/error-messages";
 import {
@@ -58,6 +59,13 @@ export function ProjectSettings({ projectId }: { projectId: string }) {
           Search Console
         </h2>
         <SearchConsoleConnectionCard projectId={projectId} />
+      </section>
+
+      <section id="content-api" className="space-y-3 scroll-mt-6">
+        <h2 className="text-sm font-medium text-base-content/50">
+          Content API
+        </h2>
+        <ContentApiKeysCard projectId={projectId} />
       </section>
 
       <DangerSection project={project} canArchive={projects.length > 1} />

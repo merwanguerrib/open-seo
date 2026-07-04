@@ -10,7 +10,7 @@ export interface ArticleFaqEntry {
   answer: string;
 }
 
-export interface ArticleJsonLdInput {
+interface ArticleJsonLdInput {
   title: string;
   metaDescription: string | null;
   author: string | null;
@@ -19,7 +19,7 @@ export interface ArticleJsonLdInput {
   faq: ArticleFaqEntry[];
 }
 
-export type JsonLdObject = Record<string, unknown>;
+type JsonLdObject = Record<string, unknown>;
 
 export function buildArticleJsonLd(input: ArticleJsonLdInput): JsonLdObject[] {
   const blogPosting: JsonLdObject = {

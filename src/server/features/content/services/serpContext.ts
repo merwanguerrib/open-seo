@@ -6,7 +6,7 @@ import { isRecord } from "@/server/lib/dataforseo/envelope";
  * article must beat, the People Also Ask questions worth answering, and the
  * AI Overview text (what Google's own answer engine says) when present.
  */
-export interface SerpContext {
+export type SerpContext = {
   topOrganic: Array<{
     url: string;
     title: string | null;
@@ -15,7 +15,7 @@ export interface SerpContext {
   }>;
   paaQuestions: string[];
   aiOverview: string | null;
-}
+};
 
 const MAX_ORGANIC_RESULTS = 10;
 

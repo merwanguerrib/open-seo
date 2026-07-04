@@ -46,14 +46,22 @@ interface ArticleGenerationParams {
 const MAX_COMPETITOR_PAGES = 4;
 
 const STEP_CONFIG = {
-  retries: { limit: 2, delay: "10 seconds" as const, backoff: "exponential" },
+  retries: {
+    limit: 2,
+    delay: "10 seconds" as const,
+    backoff: "exponential" as const,
+  },
   timeout: "5 minutes" as const,
 };
 
 // LLM steps are slower and pricier; retry once, with a longer timeout for
 // long-form generation.
 const LLM_STEP_CONFIG = {
-  retries: { limit: 1, delay: "15 seconds" as const, backoff: "constant" },
+  retries: {
+    limit: 1,
+    delay: "15 seconds" as const,
+    backoff: "constant" as const,
+  },
   timeout: "10 minutes" as const,
 };
 
@@ -134,10 +142,7 @@ export class ArticleGenerationWorkflow extends WorkflowEntrypoint<
         "parse-competitors",
         STEP_CONFIG,
         async (): Promise<CompetitorPage[]> => {
-          const targets = serpContext.topOrganic.slice(
-            0,
-            MAX_COMPETITOR_PAGES,
-          );
+          const targets = serpContext.topOrganic.slice(0, MAX_COMPETITOR_PAGES);
           // Individual pages may block crawlers or time out; tolerate
           // failures as long as at least one page parses.
           const settled = await Promise.allSettled(
@@ -178,7 +183,9 @@ export class ArticleGenerationWorkflow extends WorkflowEntrypoint<
           await ContentRepository.updateArticleFromWorkflow(
             articleId,
             workflowRunId,
-            { brief: JSON.stringify({ ...result.object, usage: result.usage }) },
+            {
+              brief: JSON.stringify({ ...result.object, usage: result.usage }),
+            },
           );
           return result.object;
         },

@@ -2,19 +2,26 @@ import { env } from "cloudflare:workers";
 import type { BillingCustomerContext } from "@/server/billing/subscription";
 import { ContentRepository } from "@/server/features/content/repositories/ContentRepository";
 import type { ContentArticleRow } from "@/server/features/content/repositories/ContentRepository";
-import {
-  generateContentApiKey,
-} from "@/server/features/content/services/apiKeys";
+import { generateContentApiKey } from "@/server/features/content/services/apiKeys";
 import { dedupeSlug, slugify } from "@/server/features/content/services/slug";
 import { AppError } from "@/server/lib/errors";
 
-export interface ArticleFaqEntryJson {
+interface ArticleFaqEntryJson {
   question: string;
   answer: string;
 }
 
+/** Parsed `brief` JSON column; fields are optional because older rows may predate additions. */
+type StoredArticleBrief = {
+  intent?: string;
+  angle?: string;
+  outline?: Array<{ heading: string; subheadings: string[] }>;
+  entities?: string[];
+  questions?: string[];
+} | null;
+
 /** Article shape returned to the app UI (JSON columns parsed). */
-export interface ContentArticleView {
+interface ContentArticleView {
   id: string;
   keyword: string;
   locationCode: number;
@@ -25,7 +32,7 @@ export interface ContentArticleView {
   metaDescription: string | null;
   author: string | null;
   markdown: string | null;
-  brief: unknown;
+  brief: StoredArticleBrief;
   faq: ArticleFaqEntryJson[];
   sourceUrls: string[];
   error: string | null;
@@ -43,7 +50,7 @@ function parseJsonColumn<T>(raw: string | null, fallback: T): T {
   }
 }
 
-export function toArticleView(row: ContentArticleRow): ContentArticleView {
+function toArticleView(row: ContentArticleRow): ContentArticleView {
   return {
     id: row.id,
     keyword: row.keyword,
@@ -55,7 +62,7 @@ export function toArticleView(row: ContentArticleRow): ContentArticleView {
     metaDescription: row.metaDescription,
     author: row.author,
     markdown: row.markdown,
-    brief: parseJsonColumn<unknown>(row.brief, null),
+    brief: parseJsonColumn<StoredArticleBrief>(row.brief, null),
     faq: parseJsonColumn<ArticleFaqEntryJson[]>(row.faq, []),
     sourceUrls: parseJsonColumn<string[]>(row.sourceUrls, []),
     error: row.error,

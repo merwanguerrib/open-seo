@@ -2,6 +2,7 @@ import {
   Bookmark,
   Bot,
   ClipboardCheck,
+  FileText,
   Globe,
   Link2,
   MessageSquare,
@@ -29,6 +30,12 @@ const projectNavItems = [
     label: "Rank Tracking",
     icon: TrendingUp,
     matchSegment: "/rank-tracking",
+  },
+  {
+    to: "/p/$projectId/content" as const,
+    label: "Articles",
+    icon: FileText,
+    matchSegment: "/content",
   },
   {
     to: "/p/$projectId/domain" as const,
@@ -94,6 +101,13 @@ export function getProjectNavGroups(projectId: string) {
         bySegment("/saved"),
         bySegment("/rank-tracking"),
       ],
+    },
+    {
+      type: "group" as const,
+      label: "Content",
+      icon: FileText,
+      matchSegments: ["/content"],
+      items: [bySegment("/content")],
     },
     {
       type: "group" as const,

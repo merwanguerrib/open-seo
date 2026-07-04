@@ -50,12 +50,10 @@ export const generatedArticleSchema = z.object({
   ),
 });
 
-export type GeneratedArticle = z.infer<typeof generatedArticleSchema>;
-
-export interface CompetitorPage {
+export type CompetitorPage = {
   url: string;
   text: string;
-}
+};
 
 function formatCompetitors(competitors: CompetitorPage[]): string {
   return competitors
@@ -75,7 +73,11 @@ function formatSerpContext(serp: SerpContext): string {
     ),
   ];
   if (serp.paaQuestions.length) {
-    lines.push("", "### People Also Ask", ...serp.paaQuestions.map((q) => `- ${q}`));
+    lines.push(
+      "",
+      "### People Also Ask",
+      ...serp.paaQuestions.map((q) => `- ${q}`),
+    );
   }
   if (serp.aiOverview) {
     lines.push("", "### Google AI Overview for this query", serp.aiOverview);

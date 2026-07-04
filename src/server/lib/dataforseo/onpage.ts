@@ -41,7 +41,7 @@ function collectText(node: unknown, out: string[]): void {
   }
 }
 
-export interface ParsedPageContent {
+interface ParsedPageContent {
   url: string;
   /** Flattened readable text (headings + paragraphs) of the page's main content. */
   text: string;

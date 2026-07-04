@@ -6,9 +6,8 @@ import { db } from "@/db";
 import { contentApiKeys, contentArticles } from "@/db/schema";
 
 export type ContentArticleRow = typeof contentArticles.$inferSelect;
-export type ContentApiKeyRow = typeof contentApiKeys.$inferSelect;
 
-export type ContentArticleStatus = ContentArticleRow["status"];
+type ContentArticleStatus = ContentArticleRow["status"];
 
 const touchUpdatedAt = { updatedAt: sql`(current_timestamp)` };
 
@@ -228,7 +227,10 @@ async function resolveActiveApiKeyByHash(keyHash: string) {
     .select()
     .from(contentApiKeys)
     .where(
-      and(eq(contentApiKeys.keyHash, keyHash), isNull(contentApiKeys.revokedAt)),
+      and(
+        eq(contentApiKeys.keyHash, keyHash),
+        isNull(contentApiKeys.revokedAt),
+      ),
     )
     .limit(1);
   const key = rows[0];
