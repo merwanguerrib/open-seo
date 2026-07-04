@@ -35,6 +35,7 @@ import { Route as AppHelpDataforseoApiKeyRouteImport } from './routes/_app/help/
 import { Route as ProjectPProjectIdRouteRouteImport } from './routes/_project/p/$projectId/route'
 import { Route as ProjectPProjectIdIndexRouteImport } from './routes/_project/p/$projectId/index'
 import { Route as ApiGscOauthCallbackRouteImport } from './routes/api/gsc/oauth/callback'
+import { Route as ApiContentV1ArticlesRouteImport } from './routes/api/content/v1/articles'
 import { Route as ProjectPProjectIdSettingsRouteImport } from './routes/_project/p/$projectId/settings'
 import { Route as ProjectPProjectIdSavedRouteImport } from './routes/_project/p/$projectId/saved'
 import { Route as ProjectPProjectIdRankTrackingRouteImport } from './routes/_project/p/$projectId/rank-tracking'
@@ -46,6 +47,7 @@ import { Route as ProjectPProjectIdBacklinksRouteImport } from './routes/_projec
 import { Route as ProjectPProjectIdAuditRouteImport } from './routes/_project/p/$projectId/audit'
 import { Route as ProjectPProjectIdRankTrackingIndexRouteImport } from './routes/_project/p/$projectId/rank-tracking/index'
 import { Route as ProjectPProjectIdAuditIndexRouteImport } from './routes/_project/p/$projectId/audit/index'
+import { Route as ApiContentV1ArticlesSlugRouteImport } from './routes/api/content/v1/articles.$slug'
 import { Route as ProjectPProjectIdRankTrackingConfigIdRouteImport } from './routes/_project/p/$projectId/rank-tracking/$configId'
 import { Route as ProjectPProjectIdAuditIssuesResultIdRouteImport } from './routes/_project/p/$projectId/audit/issues/$resultId'
 
@@ -179,6 +181,11 @@ const ApiGscOauthCallbackRoute = ApiGscOauthCallbackRouteImport.update({
   path: '/api/gsc/oauth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiContentV1ArticlesRoute = ApiContentV1ArticlesRouteImport.update({
+  id: '/api/content/v1/articles',
+  path: '/api/content/v1/articles',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProjectPProjectIdSettingsRoute =
   ProjectPProjectIdSettingsRouteImport.update({
     id: '/settings',
@@ -242,6 +249,12 @@ const ProjectPProjectIdAuditIndexRoute =
     path: '/',
     getParentRoute: () => ProjectPProjectIdAuditRoute,
   } as any)
+const ApiContentV1ArticlesSlugRoute =
+  ApiContentV1ArticlesSlugRouteImport.update({
+    id: '/$slug',
+    path: '/$slug',
+    getParentRoute: () => ApiContentV1ArticlesRoute,
+  } as any)
 const ProjectPProjectIdRankTrackingConfigIdRoute =
   ProjectPProjectIdRankTrackingConfigIdRouteImport.update({
     id: '/$configId',
@@ -285,9 +298,11 @@ export interface FileRoutesByFullPath {
   '/p/$projectId/rank-tracking': typeof ProjectPProjectIdRankTrackingRouteWithChildren
   '/p/$projectId/saved': typeof ProjectPProjectIdSavedRoute
   '/p/$projectId/settings': typeof ProjectPProjectIdSettingsRoute
+  '/api/content/v1/articles': typeof ApiContentV1ArticlesRouteWithChildren
   '/api/gsc/oauth/callback': typeof ApiGscOauthCallbackRoute
   '/p/$projectId/': typeof ProjectPProjectIdIndexRoute
   '/p/$projectId/rank-tracking/$configId': typeof ProjectPProjectIdRankTrackingConfigIdRoute
+  '/api/content/v1/articles/$slug': typeof ApiContentV1ArticlesSlugRoute
   '/p/$projectId/audit/': typeof ProjectPProjectIdAuditIndexRoute
   '/p/$projectId/rank-tracking/': typeof ProjectPProjectIdRankTrackingIndexRoute
   '/p/$projectId/audit/issues/$resultId': typeof ProjectPProjectIdAuditIssuesResultIdRoute
@@ -319,9 +334,11 @@ export interface FileRoutesByTo {
   '/p/$projectId/prompt-explorer': typeof ProjectPProjectIdPromptExplorerRoute
   '/p/$projectId/saved': typeof ProjectPProjectIdSavedRoute
   '/p/$projectId/settings': typeof ProjectPProjectIdSettingsRoute
+  '/api/content/v1/articles': typeof ApiContentV1ArticlesRouteWithChildren
   '/api/gsc/oauth/callback': typeof ApiGscOauthCallbackRoute
   '/p/$projectId': typeof ProjectPProjectIdIndexRoute
   '/p/$projectId/rank-tracking/$configId': typeof ProjectPProjectIdRankTrackingConfigIdRoute
+  '/api/content/v1/articles/$slug': typeof ApiContentV1ArticlesSlugRoute
   '/p/$projectId/audit': typeof ProjectPProjectIdAuditIndexRoute
   '/p/$projectId/rank-tracking': typeof ProjectPProjectIdRankTrackingIndexRoute
   '/p/$projectId/audit/issues/$resultId': typeof ProjectPProjectIdAuditIssuesResultIdRoute
@@ -361,9 +378,11 @@ export interface FileRoutesById {
   '/_project/p/$projectId/rank-tracking': typeof ProjectPProjectIdRankTrackingRouteWithChildren
   '/_project/p/$projectId/saved': typeof ProjectPProjectIdSavedRoute
   '/_project/p/$projectId/settings': typeof ProjectPProjectIdSettingsRoute
+  '/api/content/v1/articles': typeof ApiContentV1ArticlesRouteWithChildren
   '/api/gsc/oauth/callback': typeof ApiGscOauthCallbackRoute
   '/_project/p/$projectId/': typeof ProjectPProjectIdIndexRoute
   '/_project/p/$projectId/rank-tracking/$configId': typeof ProjectPProjectIdRankTrackingConfigIdRoute
+  '/api/content/v1/articles/$slug': typeof ApiContentV1ArticlesSlugRoute
   '/_project/p/$projectId/audit/': typeof ProjectPProjectIdAuditIndexRoute
   '/_project/p/$projectId/rank-tracking/': typeof ProjectPProjectIdRankTrackingIndexRoute
   '/_project/p/$projectId/audit/issues/$resultId': typeof ProjectPProjectIdAuditIssuesResultIdRoute
@@ -400,9 +419,11 @@ export interface FileRouteTypes {
     | '/p/$projectId/rank-tracking'
     | '/p/$projectId/saved'
     | '/p/$projectId/settings'
+    | '/api/content/v1/articles'
     | '/api/gsc/oauth/callback'
     | '/p/$projectId/'
     | '/p/$projectId/rank-tracking/$configId'
+    | '/api/content/v1/articles/$slug'
     | '/p/$projectId/audit/'
     | '/p/$projectId/rank-tracking/'
     | '/p/$projectId/audit/issues/$resultId'
@@ -434,9 +455,11 @@ export interface FileRouteTypes {
     | '/p/$projectId/prompt-explorer'
     | '/p/$projectId/saved'
     | '/p/$projectId/settings'
+    | '/api/content/v1/articles'
     | '/api/gsc/oauth/callback'
     | '/p/$projectId'
     | '/p/$projectId/rank-tracking/$configId'
+    | '/api/content/v1/articles/$slug'
     | '/p/$projectId/audit'
     | '/p/$projectId/rank-tracking'
     | '/p/$projectId/audit/issues/$resultId'
@@ -475,9 +498,11 @@ export interface FileRouteTypes {
     | '/_project/p/$projectId/rank-tracking'
     | '/_project/p/$projectId/saved'
     | '/_project/p/$projectId/settings'
+    | '/api/content/v1/articles'
     | '/api/gsc/oauth/callback'
     | '/_project/p/$projectId/'
     | '/_project/p/$projectId/rank-tracking/$configId'
+    | '/api/content/v1/articles/$slug'
     | '/_project/p/$projectId/audit/'
     | '/_project/p/$projectId/rank-tracking/'
     | '/_project/p/$projectId/audit/issues/$resultId'
@@ -494,6 +519,7 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OpenaiAppsChallengeRoute: typeof Char91DotwellKnownChar93OpenaiAppsChallengeRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiAutumnSplatRoute: typeof ApiAutumnSplatRoute
+  ApiContentV1ArticlesRoute: typeof ApiContentV1ArticlesRouteWithChildren
   ApiGscOauthCallbackRoute: typeof ApiGscOauthCallbackRoute
 }
 
@@ -681,6 +707,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiGscOauthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/content/v1/articles': {
+      id: '/api/content/v1/articles'
+      path: '/api/content/v1/articles'
+      fullPath: '/api/content/v1/articles'
+      preLoaderRoute: typeof ApiContentV1ArticlesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_project/p/$projectId/settings': {
       id: '/_project/p/$projectId/settings'
       path: '/settings'
@@ -757,6 +790,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/p/$projectId/audit/'
       preLoaderRoute: typeof ProjectPProjectIdAuditIndexRouteImport
       parentRoute: typeof ProjectPProjectIdAuditRoute
+    }
+    '/api/content/v1/articles/$slug': {
+      id: '/api/content/v1/articles/$slug'
+      path: '/$slug'
+      fullPath: '/api/content/v1/articles/$slug'
+      preLoaderRoute: typeof ApiContentV1ArticlesSlugRouteImport
+      parentRoute: typeof ApiContentV1ArticlesRoute
     }
     '/_project/p/$projectId/rank-tracking/$configId': {
       id: '/_project/p/$projectId/rank-tracking/$configId'
@@ -909,6 +949,17 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface ApiContentV1ArticlesRouteChildren {
+  ApiContentV1ArticlesSlugRoute: typeof ApiContentV1ArticlesSlugRoute
+}
+
+const ApiContentV1ArticlesRouteChildren: ApiContentV1ArticlesRouteChildren = {
+  ApiContentV1ArticlesSlugRoute: ApiContentV1ArticlesSlugRoute,
+}
+
+const ApiContentV1ArticlesRouteWithChildren =
+  ApiContentV1ArticlesRoute._addFileChildren(ApiContentV1ArticlesRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   AppRouteRoute: AppRouteRouteWithChildren,
   ProjectRouteRoute: ProjectRouteRouteWithChildren,
@@ -921,6 +972,7 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OpenaiAppsChallengeRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiAutumnSplatRoute: ApiAutumnSplatRoute,
+  ApiContentV1ArticlesRoute: ApiContentV1ArticlesRouteWithChildren,
   ApiGscOauthCallbackRoute: ApiGscOauthCallbackRoute,
 }
 export const routeTree = rootRouteImport
