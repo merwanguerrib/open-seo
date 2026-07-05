@@ -34,6 +34,9 @@ export const getSerpCompetitors = createServerFn({ method: "POST" })
       keywords: data.keywords,
       locationCode: context.project.locationCode,
       languageCode: context.project.languageCode,
+      // Mirror the MCP tool's defaults; without item_types DataForSEO returns
+      // an empty competitor set.
+      itemTypes: ["organic", "local_pack"],
       includeSubdomains: data.includeSubdomains ?? false,
       limit: data.limit ?? 50,
       creditFeature: "domain_overview",
