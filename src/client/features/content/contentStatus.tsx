@@ -3,7 +3,8 @@ type ContentArticleStatus =
   | "generating"
   | "draft"
   | "published"
-  | "failed";
+  | "failed"
+  | "archived";
 
 const STATUS_BADGES: Record<
   ContentArticleStatus,
@@ -14,6 +15,7 @@ const STATUS_BADGES: Record<
   draft: { label: "Draft", className: "badge-warning" },
   published: { label: "Published", className: "badge-success" },
   failed: { label: "Failed", className: "badge-error" },
+  archived: { label: "Archived", className: "badge-ghost" },
 };
 
 export function ContentStatusBadge({

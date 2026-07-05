@@ -13,6 +13,7 @@ import { customerHasPaidPlan } from "@/server/billing/subscription";
 import { ContentPlanRepository } from "@/server/features/content/repositories/ContentPlanRepository";
 import { ContentRepository } from "@/server/features/content/repositories/ContentRepository";
 import { ContentPlanService } from "@/server/features/content/services/ContentPlanService";
+import { runWeeklyRepair } from "@/server/features/content/services/contentRepair";
 import { isHostedServerAuthMode } from "@/server/lib/runtime-env";
 
 const HOURS = 60 * 60 * 1000;
@@ -114,7 +115,14 @@ async function processPlan(input: {
     }
   }
 
-  // 4. Advance the heartbeat.
+  // 4. Weekly self-repair pass (throttled per article to ~weekly).
+  try {
+    await runWeeklyRepair({ projectId, plan, billingCustomer });
+  } catch (error) {
+    console.error(`[content-cron] repair pass failed for ${projectId}:`, error);
+  }
+
+  // 5. Advance the heartbeat.
   await ContentPlanRepository.updatePlan(projectId, {
     nextRunAt: new Date(Date.now() + PLAN_HEARTBEAT_HOURS * HOURS).toISOString(),
   });

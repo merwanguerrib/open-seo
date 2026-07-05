@@ -28,7 +28,15 @@ export const contentArticles = sqliteTable(
     locationCode: integer("location_code").notNull().default(2840),
     languageCode: text("language_code").notNull().default("en"),
     status: text("status", {
-      enum: ["queued", "generating", "draft", "published", "failed"],
+      enum: [
+        "queued",
+        "generating",
+        "draft",
+        "published",
+        "failed",
+        // Retired by the weekly self-repair pass (dead article, no impressions).
+        "archived",
+      ],
     })
       .notNull()
       .default("queued"),

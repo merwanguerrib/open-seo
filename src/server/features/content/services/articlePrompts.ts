@@ -105,6 +105,36 @@ export function buildBriefPrompt(input: {
   ].join("\n");
 }
 
+export const titleRewriteSchema = z.object({
+  title: z.string().describe("New SEO title, <= 60 characters when possible"),
+  metaDescription: z
+    .string()
+    .describe("New meta description, 140-160 characters"),
+});
+
+export type TitleRewrite = z.infer<typeof titleRewriteSchema>;
+
+/** Prompt for the weekly repair pass: rewrite a title/meta that gets
+ *  impressions but few clicks. */
+export function buildTitleRewritePrompt(input: {
+  keyword: string;
+  currentTitle: string;
+  currentMeta: string;
+  markdown: string;
+}): string {
+  return [
+    `This article ranks for "${input.keyword}" and gets impressions on Google but a low click-through rate, which points to a weak title or meta description.`,
+    "",
+    `Current title: ${input.currentTitle}`,
+    `Current meta description: ${input.currentMeta}`,
+    "",
+    "Rewrite the title and meta description to be more compelling and clickable while staying accurate to the article and matching search intent. Keep the primary keyword in the title. Do not clickbait or overpromise.",
+    "",
+    "## Article (for context)",
+    input.markdown.slice(0, 4000),
+  ].join("\n");
+}
+
 export type InternalLink = {
   title: string;
   liveUrl: string;

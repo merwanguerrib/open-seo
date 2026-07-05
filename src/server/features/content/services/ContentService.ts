@@ -2,6 +2,7 @@ import { env } from "cloudflare:workers";
 import type { BillingCustomerContext } from "@/server/billing/subscription";
 import { ContentRepository } from "@/server/features/content/repositories/ContentRepository";
 import type { ContentArticleRow } from "@/server/features/content/repositories/ContentRepository";
+import { ContentPlanRepository } from "@/server/features/content/repositories/ContentPlanRepository";
 import { generateContentApiKey } from "@/server/features/content/services/apiKeys";
 import { dedupeSlug, slugify } from "@/server/features/content/services/slug";
 import { AppError } from "@/server/lib/errors";
@@ -198,6 +199,43 @@ async function getArticle(articleId: string, projectId: string) {
   return toArticleView(row);
 }
 
+/** The article plus its GSC metric history for the journey timeline. */
+async function getArticleJourney(articleId: string, projectId: string) {
+  const row = await ContentRepository.getArticleForProject(
+    articleId,
+    projectId,
+  );
+  if (!row) throw new AppError("NOT_FOUND");
+  const metrics = await ContentPlanRepository.listArticleMetrics(articleId);
+  const latest = metrics.at(-1) ?? null;
+
+  // Derive the journey stage from status + whether GSC has data yet.
+  let stage: "written" | "published" | "gathering" | "monitored";
+  if (row.status === "published") {
+    stage =
+      latest && latest.impressions > 0
+        ? "monitored"
+        : row.publishedAt
+          ? "gathering"
+          : "published";
+  } else {
+    stage = "written";
+  }
+
+  return {
+    article: toArticleView(row),
+    stage,
+    lastRepairedAt: row.lastRepairedAt,
+    metrics: metrics.map((metric) => ({
+      date: metric.date,
+      clicks: metric.clicks,
+      impressions: metric.impressions,
+      ctr: metric.ctr,
+      position: metric.position,
+    })),
+  };
+}
+
 async function updateArticle(input: {
   articleId: string;
   projectId: string;
@@ -266,6 +304,27 @@ async function setArticleStatus(input: {
   return getArticle(input.articleId, input.projectId);
 }
 
+/**
+ * Regenerate an existing article in place (the weekly refresh action).
+ * Re-runs the full generation workflow, which pulls a fresh SERP and the
+ * current cluster siblings for internal links. The result lands as a draft
+ * with a review window so a human can catch a bad refresh.
+ */
+async function regenerateArticle(input: {
+  articleId: string;
+  billingCustomer: BillingCustomerContext;
+  autoPublishAt: string | null;
+}) {
+  const workflowRunId = crypto.randomUUID();
+  await ContentRepository.requeueArticle(
+    input.articleId,
+    workflowRunId,
+    input.autoPublishAt,
+  );
+  await startWorkflow(input.articleId, workflowRunId, input.billingCustomer);
+  return { articleId: input.articleId };
+}
+
 /** "Keep as draft" — cancels the autopilot review-window auto-publish. */
 async function holdArticle(articleId: string, projectId: string) {
   const article = await ContentRepository.getArticleForProject(
@@ -309,8 +368,10 @@ export const ContentService = {
   retryArticle,
   listArticles,
   getArticle,
+  getArticleJourney,
   updateArticle,
   setArticleStatus,
+  regenerateArticle,
   holdArticle,
   removeArticle,
   createApiKey,

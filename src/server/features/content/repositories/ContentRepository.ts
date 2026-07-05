@@ -176,6 +176,63 @@ async function publishArticleById(articleId: string) {
     .where(eq(contentArticles.id, articleId));
 }
 
+// ─── Weekly repair (phase 3) ─────────────────────────────────────────────────
+
+/** Applies a title/meta rewrite from the repair pass and stamps lastRepairedAt. */
+async function applyTitleRewrite(
+  articleId: string,
+  data: { title: string; metaDescription: string },
+) {
+  await db
+    .update(contentArticles)
+    .set({
+      title: data.title,
+      metaDescription: data.metaDescription,
+      lastRepairedAt: sql`(current_timestamp)`,
+      ...touchUpdatedAt,
+    })
+    .where(eq(contentArticles.id, articleId));
+}
+
+/** Retires a dead article and stamps lastRepairedAt. */
+async function archiveArticleById(articleId: string) {
+  await db
+    .update(contentArticles)
+    .set({
+      status: "archived",
+      lastRepairedAt: sql`(current_timestamp)`,
+      ...touchUpdatedAt,
+    })
+    .where(eq(contentArticles.id, articleId));
+}
+
+/** Records that the repair pass processed an article (no change needed). */
+async function markRepaired(articleId: string) {
+  await db
+    .update(contentArticles)
+    .set({ lastRepairedAt: sql`(current_timestamp)` })
+    .where(eq(contentArticles.id, articleId));
+}
+
+/** Restarts generation for an existing article (refresh/regeneration). */
+async function requeueArticle(
+  articleId: string,
+  workflowRunId: string,
+  autoPublishAt: string | null,
+) {
+  await db
+    .update(contentArticles)
+    .set({
+      status: "queued",
+      error: null,
+      workflowRunId,
+      autoPublishAt,
+      lastRepairedAt: sql`(current_timestamp)`,
+      ...touchUpdatedAt,
+    })
+    .where(eq(contentArticles.id, articleId));
+}
+
 /** Published sibling live URLs in a cluster, for internal linking a new article. */
 async function getClusterSiblingLiveUrls(
   clusterId: string,
@@ -344,6 +401,10 @@ export const ContentRepository = {
   holdAutoPublishForProject,
   getDraftsDueForAutoPublish,
   publishArticleById,
+  applyTitleRewrite,
+  archiveArticleById,
+  markRepaired,
+  requeueArticle,
   getClusterSiblingLiveUrls,
   getTrackedArticles,
   resetArticleForRetry,
