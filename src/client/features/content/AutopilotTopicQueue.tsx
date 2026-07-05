@@ -50,7 +50,11 @@ export function AutopilotTopicQueue({
   }
 
   const topics = calendar?.topics ?? [];
-  const scheduled = topics.filter((t) => t.status === "scheduled");
+  const scheduled = topics
+    .filter((t) => t.status === "scheduled")
+    .toSorted((a, b) =>
+      (a.scheduledFor ?? "").localeCompare(b.scheduledFor ?? ""),
+    );
   const suggested = topics.filter((t) => t.status === "suggested");
   const inProgress = topics.filter(
     (t) => t.status === "generating" || t.status === "generated",
