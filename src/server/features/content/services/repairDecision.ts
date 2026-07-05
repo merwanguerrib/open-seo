@@ -12,7 +12,7 @@ export type ArticleMetricPoint = {
   position: number;
 };
 
-export type RepairAction =
+type RepairAction =
   | "none"
   | "title_rewrite"
   | "refresh"

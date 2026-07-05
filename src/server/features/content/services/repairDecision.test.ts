@@ -3,13 +3,15 @@ import { decideRepairAction } from "./repairDecision";
 
 const now = new Date("2026-07-05T00:00:00Z");
 
-function point(overrides: Partial<{
-  date: string;
-  clicks: number;
-  impressions: number;
-  ctr: number;
-  position: number;
-}>) {
+function point(
+  overrides: Partial<{
+    date: string;
+    clicks: number;
+    impressions: number;
+    ctr: number;
+    position: number;
+  }>,
+) {
   return {
     date: "2026-07-01",
     clicks: 0,
@@ -22,9 +24,9 @@ function point(overrides: Partial<{
 
 describe("decideRepairAction", () => {
   it("returns none with no metrics", () => {
-    expect(
-      decideRepairAction({ publishedAt: null, now, metrics: [] }),
-    ).toBe("none");
+    expect(decideRepairAction({ publishedAt: null, now, metrics: [] })).toBe(
+      "none",
+    );
   });
 
   it("archives old articles with near-zero impressions", () => {
@@ -42,7 +44,9 @@ describe("decideRepairAction", () => {
       decideRepairAction({
         publishedAt: "2026-06-20T00:00:00Z",
         now,
-        metrics: [point({ impressions: 500, clicks: 3, ctr: 0.006, position: 6 })],
+        metrics: [
+          point({ impressions: 500, clicks: 3, ctr: 0.006, position: 6 }),
+        ],
       }),
     ).toBe("title_rewrite");
   });
@@ -65,7 +69,9 @@ describe("decideRepairAction", () => {
       decideRepairAction({
         publishedAt: "2026-06-20T00:00:00Z",
         now,
-        metrics: [point({ impressions: 200, clicks: 8, ctr: 0.04, position: 14 })],
+        metrics: [
+          point({ impressions: 200, clicks: 8, ctr: 0.04, position: 14 }),
+        ],
       }),
     ).toBe("internal_links");
   });
@@ -75,7 +81,9 @@ describe("decideRepairAction", () => {
       decideRepairAction({
         publishedAt: "2026-06-20T00:00:00Z",
         now,
-        metrics: [point({ impressions: 300, clicks: 60, ctr: 0.2, position: 3 })],
+        metrics: [
+          point({ impressions: 300, clicks: 60, ctr: 0.2, position: 3 }),
+        ],
       }),
     ).toBe("none");
   });

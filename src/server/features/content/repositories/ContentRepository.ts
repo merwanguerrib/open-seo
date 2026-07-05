@@ -1,9 +1,10 @@
 /**
  * Data access layer for content tables (content_articles, content_api_keys).
  */
-import { and, desc, eq, isNull, lte, ne, sql } from "drizzle-orm";
+import { and, desc, eq, lte, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { contentApiKeys, contentArticles } from "@/db/schema";
+import { contentArticles } from "@/db/schema";
+import { ContentApiKeyRepository } from "@/server/features/content/repositories/ContentApiKeyRepository";
 
 export type ContentArticleRow = typeof contentArticles.$inferSelect;
 
@@ -132,10 +133,7 @@ async function setArticleStatusForProject(
 }
 
 /** Clears the review-window timer without publishing — the "keep as draft" action. */
-async function holdAutoPublishForProject(
-  articleId: string,
-  projectId: string,
-) {
+async function holdAutoPublishForProject(articleId: string, projectId: string) {
   await db
     .update(contentArticles)
     .set({ autoPublishAt: sql`NULL`, ...touchUpdatedAt })
@@ -330,66 +328,6 @@ async function getPublishedArticleBySlug(projectId: string, slug: string) {
   return rows[0] ?? null;
 }
 
-// ─── API keys ────────────────────────────────────────────────────────────────
-
-async function createApiKey(data: {
-  id: string;
-  projectId: string;
-  keyHash: string;
-  label: string;
-}) {
-  await db.insert(contentApiKeys).values(data);
-}
-
-async function listApiKeysForProject(projectId: string) {
-  return db
-    .select({
-      id: contentApiKeys.id,
-      label: contentApiKeys.label,
-      createdAt: contentApiKeys.createdAt,
-      lastUsedAt: contentApiKeys.lastUsedAt,
-      revokedAt: contentApiKeys.revokedAt,
-    })
-    .from(contentApiKeys)
-    .where(eq(contentApiKeys.projectId, projectId))
-    .orderBy(desc(contentApiKeys.createdAt));
-}
-
-async function revokeApiKeyForProject(keyId: string, projectId: string) {
-  await db
-    .update(contentApiKeys)
-    .set({ revokedAt: sql`(current_timestamp)` })
-    .where(
-      and(
-        eq(contentApiKeys.id, keyId),
-        eq(contentApiKeys.projectId, projectId),
-      ),
-    );
-}
-
-/** Resolves an active (non-revoked) key by hash and stamps last_used_at. */
-async function resolveActiveApiKeyByHash(keyHash: string) {
-  const rows = await db
-    .select()
-    .from(contentApiKeys)
-    .where(
-      and(
-        eq(contentApiKeys.keyHash, keyHash),
-        isNull(contentApiKeys.revokedAt),
-      ),
-    )
-    .limit(1);
-  const key = rows[0];
-  if (!key) return null;
-
-  await db
-    .update(contentApiKeys)
-    .set({ lastUsedAt: sql`(current_timestamp)` })
-    .where(eq(contentApiKeys.id, key.id));
-
-  return key;
-}
-
 export const ContentRepository = {
   createArticle,
   getArticleForProject,
@@ -411,8 +349,5 @@ export const ContentRepository = {
   deleteArticleForProject,
   listPublishedArticles,
   getPublishedArticleBySlug,
-  createApiKey,
-  listApiKeysForProject,
-  revokeApiKeyForProject,
-  resolveActiveApiKeyByHash,
+  ...ContentApiKeyRepository,
 };

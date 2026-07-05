@@ -8,6 +8,7 @@ import {
   Link2,
   MapPin,
   MessageSquare,
+  Plane,
   Search,
   Sparkles,
   Swords,
@@ -39,6 +40,12 @@ const projectNavItems = [
     label: "Articles",
     icon: FileText,
     matchSegment: "/content",
+  },
+  {
+    to: "/p/$projectId/autopilot" as const,
+    label: "Autopilot",
+    icon: Plane,
+    matchSegment: "/autopilot",
   },
   {
     to: "/p/$projectId/domain" as const,
@@ -127,8 +134,8 @@ export function getProjectNavGroups(projectId: string) {
       type: "group" as const,
       label: "Content",
       icon: FileText,
-      matchSegments: ["/content"],
-      items: [bySegment("/content")],
+      matchSegments: ["/content", "/autopilot"],
+      items: [bySegment("/content"), bySegment("/autopilot")],
     },
     {
       type: "group" as const,

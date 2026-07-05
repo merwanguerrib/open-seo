@@ -12,10 +12,9 @@ import {
 } from "@/db/schema";
 
 export type ContentPlanRow = typeof contentPlans.$inferSelect;
-export type ContentClusterRow = typeof contentClusters.$inferSelect;
+type ContentClusterRow = typeof contentClusters.$inferSelect;
 export type ContentTopicRow = typeof contentTopics.$inferSelect;
-export type ContentArticleMetricRow =
-  typeof contentArticleMetrics.$inferSelect;
+type ContentArticleMetricRow = typeof contentArticleMetrics.$inferSelect;
 
 const touchUpdatedAt = { updatedAt: sql`(current_timestamp)` };
 
@@ -69,10 +68,7 @@ async function getDuePlans(nowIso: string): Promise<ContentPlanRow[]> {
     .select()
     .from(contentPlans)
     .where(
-      and(
-        eq(contentPlans.enabled, true),
-        lte(contentPlans.nextRunAt, nowIso),
-      ),
+      and(eq(contentPlans.enabled, true), lte(contentPlans.nextRunAt, nowIso)),
     );
 }
 
@@ -223,7 +219,10 @@ async function getTopic(
     .select()
     .from(contentTopics)
     .where(
-      and(eq(contentTopics.id, topicId), eq(contentTopics.projectId, projectId)),
+      and(
+        eq(contentTopics.id, topicId),
+        eq(contentTopics.projectId, projectId),
+      ),
     )
     .limit(1);
   return rows[0] ?? null;

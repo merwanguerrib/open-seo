@@ -50,8 +50,7 @@ async function updatePlan(input: {
   const { projectId, enabled, ...rest } = input;
 
   // Enabling arms the cron: give it a next-run so it's picked up promptly.
-  const nextRunAt =
-    enabled === true ? new Date().toISOString() : undefined;
+  const nextRunAt = enabled === true ? new Date().toISOString() : undefined;
 
   await ContentPlanRepository.updatePlan(projectId, {
     ...rest,
@@ -99,7 +98,9 @@ async function runDiscovery(input: {
  * `WEEKS_AHEAD` weeks out at the plan's cadence. Spacing is even across the
  * week (7 / cadence days). Returns how many topics were scheduled.
  */
-async function scheduleTopics(projectId: string): Promise<{ scheduled: number }> {
+async function scheduleTopics(
+  projectId: string,
+): Promise<{ scheduled: number }> {
   const plan = await ContentPlanRepository.getOrCreatePlan(projectId);
   const cadence = Math.max(1, plan.cadencePerWeek);
   const targetScheduled = cadence * WEEKS_AHEAD;
@@ -122,7 +123,7 @@ async function scheduleTopics(projectId: string): Promise<{ scheduled: number }>
   const latestSlot = scheduledTopics
     .map((topic) => topic.scheduledFor)
     .filter((slot): slot is string => Boolean(slot))
-    .sort()
+    .toSorted()
     .at(-1);
   let cursor = latestSlot
     ? new Date(`${latestSlot}T00:00:00Z`)

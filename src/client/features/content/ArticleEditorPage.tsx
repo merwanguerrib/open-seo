@@ -15,6 +15,8 @@ import {
   ContentStatusBadge,
   isArticleInProgress,
 } from "@/client/features/content/contentStatus";
+import { ArticleSidePanel } from "@/client/features/content/ArticleSidePanel";
+import { holdArticle } from "@/serverFunctions/contentPlan";
 
 const IN_PROGRESS_POLL_MS = 4_000;
 
@@ -152,10 +154,42 @@ function Editor({
     },
   });
 
+  const holdMutation = useMutation({
+    mutationFn: () =>
+      holdArticle({ data: { projectId, articleId: article.id } }),
+    onSuccess: () => {
+      toast.success("Auto-publish cancelled — kept as draft");
+      invalidate();
+    },
+    onError: (error) => {
+      toast.error(getStandardErrorMessage(error, "Failed to hold"));
+    },
+  });
+
   const isFailed = article.status === "failed";
 
   return (
     <div className="space-y-4">
+      {article.autoPublishAt && article.status === "draft" && (
+        <div className="alert alert-info flex-wrap gap-2 text-sm">
+          <span>
+            Autopilot will publish this on{" "}
+            <span className="font-medium">
+              {article.autoPublishAt.slice(0, 16).replace("T", " ")}
+            </span>{" "}
+            unless you edit or hold it.
+          </span>
+          <button
+            type="button"
+            className="btn btn-ghost btn-xs"
+            disabled={holdMutation.isPending}
+            onClick={() => holdMutation.mutate()}
+          >
+            Keep as draft
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-semibold">
@@ -296,84 +330,8 @@ function Editor({
           </div>
         </div>
 
-        <ArticleSidePanel article={article} />
+        <ArticleSidePanel projectId={projectId} article={article} />
       </div>
-    </div>
-  );
-}
-
-function ArticleSidePanel({ article }: { article: ArticleView }) {
-  const brief = article.brief as {
-    intent?: string;
-    angle?: string;
-  } | null;
-
-  return (
-    <div className="space-y-4">
-      <div className="card bg-base-100 border border-base-300">
-        <div className="card-body gap-2 p-4 text-sm">
-          <h2 className="text-xs font-medium uppercase text-base-content/50">
-            Target
-          </h2>
-          <p>
-            <span className="font-medium">{article.keyword}</span>
-            <span className="text-base-content/50">
-              {" "}
-              · {article.languageCode}
-            </span>
-          </p>
-          {brief?.intent && (
-            <p className="text-base-content/70">
-              Intent:{" "}
-              <span className="badge badge-ghost badge-sm">{brief.intent}</span>
-            </p>
-          )}
-          {brief?.angle && (
-            <p className="text-xs text-base-content/60">{brief.angle}</p>
-          )}
-        </div>
-      </div>
-
-      {article.faq.length > 0 && (
-        <div className="card bg-base-100 border border-base-300">
-          <div className="card-body gap-2 p-4 text-sm">
-            <h2 className="text-xs font-medium uppercase text-base-content/50">
-              FAQ (served as FAQPage JSON-LD)
-            </h2>
-            <ul className="space-y-1">
-              {article.faq.map((entry) => (
-                <li key={entry.question} className="text-xs">
-                  <span className="font-medium">{entry.question}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
-
-      {article.sourceUrls.length > 0 && (
-        <div className="card bg-base-100 border border-base-300">
-          <div className="card-body gap-2 p-4">
-            <h2 className="text-xs font-medium uppercase text-base-content/50">
-              Grounding sources
-            </h2>
-            <ul className="space-y-1">
-              {article.sourceUrls.map((url) => (
-                <li key={url}>
-                  <a
-                    href={url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="link link-hover break-all text-xs text-base-content/70"
-                  >
-                    {url}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

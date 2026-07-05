@@ -127,7 +127,10 @@ async function discoverExpansionTopics(input: {
         creditFeature: "content",
       });
     } catch (error) {
-      console.error(`[topic-discovery] suggestions failed for "${seed}":`, error);
+      console.error(
+        `[topic-discovery] suggestions failed for "${seed}":`,
+        error,
+      );
       continue;
     }
 
@@ -195,10 +198,9 @@ export async function discoverTopics(input: {
     input.projectId,
   );
 
-  const seeds = (gscSeeds.length > 0 ? gscSeeds : input.fallbackSeeds ?? []).slice(
-    0,
-    MAX_EXPANSION_SEEDS,
-  );
+  const seeds = (
+    gscSeeds.length > 0 ? gscSeeds : (input.fallbackSeeds ?? [])
+  ).slice(0, MAX_EXPANSION_SEEDS);
 
   const expansionTopics = await discoverExpansionTopics({
     projectId: input.projectId,
@@ -211,8 +213,9 @@ export async function discoverTopics(input: {
 
   // Dedupe against already-queued topics, existing article slugs' keywords,
   // and within this batch.
-  const existingTopicKeywords =
-    await ContentPlanRepository.getExistingKeywords(input.projectId);
+  const existingTopicKeywords = await ContentPlanRepository.getExistingKeywords(
+    input.projectId,
+  );
   const existingArticles = await ContentRepository.listArticlesForProject(
     input.projectId,
   );

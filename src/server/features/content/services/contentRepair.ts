@@ -84,9 +84,7 @@ async function snapshotArticleMetrics(
   }));
 }
 
-async function rewriteTitle(
-  article: ContentArticleRow,
-): Promise<void> {
+async function rewriteTitle(article: ContentArticleRow): Promise<void> {
   const model = await getContentModel();
   const result = await generateObject({
     model,
@@ -127,7 +125,9 @@ async function repairArticle(input: {
 
   const reviewWindow =
     plan.autoPublish && plan.reviewWindowHours >= 0
-      ? new Date(now.getTime() + plan.reviewWindowHours * 60 * 60 * 1000).toISOString()
+      ? new Date(
+          now.getTime() + plan.reviewWindowHours * 60 * 60 * 1000,
+        ).toISOString()
       : null;
 
   switch (action) {
@@ -152,7 +152,9 @@ async function repairArticle(input: {
   }
 
   if (action !== "none") {
-    console.log(`[content-repair] ${action} on ${article.id} (${article.slug})`);
+    console.log(
+      `[content-repair] ${action} on ${article.id} (${article.slug})`,
+    );
   }
 }
 

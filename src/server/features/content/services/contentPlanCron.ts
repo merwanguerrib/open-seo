@@ -41,9 +41,14 @@ async function autoPublishDueDrafts(nowIso: string): Promise<void> {
   for (const article of due) {
     try {
       await ContentRepository.publishArticleById(article.id);
-      console.log(`[content-cron] auto-published ${article.id} (${article.slug})`);
+      console.log(
+        `[content-cron] auto-published ${article.id} (${article.slug})`,
+      );
     } catch (error) {
-      console.error(`[content-cron] auto-publish failed for ${article.id}:`, error);
+      console.error(
+        `[content-cron] auto-publish failed for ${article.id}:`,
+        error,
+      );
     }
   }
 }
@@ -61,7 +66,9 @@ async function processPlan(input: {
   if (isHosted && !(await customerHasPaidPlan(organizationId))) {
     // Advance the heartbeat so a lapsed org doesn't stay perpetually due.
     await ContentPlanRepository.updatePlan(projectId, {
-      nextRunAt: new Date(Date.now() + PLAN_HEARTBEAT_HOURS * HOURS).toISOString(),
+      nextRunAt: new Date(
+        Date.now() + PLAN_HEARTBEAT_HOURS * HOURS,
+      ).toISOString(),
     });
     return;
   }
@@ -124,7 +131,9 @@ async function processPlan(input: {
 
   // 5. Advance the heartbeat.
   await ContentPlanRepository.updatePlan(projectId, {
-    nextRunAt: new Date(Date.now() + PLAN_HEARTBEAT_HOURS * HOURS).toISOString(),
+    nextRunAt: new Date(
+      Date.now() + PLAN_HEARTBEAT_HOURS * HOURS,
+    ).toISOString(),
   });
 }
 

@@ -109,9 +109,7 @@ export const contentPlans = sqliteTable(
     projectId: text("project_id")
       .notNull()
       .references(() => projects.id, { onDelete: "cascade" }),
-    enabled: integer("enabled", { mode: "boolean" })
-      .notNull()
-      .default(false),
+    enabled: integer("enabled", { mode: "boolean" }).notNull().default(false),
     cadencePerWeek: integer("cadence_per_week").notNull().default(3),
     // How long an autopilot draft waits before auto-publishing. 0 = publish
     // immediately (no window).

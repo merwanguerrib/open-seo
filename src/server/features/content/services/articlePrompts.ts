@@ -112,8 +112,6 @@ export const titleRewriteSchema = z.object({
     .describe("New meta description, 140-160 characters"),
 });
 
-export type TitleRewrite = z.infer<typeof titleRewriteSchema>;
-
 /** Prompt for the weekly repair pass: rewrite a title/meta that gets
  *  impressions but few clicks. */
 export function buildTitleRewritePrompt(input: {
@@ -135,7 +133,7 @@ export function buildTitleRewritePrompt(input: {
   ].join("\n");
 }
 
-export type InternalLink = {
+type InternalLink = {
   title: string;
   liveUrl: string;
 };
