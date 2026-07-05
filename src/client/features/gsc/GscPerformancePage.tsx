@@ -77,7 +77,12 @@ export function GscPerformancePage({ projectId }: { projectId: string }) {
           <select
             className="select select-bordered select-sm"
             value={dateRange}
-            onChange={(event) => setDateRange(event.target.value as DateRange)}
+            onChange={(event) => {
+              const next = DATE_RANGE_OPTIONS.find(
+                (option) => option.value === event.target.value,
+              );
+              if (next) setDateRange(next.value);
+            }}
           >
             {DATE_RANGE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>

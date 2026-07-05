@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { createDataforseoClient } from "@/server/lib/dataforseo";
+import { isRecord } from "@/server/lib/dataforseo/envelope";
 import { requireProjectContext } from "@/serverFunctions/middleware";
 
 const coordinateSchema = z.object({
@@ -53,18 +54,20 @@ function asNumber(value: unknown): number | null {
   return typeof value === "number" ? value : null;
 }
 
+/** SDK items are class instances; read them through a plain record view. */
+function toRecord(value: unknown): Record<string, unknown> {
+  return isRecord(value) ? value : {};
+}
+
 /** Extract { value, votes_count } from a DataForSEO RatingInfo-shaped field. */
 function ratingOf(value: unknown): {
   rating: number | null;
   votes: number | null;
 } {
-  if (typeof value !== "object" || value === null) {
-    return { rating: null, votes: null };
-  }
-  const record = value as Record<string, unknown>;
+  if (!isRecord(value)) return { rating: null, votes: null };
   return {
-    rating: asNumber(record.value),
-    votes: asNumber(record.votes_count),
+    rating: asNumber(value.value),
+    votes: asNumber(value.votes_count),
   };
 }
 
@@ -86,7 +89,7 @@ export const searchLocalBusinesses = createServerFn({ method: "POST" })
     });
 
     const rows: LocalBusinessRow[] = items.map((raw) => {
-      const item = raw as Record<string, unknown>;
+      const item = toRecord(raw);
       const { rating, votes } = ratingOf(item.rating);
       return {
         title: asString(item.title) ?? "(untitled)",
@@ -123,7 +126,7 @@ export const getLocalSerp = createServerFn({ method: "POST" })
     });
 
     const rows: LocalSerpRow[] = items.map((raw) => {
-      const item = raw as Record<string, unknown>;
+      const item = toRecord(raw);
       const { rating, votes } = ratingOf(item.rating);
       return {
         rank: asNumber(item.rank_absolute) ?? asNumber(item.rank_group),

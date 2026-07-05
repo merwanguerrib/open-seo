@@ -3,6 +3,7 @@
  * Only `published` articles are ever visible through this surface.
  */
 import { marked } from "marked";
+import { isRecord } from "@/server/lib/dataforseo/envelope";
 import { ContentRepository } from "@/server/features/content/repositories/ContentRepository";
 import type { ContentArticleRow } from "@/server/features/content/repositories/ContentRepository";
 import {
@@ -35,10 +36,9 @@ function parseFaq(raw: string | null): ArticleFaqEntry[] {
     if (!Array.isArray(parsed)) return [];
     return parsed.filter(
       (entry): entry is ArticleFaqEntry =>
-        typeof entry === "object" &&
-        entry !== null &&
-        typeof (entry as ArticleFaqEntry).question === "string" &&
-        typeof (entry as ArticleFaqEntry).answer === "string",
+        isRecord(entry) &&
+        typeof entry.question === "string" &&
+        typeof entry.answer === "string",
     );
   } catch {
     return [];

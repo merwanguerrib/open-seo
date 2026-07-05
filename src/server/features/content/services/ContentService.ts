@@ -49,7 +49,11 @@ interface ContentArticleView {
 function parseJsonColumn<T>(raw: string | null, fallback: T): T {
   if (!raw) return fallback;
   try {
-    return JSON.parse(raw) as T;
+    // Deserialization boundary for display-only JSON columns (brief/faq/
+    // sourceUrls); the caller's fallback pins the expected shape.
+    // eslint-disable-next-line typescript-eslint/no-unsafe-assignment
+    const parsed: T = JSON.parse(raw);
+    return parsed;
   } catch {
     return fallback;
   }
