@@ -12,6 +12,7 @@ import {
   Search,
   Sparkles,
   Swords,
+  Terminal,
   TrendingUp,
 } from "lucide-react";
 import { linkOptions } from "@tanstack/react-router";
@@ -95,6 +96,12 @@ const projectNavItems = [
     icon: MessageSquare,
     matchSegment: "/prompt-explorer",
   },
+  {
+    to: "/p/$projectId/tools" as const,
+    label: "MCP Tools",
+    icon: Terminal,
+    matchSegment: "/tools",
+  },
 ] as const;
 
 const aiNavItem = linkOptions({
@@ -167,8 +174,12 @@ export function getProjectNavGroups(projectId: string) {
       type: "group" as const,
       label: "AI Visibility",
       icon: Sparkles,
-      matchSegments: ["/brand-lookup", "/prompt-explorer"],
-      items: [bySegment("/brand-lookup"), bySegment("/prompt-explorer")],
+      matchSegments: ["/brand-lookup", "/prompt-explorer", "/tools"],
+      items: [
+        bySegment("/brand-lookup"),
+        bySegment("/prompt-explorer"),
+        bySegment("/tools"),
+      ],
     },
     {
       type: "standalone" as const,

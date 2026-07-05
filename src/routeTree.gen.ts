@@ -36,6 +36,7 @@ import { Route as ProjectPProjectIdRouteRouteImport } from './routes/_project/p/
 import { Route as ProjectPProjectIdIndexRouteImport } from './routes/_project/p/$projectId/index'
 import { Route as ApiGscOauthCallbackRouteImport } from './routes/api/gsc/oauth/callback'
 import { Route as ApiContentV1ArticlesRouteImport } from './routes/api/content/v1/articles'
+import { Route as ProjectPProjectIdToolsRouteImport } from './routes/_project/p/$projectId/tools'
 import { Route as ProjectPProjectIdSettingsRouteImport } from './routes/_project/p/$projectId/settings'
 import { Route as ProjectPProjectIdSerpCompetitorsRouteImport } from './routes/_project/p/$projectId/serp-competitors'
 import { Route as ProjectPProjectIdSavedRouteImport } from './routes/_project/p/$projectId/saved'
@@ -192,6 +193,11 @@ const ApiContentV1ArticlesRoute = ApiContentV1ArticlesRouteImport.update({
   id: '/api/content/v1/articles',
   path: '/api/content/v1/articles',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ProjectPProjectIdToolsRoute = ProjectPProjectIdToolsRouteImport.update({
+  id: '/tools',
+  path: '/tools',
+  getParentRoute: () => ProjectPProjectIdRouteRoute,
 } as any)
 const ProjectPProjectIdSettingsRoute =
   ProjectPProjectIdSettingsRouteImport.update({
@@ -350,6 +356,7 @@ export interface FileRoutesByFullPath {
   '/p/$projectId/saved': typeof ProjectPProjectIdSavedRoute
   '/p/$projectId/serp-competitors': typeof ProjectPProjectIdSerpCompetitorsRoute
   '/p/$projectId/settings': typeof ProjectPProjectIdSettingsRoute
+  '/p/$projectId/tools': typeof ProjectPProjectIdToolsRoute
   '/api/content/v1/articles': typeof ApiContentV1ArticlesRouteWithChildren
   '/api/gsc/oauth/callback': typeof ApiGscOauthCallbackRoute
   '/p/$projectId/': typeof ProjectPProjectIdIndexRoute
@@ -392,6 +399,7 @@ export interface FileRoutesByTo {
   '/p/$projectId/saved': typeof ProjectPProjectIdSavedRoute
   '/p/$projectId/serp-competitors': typeof ProjectPProjectIdSerpCompetitorsRoute
   '/p/$projectId/settings': typeof ProjectPProjectIdSettingsRoute
+  '/p/$projectId/tools': typeof ProjectPProjectIdToolsRoute
   '/api/content/v1/articles': typeof ApiContentV1ArticlesRouteWithChildren
   '/api/gsc/oauth/callback': typeof ApiGscOauthCallbackRoute
   '/p/$projectId': typeof ProjectPProjectIdIndexRoute
@@ -443,6 +451,7 @@ export interface FileRoutesById {
   '/_project/p/$projectId/saved': typeof ProjectPProjectIdSavedRoute
   '/_project/p/$projectId/serp-competitors': typeof ProjectPProjectIdSerpCompetitorsRoute
   '/_project/p/$projectId/settings': typeof ProjectPProjectIdSettingsRoute
+  '/_project/p/$projectId/tools': typeof ProjectPProjectIdToolsRoute
   '/api/content/v1/articles': typeof ApiContentV1ArticlesRouteWithChildren
   '/api/gsc/oauth/callback': typeof ApiGscOauthCallbackRoute
   '/_project/p/$projectId/': typeof ProjectPProjectIdIndexRoute
@@ -491,6 +500,7 @@ export interface FileRouteTypes {
     | '/p/$projectId/saved'
     | '/p/$projectId/serp-competitors'
     | '/p/$projectId/settings'
+    | '/p/$projectId/tools'
     | '/api/content/v1/articles'
     | '/api/gsc/oauth/callback'
     | '/p/$projectId/'
@@ -533,6 +543,7 @@ export interface FileRouteTypes {
     | '/p/$projectId/saved'
     | '/p/$projectId/serp-competitors'
     | '/p/$projectId/settings'
+    | '/p/$projectId/tools'
     | '/api/content/v1/articles'
     | '/api/gsc/oauth/callback'
     | '/p/$projectId'
@@ -583,6 +594,7 @@ export interface FileRouteTypes {
     | '/_project/p/$projectId/saved'
     | '/_project/p/$projectId/serp-competitors'
     | '/_project/p/$projectId/settings'
+    | '/_project/p/$projectId/tools'
     | '/api/content/v1/articles'
     | '/api/gsc/oauth/callback'
     | '/_project/p/$projectId/'
@@ -800,6 +812,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/content/v1/articles'
       preLoaderRoute: typeof ApiContentV1ArticlesRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_project/p/$projectId/tools': {
+      id: '/_project/p/$projectId/tools'
+      path: '/tools'
+      fullPath: '/p/$projectId/tools'
+      preLoaderRoute: typeof ProjectPProjectIdToolsRouteImport
+      parentRoute: typeof ProjectPProjectIdRouteRoute
     }
     '/_project/p/$projectId/settings': {
       id: '/_project/p/$projectId/settings'
@@ -1042,6 +1061,7 @@ interface ProjectPProjectIdRouteRouteChildren {
   ProjectPProjectIdSavedRoute: typeof ProjectPProjectIdSavedRoute
   ProjectPProjectIdSerpCompetitorsRoute: typeof ProjectPProjectIdSerpCompetitorsRoute
   ProjectPProjectIdSettingsRoute: typeof ProjectPProjectIdSettingsRoute
+  ProjectPProjectIdToolsRoute: typeof ProjectPProjectIdToolsRoute
   ProjectPProjectIdIndexRoute: typeof ProjectPProjectIdIndexRoute
 }
 
@@ -1063,6 +1083,7 @@ const ProjectPProjectIdRouteRouteChildren: ProjectPProjectIdRouteRouteChildren =
     ProjectPProjectIdSerpCompetitorsRoute:
       ProjectPProjectIdSerpCompetitorsRoute,
     ProjectPProjectIdSettingsRoute: ProjectPProjectIdSettingsRoute,
+    ProjectPProjectIdToolsRoute: ProjectPProjectIdToolsRoute,
     ProjectPProjectIdIndexRoute: ProjectPProjectIdIndexRoute,
   }
 
