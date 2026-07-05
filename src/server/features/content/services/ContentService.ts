@@ -35,6 +35,10 @@ interface ContentArticleView {
   brief: StoredArticleBrief;
   faq: ArticleFaqEntryJson[];
   sourceUrls: string[];
+  source: ContentArticleRow["source"];
+  clusterId: string | null;
+  liveUrl: string | null;
+  autoPublishAt: string | null;
   error: string | null;
   createdAt: string;
   updatedAt: string;
@@ -65,11 +69,25 @@ function toArticleView(row: ContentArticleRow): ContentArticleView {
     brief: parseJsonColumn<StoredArticleBrief>(row.brief, null),
     faq: parseJsonColumn<ArticleFaqEntryJson[]>(row.faq, []),
     sourceUrls: parseJsonColumn<string[]>(row.sourceUrls, []),
+    source: row.source,
+    clusterId: row.clusterId,
+    liveUrl: row.liveUrl,
+    autoPublishAt: row.autoPublishAt,
     error: row.error,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     publishedAt: row.publishedAt,
   };
+}
+
+function buildLiveUrl(
+  blogUrlPattern: string | null | undefined,
+  slug: string,
+): string | null {
+  if (!blogUrlPattern) return null;
+  return blogUrlPattern.includes("{slug}")
+    ? blogUrlPattern.replace("{slug}", slug)
+    : `${blogUrlPattern.replace(/\/$/, "")}/${slug}`;
 }
 
 async function generateArticle(input: {
@@ -78,6 +96,11 @@ async function generateArticle(input: {
   keyword: string;
   locationCode: number;
   languageCode: string;
+  // Autopilot fields; omitted for manual generation.
+  source?: "manual" | "autopilot";
+  clusterId?: string | null;
+  blogUrlPattern?: string | null;
+  autoPublishAt?: string | null;
 }) {
   const articleId = crypto.randomUUID();
   // Workflow instance ids must be unique per run; retries get a fresh one,
@@ -97,6 +120,10 @@ async function generateArticle(input: {
     languageCode: input.languageCode,
     slug,
     workflowRunId,
+    source: input.source ?? "manual",
+    clusterId: input.clusterId ?? null,
+    liveUrl: buildLiveUrl(input.blogUrlPattern, slug),
+    autoPublishAt: input.autoPublishAt ?? null,
   });
 
   try {
@@ -239,6 +266,17 @@ async function setArticleStatus(input: {
   return getArticle(input.articleId, input.projectId);
 }
 
+/** "Keep as draft" — cancels the autopilot review-window auto-publish. */
+async function holdArticle(articleId: string, projectId: string) {
+  const article = await ContentRepository.getArticleForProject(
+    articleId,
+    projectId,
+  );
+  if (!article) throw new AppError("NOT_FOUND");
+  await ContentRepository.holdAutoPublishForProject(articleId, projectId);
+  return getArticle(articleId, projectId);
+}
+
 async function removeArticle(articleId: string, projectId: string) {
   await ContentRepository.deleteArticleForProject(articleId, projectId);
 }
@@ -273,6 +311,7 @@ export const ContentService = {
   getArticle,
   updateArticle,
   setArticleStatus,
+  holdArticle,
   removeArticle,
   createApiKey,
   listApiKeys,

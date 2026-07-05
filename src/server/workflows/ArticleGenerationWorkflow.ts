@@ -97,12 +97,21 @@ export class ArticleGenerationWorkflow extends WorkflowEntrypoint<
         .from(projects)
         .where(eq(projects.id, row.projectId))
         .limit(1);
+      // Cluster siblings with a known live URL become internal-link candidates
+      // so the writer can weave pillar↔satellite links.
+      const internalLinks = row.clusterId
+        ? await ContentRepository.getClusterSiblingLiveUrls(
+            row.clusterId,
+            articleId,
+          )
+        : [];
       return {
         projectId: row.projectId,
         keyword: row.keyword,
         locationCode: row.locationCode,
         languageCode: row.languageCode,
         siteDomain: projectRows[0]?.domain ?? null,
+        internalLinks,
       };
     });
 
@@ -213,6 +222,7 @@ export class ArticleGenerationWorkflow extends WorkflowEntrypoint<
             brief,
             competitors,
             siteDomain: article.siteDomain,
+            internalLinks: article.internalLinks,
           }),
         });
 

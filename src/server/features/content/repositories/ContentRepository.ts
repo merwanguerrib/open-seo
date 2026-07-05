@@ -1,7 +1,7 @@
 /**
  * Data access layer for content tables (content_articles, content_api_keys).
  */
-import { and, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, lte, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { contentApiKeys, contentArticles } from "@/db/schema";
 
@@ -19,6 +19,10 @@ async function createArticle(data: {
   languageCode: string;
   slug: string;
   workflowRunId: string;
+  source?: "manual" | "autopilot";
+  clusterId?: string | null;
+  liveUrl?: string | null;
+  autoPublishAt?: string | null;
 }) {
   await db.insert(contentArticles).values({ ...data, status: "queued" });
 }
@@ -116,11 +120,96 @@ async function setArticleStatusForProject(
       ...touchUpdatedAt,
       publishedAt:
         status === "published" ? sql`(current_timestamp)` : sql`NULL`,
+      // Publishing (or unpublishing) settles the review window either way.
+      autoPublishAt: sql`NULL`,
     })
     .where(
       and(
         eq(contentArticles.id, articleId),
         eq(contentArticles.projectId, projectId),
+      ),
+    );
+}
+
+/** Clears the review-window timer without publishing — the "keep as draft" action. */
+async function holdAutoPublishForProject(
+  articleId: string,
+  projectId: string,
+) {
+  await db
+    .update(contentArticles)
+    .set({ autoPublishAt: sql`NULL`, ...touchUpdatedAt })
+    .where(
+      and(
+        eq(contentArticles.id, articleId),
+        eq(contentArticles.projectId, projectId),
+      ),
+    );
+}
+
+// ─── Autopilot (cron) ────────────────────────────────────────────────────────
+
+/** Autopilot drafts whose review window has expired and are due to auto-publish. */
+async function getDraftsDueForAutoPublish(nowIso: string) {
+  return db
+    .select()
+    .from(contentArticles)
+    .where(
+      and(
+        eq(contentArticles.status, "draft"),
+        eq(contentArticles.source, "autopilot"),
+        lte(contentArticles.autoPublishAt, nowIso),
+      ),
+    );
+}
+
+/** Cron-side publish (no project scoping — the cron owns the article id). */
+async function publishArticleById(articleId: string) {
+  await db
+    .update(contentArticles)
+    .set({
+      status: "published",
+      publishedAt: sql`(current_timestamp)`,
+      autoPublishAt: sql`NULL`,
+      ...touchUpdatedAt,
+    })
+    .where(eq(contentArticles.id, articleId));
+}
+
+/** Published sibling live URLs in a cluster, for internal linking a new article. */
+async function getClusterSiblingLiveUrls(
+  clusterId: string,
+  excludeArticleId: string,
+): Promise<Array<{ title: string; liveUrl: string }>> {
+  const rows = await db
+    .select({
+      title: contentArticles.title,
+      liveUrl: contentArticles.liveUrl,
+      slug: contentArticles.slug,
+    })
+    .from(contentArticles)
+    .where(
+      and(
+        eq(contentArticles.clusterId, clusterId),
+        ne(contentArticles.id, excludeArticleId),
+      ),
+    );
+  return rows
+    .filter((row): row is { title: string; liveUrl: string; slug: string } =>
+      Boolean(row.liveUrl),
+    )
+    .map((row) => ({ title: row.title ?? row.slug, liveUrl: row.liveUrl }));
+}
+
+/** Published autopilot articles with a live URL, for the weekly GSC repair pass. */
+async function getTrackedArticles(projectId: string) {
+  return db
+    .select()
+    .from(contentArticles)
+    .where(
+      and(
+        eq(contentArticles.projectId, projectId),
+        eq(contentArticles.status, "published"),
       ),
     );
 }
@@ -252,6 +341,11 @@ export const ContentRepository = {
   updateArticleFromWorkflow,
   updateArticleForProject,
   setArticleStatusForProject,
+  holdAutoPublishForProject,
+  getDraftsDueForAutoPublish,
+  publishArticleById,
+  getClusterSiblingLiveUrls,
+  getTrackedArticles,
   resetArticleForRetry,
   deleteArticleForProject,
   listPublishedArticles,

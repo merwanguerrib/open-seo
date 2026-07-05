@@ -105,17 +105,34 @@ export function buildBriefPrompt(input: {
   ].join("\n");
 }
 
+export type InternalLink = {
+  title: string;
+  liveUrl: string;
+};
+
+function formatInternalLinks(links: InternalLink[]): string {
+  return [
+    "## Internal links to weave in",
+    "These are other articles on this site in the same topic cluster. Link to the relevant ones naturally from the body text, using descriptive anchor text:",
+    ...links.map((link) => `- [${link.title}](${link.liveUrl})`),
+  ].join("\n");
+}
+
 export function buildArticlePrompt(input: {
   keyword: string;
   languageCode: string;
   brief: ArticleBrief;
   competitors: CompetitorPage[];
   siteDomain: string | null;
+  internalLinks?: InternalLink[];
 }): string {
   return [
     `You are an expert SEO writer. Write a complete article targeting the keyword "${input.keyword}", entirely in the language with code "${input.languageCode}".`,
     input.siteDomain
       ? `The article will be published on ${input.siteDomain}; write as that site's editorial voice (first-person plural is fine), but never fabricate facts about the company.`
+      : null,
+    input.internalLinks && input.internalLinks.length > 0
+      ? `\n${formatInternalLinks(input.internalLinks)}`
       : null,
     "",
     "## Brief",

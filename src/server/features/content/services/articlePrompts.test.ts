@@ -83,4 +83,31 @@ describe("buildArticlePrompt", () => {
     });
     expect(prompt).not.toContain("published on");
   });
+
+  it("includes internal link candidates when provided", () => {
+    const prompt = buildArticlePrompt({
+      keyword: "k",
+      languageCode: "en",
+      brief,
+      competitors,
+      siteDomain: null,
+      internalLinks: [
+        { title: "Pillar guide", liveUrl: "https://example.com/blog/pillar" },
+      ],
+    });
+    expect(prompt).toContain("Internal links to weave in");
+    expect(prompt).toContain("[Pillar guide](https://example.com/blog/pillar)");
+  });
+
+  it("omits the internal links section when empty", () => {
+    const prompt = buildArticlePrompt({
+      keyword: "k",
+      languageCode: "en",
+      brief,
+      competitors,
+      siteDomain: null,
+      internalLinks: [],
+    });
+    expect(prompt).not.toContain("Internal links to weave in");
+  });
 });

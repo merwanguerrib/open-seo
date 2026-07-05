@@ -7,6 +7,7 @@ import { resolveUserContextFromHeaders } from "@/middleware/ensure-user/resolve"
 import { ProjectRepository } from "@/server/features/projects/repositories/ProjectRepository";
 import { RankTrackingRepository } from "@/server/features/rank-tracking/repositories/RankTrackingRepository";
 import { beginRankCheckRun } from "@/server/features/rank-tracking/services/rankCheckRunGuards";
+import { processContentPlans } from "@/server/features/content/services/contentPlanCron";
 import {
   customerHasPaidPlan,
   getOrCreateOrganizationCustomer,
@@ -217,6 +218,14 @@ export default {
           err,
         );
       }
+    }
+
+    // Content autopilot: discover topics, generate scheduled articles, and
+    // auto-publish drafts past their review window.
+    try {
+      await processContentPlans();
+    } catch (err) {
+      console.error("[cron] Error processing content plans:", err);
     }
   },
 };

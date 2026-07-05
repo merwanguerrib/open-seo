@@ -190,6 +190,13 @@
       "when": 1783154365629,
       "tag": "0026_short_nicolaos",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "6",
+      "when": 1783209998710,
+      "tag": "0027_large_lord_hawal",
+      "breakpoints": true
     }
   ]
 }
