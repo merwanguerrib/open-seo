@@ -8,6 +8,7 @@ import {
   runMcpTool,
 } from "@/serverFunctions/mcpTools";
 import { buildToolInvocation } from "@/shared/mcpToolInvocation";
+import { LocalTerminalPanel } from "@/client/features/mcp-tools/LocalTerminalPanel";
 
 type Catalog = Awaited<ReturnType<typeof getMcpToolsConsole>>;
 export type ToolDescriptor = Catalog["tools"][number];
@@ -118,6 +119,11 @@ export function ToolInvocationBuilder({
           />
         </div>
       </div>
+
+      <LocalTerminalPanel
+        claudeCommand={invocation.claudeCommand}
+        codexCommand={invocation.codexCommand}
+      />
     </div>
   );
 }
