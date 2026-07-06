@@ -85,6 +85,8 @@ type McpToolParam = {
   kind: "string" | "number" | "boolean" | "enum" | "json";
   /** For `enum`, the allowed values (also covers const/literal unions). */
   enumValues?: string[];
+  /** For `json` params, the JSON Schema of the expected shape, as a hint. */
+  schemaHint?: string;
 };
 
 type McpToolDescriptor = {
@@ -168,6 +170,10 @@ function describeTool(
           typeof schema.description === "string" ? schema.description : null,
         kind,
         ...(enumValues ? { enumValues } : {}),
+        // Show the expected shape for JSON params so users don't guess.
+        ...(kind === "json"
+          ? { schemaHint: JSON.stringify(schema, null, 2) }
+          : {}),
       };
     },
   );
