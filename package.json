@@ -37,7 +37,8 @@
     "billing:brand-lookup": "tsx scripts/brand-lookup-cost-profile.ts",
     "cleanup:default-projects:d1": "tsx scripts/d1-default-project-cleanup.ts",
     "seed:rank-tracking": "tsx scripts/seed-rank-tracking.ts",
-    "ci:check": "prettier --check . && knip && tsc --noEmit && oxlint . --type-aware"
+    "ci:check": "prettier --check . && knip && tsc --noEmit && oxlint . --type-aware",
+    "mcp:bridge": "node scripts/mcp-terminal-bridge.mjs"
   },
   "cloudflare": {
     "bindings": {
@@ -89,6 +90,7 @@
     "graphology-metrics": "^2.4.0",
     "jose": "^6.0.12",
     "lucide-react": "^0.542.0",
+    "marked": "^18.0.5",
     "papaparse": "^5.5.3",
     "posthog-js": "^1.363.5",
     "posthog-node": "^5.28.5",

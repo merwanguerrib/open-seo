@@ -40,6 +40,7 @@ import {
   postRankCheckTasks,
 } from "@/server/lib/dataforseo/serp";
 import { fetchLighthouseResult } from "@/server/lib/dataforseo/lighthouse";
+import { fetchPageContentParsing } from "@/server/lib/dataforseo/onpage";
 import {
   fetchLlmAggregatedMetrics,
   fetchLlmCrossAggregatedMetrics,
@@ -127,6 +128,11 @@ export function createDataforseoClient(customer: BillingCustomerContext) {
     },
     lighthouse: {
       live: meter(customer, fetchLighthouseResult),
+    },
+    onPage: {
+      // Used by article generation to read competitor pages; billed to the
+      // content feature rather than the on_page default (site_audit).
+      contentParsing: meter(customer, fetchPageContentParsing, "content"),
     },
     aiSearch: {
       mentionsSearch: meter(customer, fetchLlmMentionsSearch),

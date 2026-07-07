@@ -1,4 +1,6 @@
 import { useMemo } from "react";
+import { Link, useParams } from "@tanstack/react-router";
+import { FileText } from "lucide-react";
 import {
   createColumnHelper,
   type ColumnDef,
@@ -49,6 +51,9 @@ export function KeywordResearchDesktopTable({
   handleRowClick,
 }: Props) {
   const selectAnchorRef = useSelectionAnchor();
+  // The table renders under /_project/p/$projectId/*; non-strict access keeps
+  // it decoupled from the exact route id.
+  const { projectId } = useParams({ strict: false });
   const rowSelection = useMemo<RowSelectionState>(
     () =>
       Object.fromEntries(
@@ -168,8 +173,28 @@ export function KeywordResearchDesktopTable({
           cellClassName: "whitespace-nowrap text-center",
         },
       }),
+      ...(projectId
+        ? [
+            keywordColumnHelper.display({
+              id: "generate-article",
+              header: () => "",
+              cell: ({ row }) => (
+                <Link
+                  to="/p/$projectId/content"
+                  params={{ projectId }}
+                  search={{ keyword: row.original.keyword }}
+                  className="btn btn-ghost btn-xs"
+                  title="Generate an SEO article for this keyword"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <FileText className="size-3.5" />
+                </Link>
+              ),
+            }),
+          ]
+        : []),
     ],
-    [selectAnchorRef, sortDir, sortField, toggleSort],
+    [selectAnchorRef, sortDir, sortField, toggleSort, projectId],
   );
   const table = useAppTable({
     data: filteredRows,

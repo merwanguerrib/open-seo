@@ -7,6 +7,7 @@ import { resolveUserContextFromHeaders } from "@/middleware/ensure-user/resolve"
 import { ProjectRepository } from "@/server/features/projects/repositories/ProjectRepository";
 import { RankTrackingRepository } from "@/server/features/rank-tracking/repositories/RankTrackingRepository";
 import { beginRankCheckRun } from "@/server/features/rank-tracking/services/rankCheckRunGuards";
+import { processContentPlans } from "@/server/features/content/services/contentPlanCron";
 import {
   customerHasPaidPlan,
   getOrCreateOrganizationCustomer,
@@ -115,6 +116,7 @@ function fetch(
 // Export Workflow classes as named exports
 export { SiteAuditWorkflow } from "./server/workflows/SiteAuditWorkflow";
 export { RankCheckWorkflow } from "./server/workflows/RankCheckWorkflow";
+export { ArticleGenerationWorkflow } from "./server/workflows/ArticleGenerationWorkflow";
 // Durable Object class for the onboarding strategy chat (Agents SDK).
 export { OnboardingChatAgent } from "./server/features/onboarding/OnboardingChatAgent";
 
@@ -216,6 +218,14 @@ export default {
           err,
         );
       }
+    }
+
+    // Content autopilot: discover topics, generate scheduled articles, and
+    // auto-publish drafts past their review window.
+    try {
+      await processContentPlans();
+    } catch (err) {
+      console.error("[cron] Error processing content plans:", err);
     }
   },
 };
