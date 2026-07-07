@@ -33,8 +33,12 @@ export function AuditClustersPanel({
                 className="size-3 shrink-0 rounded-full"
                 style={{ backgroundColor: cluster.color }}
               />
-              <span className="flex-1 truncate font-medium">{cluster.name}</span>
-              <span className="text-xs text-base-content/50">{cluster.size}</span>
+              <span className="flex-1 truncate font-medium">
+                {cluster.name}
+              </span>
+              <span className="text-xs text-base-content/50">
+                {cluster.size}
+              </span>
             </span>
             <span
               className="block truncate pl-5 text-xs text-base-content/50"

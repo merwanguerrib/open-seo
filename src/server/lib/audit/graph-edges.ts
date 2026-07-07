@@ -1,4 +1,8 @@
-import type { AuditGraphNode, AuditGraphPayload, StepPageResult } from "./types";
+import type {
+  AuditGraphNode,
+  AuditGraphPayload,
+  StepPageResult,
+} from "./types";
 
 export interface EdgeRow {
   id: string;
@@ -76,8 +80,7 @@ export function resolveEdges(
   const byUrl = new Map(pages.map((p) => [p.url, p]));
   return edges.map((edge) => {
     const target = byUrl.get(edge.toUrl) ?? null;
-    const isBroken =
-      target?.statusCode != null && target.statusCode >= 400;
+    const isBroken = target?.statusCode != null && target.statusCode >= 400;
     return {
       id: edge.id,
       toPageId: target?.id ?? null,

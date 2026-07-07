@@ -25,23 +25,25 @@
 - `src/server/lib/audit/types.ts` — add 3 fields to `AuditGraphNode`.
 - `src/server/features/audit/repositories/AuditRepository.ts` — `getAuditGraphData` selects the 3 columns.
 - `src/server/features/audit/services/AuditService.ts` — `getGraph` maps the 3 fields.
-- `src/client/features/audit/graph/pageCategories.ts` *(new)* — `deriveCategory`, `computeCategories`, `CATEGORY_PALETTE`, `CategoryLegendEntry`.
-- `src/client/features/audit/graph/nodeDetail.ts` *(new)* — `buildNodeDetail`, `NodeDetail`.
-- `src/client/features/audit/graph/AuditCategoryLegend.tsx` *(new)* — legend panel.
-- `src/client/features/audit/graph/AuditNodeDetailPanel.tsx` *(new)* — detail panel.
-- `src/client/features/audit/graph/AuditGraphView.tsx` *(modify)* — wiring, category colors, node-click detail, 3-column layout.
+- `src/client/features/audit/graph/pageCategories.ts` _(new)_ — `deriveCategory`, `computeCategories`, `CATEGORY_PALETTE`, `CategoryLegendEntry`.
+- `src/client/features/audit/graph/nodeDetail.ts` _(new)_ — `buildNodeDetail`, `NodeDetail`.
+- `src/client/features/audit/graph/AuditCategoryLegend.tsx` _(new)_ — legend panel.
+- `src/client/features/audit/graph/AuditNodeDetailPanel.tsx` _(new)_ — detail panel.
+- `src/client/features/audit/graph/AuditGraphView.tsx` _(modify)_ — wiring, category colors, node-click detail, 3-column layout.
 
 ---
 
 ## Task 1: Server — add h1Count, externalLinkCount, canonicalUrl to the graph payload
 
 **Files:**
+
 - Modify: `src/server/lib/audit/types.ts` (`AuditGraphNode`)
 - Modify: `src/server/features/audit/repositories/AuditRepository.ts` (`getAuditGraphData`)
 - Modify: `src/server/features/audit/services/AuditService.ts` (`getGraph`)
 - Test: `src/server/lib/audit/graph-edges.test.ts` (extend the existing `buildAuditGraphPayload` test)
 
 **Interfaces:**
+
 - Produces: `AuditGraphNode` gains `h1Count: number; externalLinkCount: number; canonicalUrl: string | null`.
 
 - [ ] **Step 1: Extend the type**
@@ -49,9 +51,9 @@
 In `src/server/lib/audit/types.ts`, add to `interface AuditGraphNode` (after `isIndexable`):
 
 ```ts
-  h1Count: number;
-  externalLinkCount: number;
-  canonicalUrl: string | null;
+h1Count: number;
+externalLinkCount: number;
+canonicalUrl: string | null;
 ```
 
 - [ ] **Step 2: Write the failing test (payload preserves the new fields)**
@@ -68,9 +70,16 @@ describe("buildAuditGraphPayload new metadata fields", () => {
       startUrl: "https://s.com/",
       pages: [
         {
-          id: "p1", url: "https://s.com/", title: "Home", statusCode: 200,
-          wordCount: 10, internalLinkCount: 1, isIndexable: true,
-          h1Count: 2, externalLinkCount: 3, canonicalUrl: "https://s.com/",
+          id: "p1",
+          url: "https://s.com/",
+          title: "Home",
+          statusCode: 200,
+          wordCount: 10,
+          internalLinkCount: 1,
+          isIndexable: true,
+          h1Count: 2,
+          externalLinkCount: 3,
+          canonicalUrl: "https://s.com/",
         },
       ],
       edges: [],
@@ -122,10 +131,12 @@ git commit -m "feat(audit): expose h1 count, external links, canonical in graph 
 ## Task 2: Client — slug categories (deriveCategory + computeCategories)
 
 **Files:**
+
 - Create: `src/client/features/audit/graph/pageCategories.ts`
 - Test: `src/client/features/audit/graph/pageCategories.test.ts`
 
 **Interfaces:**
+
 - Consumes: `AuditGraphPayload` (`@/server/lib/audit/types`).
 - Produces: `deriveCategory(url): string`; `computeCategories(payload): { legend: CategoryLegendEntry[]; colorByNodeId: Map<string, string> }`; `CategoryLegendEntry = { category: string; color: string; count: number }`; `CATEGORY_PALETTE: string[]`.
 
@@ -135,7 +146,11 @@ Create `src/client/features/audit/graph/pageCategories.test.ts`:
 
 ```typescript
 import { describe, it, expect } from "vitest";
-import { deriveCategory, computeCategories, CATEGORY_PALETTE } from "./pageCategories";
+import {
+  deriveCategory,
+  computeCategories,
+  CATEGORY_PALETTE,
+} from "./pageCategories";
 import type { AuditGraphPayload } from "@/server/lib/audit/types";
 
 describe("deriveCategory", () => {
@@ -152,8 +167,16 @@ describe("deriveCategory", () => {
 
 describe("computeCategories", () => {
   const node = (id: string, url: string) => ({
-    id, url, title: id, statusCode: 200, wordCount: 0, internalLinkCount: 0,
-    isIndexable: true, h1Count: 0, externalLinkCount: 0, canonicalUrl: null,
+    id,
+    url,
+    title: id,
+    statusCode: 200,
+    wordCount: 0,
+    internalLinkCount: 0,
+    isIndexable: true,
+    h1Count: 0,
+    externalLinkCount: 0,
+    canonicalUrl: null,
   });
   const payload = {
     nodes: [
@@ -163,7 +186,12 @@ describe("computeCategories", () => {
       node("g1", "https://s.com/guides/a"),
     ],
     edges: [],
-    meta: { auditId: "a", startUrl: "https://s.com/", pagesCrawled: 4, generatedAt: "t" },
+    meta: {
+      auditId: "a",
+      startUrl: "https://s.com/",
+      pagesCrawled: 4,
+      generatedAt: "t",
+    },
   } as AuditGraphPayload;
 
   it("counts categories and sorts by count desc then name", () => {
@@ -202,8 +230,16 @@ export interface CategoryLegendEntry {
 }
 
 export const CATEGORY_PALETTE = [
-  "#2563eb", "#16a34a", "#db2777", "#d97706", "#7c3aed",
-  "#0891b2", "#dc2626", "#65a30d", "#c026d3", "#0d9488",
+  "#2563eb",
+  "#16a34a",
+  "#db2777",
+  "#d97706",
+  "#7c3aed",
+  "#0891b2",
+  "#dc2626",
+  "#65a30d",
+  "#c026d3",
+  "#0d9488",
 ];
 
 export function deriveCategory(url: string): string {
@@ -262,10 +298,12 @@ git commit -m "feat(audit): derive slug page categories with a color legend"
 ## Task 3: Client — buildNodeDetail
 
 **Files:**
+
 - Create: `src/client/features/audit/graph/nodeDetail.ts`
 - Test: `src/client/features/audit/graph/nodeDetail.test.ts`
 
 **Interfaces:**
+
 - Consumes: `AuditGraphPayload`, a graphology `Graph`, `computeGraphMetrics` output.
 - Produces: `NodeDetail` and `buildNodeDetail(payload, graph, metrics, nodeId): NodeDetail | null`.
 
@@ -281,11 +319,38 @@ import type { AuditGraphPayload } from "@/server/lib/audit/types";
 
 const payload: AuditGraphPayload = {
   nodes: [
-    { id: "home", url: "https://s.com/", title: "Home", statusCode: 200, wordCount: 50, internalLinkCount: 2, isIndexable: true, h1Count: 1, externalLinkCount: 4, canonicalUrl: "https://s.com/" },
-    { id: "a", url: "https://s.com/a", title: "A", statusCode: 200, wordCount: 30, internalLinkCount: 0, isIndexable: true, h1Count: 0, externalLinkCount: 1, canonicalUrl: null },
+    {
+      id: "home",
+      url: "https://s.com/",
+      title: "Home",
+      statusCode: 200,
+      wordCount: 50,
+      internalLinkCount: 2,
+      isIndexable: true,
+      h1Count: 1,
+      externalLinkCount: 4,
+      canonicalUrl: "https://s.com/",
+    },
+    {
+      id: "a",
+      url: "https://s.com/a",
+      title: "A",
+      statusCode: 200,
+      wordCount: 30,
+      internalLinkCount: 0,
+      isIndexable: true,
+      h1Count: 0,
+      externalLinkCount: 1,
+      canonicalUrl: null,
+    },
   ],
   edges: [{ from: "home", to: "a", anchorText: "A", isBroken: false }],
-  meta: { auditId: "x", startUrl: "https://s.com/", pagesCrawled: 2, generatedAt: "t" },
+  meta: {
+    auditId: "x",
+    startUrl: "https://s.com/",
+    pagesCrawled: 2,
+    generatedAt: "t",
+  },
 };
 
 describe("buildNodeDetail", () => {
@@ -341,7 +406,10 @@ export interface NodeDetail {
 export function buildNodeDetail(
   payload: AuditGraphPayload,
   graph: Graph,
-  metrics: { depthByNode: Map<string, number>; pagerank: Record<string, number> },
+  metrics: {
+    depthByNode: Map<string, number>;
+    pagerank: Record<string, number>;
+  },
   nodeId: string,
 ): NodeDetail | null {
   const node = payload.nodes.find((n) => n.id === nodeId);
@@ -379,10 +447,12 @@ git commit -m "feat(audit): build per-node detail for the graph inspector"
 ## Task 4: Client — category legend + node detail panel components
 
 **Files:**
+
 - Create: `src/client/features/audit/graph/AuditCategoryLegend.tsx`
 - Create: `src/client/features/audit/graph/AuditNodeDetailPanel.tsx`
 
 **Interfaces:**
+
 - Consumes: `CategoryLegendEntry` (Task 2), `NodeDetail` (Task 3).
 - Produces: `AuditCategoryLegend` (props `{ legend: CategoryLegendEntry[]; selectedCategory: string | null; onSelect: (category: string | null) => void }`); `AuditNodeDetailPanel` (props `{ detail: NodeDetail | null; onClose: () => void }`).
 
@@ -520,9 +590,11 @@ git commit -m "feat(audit): add category legend and node detail panel components
 ## Task 5: Wire node inspection + categories into AuditGraphView
 
 **Files:**
+
 - Modify: `src/client/features/audit/graph/AuditGraphView.tsx`
 
 **Interfaces:**
+
 - Consumes: `computeCategories`, `deriveCategory` (Task 2); `buildNodeDetail` (Task 3); `AuditCategoryLegend`, `AuditNodeDetailPanel` (Task 4); existing `computeAuditInsights`, `nodeHighlightReducer`, `AuditInsightsPanel`.
 
 - [ ] **Step 1: Overwrite AuditGraphView**
@@ -707,6 +779,7 @@ Expected: all pass (Phase 1/2 tests + Tasks 1-3 new tests).
 - [ ] **Step 4: Verify in the running app (REQUIRED — do not skip)**
 
 The dev server is running at http://localhost:3001. Confirm `curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/` returns **200** (catches SSR crashes). Then on a completed audit's Graph tab:
+
 - Nodes are colored by category; the left column shows the category legend with counts.
 - Clicking a category highlights its pages (red) and dims the rest; clicking an insight does the same and clears any category selection.
 - Clicking a node opens the right-side detail panel with its fields; clicking the graph background closes it.

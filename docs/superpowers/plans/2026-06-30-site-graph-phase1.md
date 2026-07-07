@@ -25,16 +25,16 @@
 - `src/db/app.schema.ts` — add `auditPageLinks` table + `auditPages.contentR2Key` column.
 - `src/server/lib/audit/types.ts` — `captureContent` on `AuditConfig`; `internalLinkDetails` + `cleanedText` on `PageAnalysis`/`StepPageResult`; new `AuditGraphPayload` types.
 - `src/server/lib/audit/page-analyzer.ts` — extract anchor text + cleaned body text.
-- `src/server/lib/audit/graph-edges.ts` *(new)* — pure helpers: `buildEdgeRows`, `buildAuditGraphPayload`.
+- `src/server/lib/audit/graph-edges.ts` _(new)_ — pure helpers: `buildEdgeRows`, `buildAuditGraphPayload`.
 - `src/server/workflows/siteAuditWorkflowCrawl.ts` — thread `internalLinkDetails`/`cleanedText` into `StepPageResult` (the analyzer already runs here via `crawlPage`).
 - `src/server/features/audit/repositories/AuditRepository.ts` — insert edges in `batchWriteResults`; new `resolveAuditGraphEdges`, `getAuditGraphData`.
 - `src/server/workflows/siteAuditWorkflowPhases.ts` — push page text to R2 when `captureContent`; add `resolve-graph` step.
 - `src/server/features/audit/services/AuditService.ts` — `getGraph(auditId, projectId)`.
 - `src/types/schemas/audit.ts` — `getAuditGraphSchema`.
 - `src/serverFunctions/audit.ts` — `getAuditGraph` server function.
-- `src/client/features/audit/graph/graphologyGraph.ts` *(new)* — pure `buildGraphologyGraph`, `computeGraphMetrics`.
-- `src/client/features/audit/graph/graphSummary.ts` *(new)* — pure `buildGraphSummary` (testable header logic).
-- `src/client/features/audit/graph/AuditGraphView.tsx` *(new)* — Sigma render + summary; node panel + filters land in a later task.
+- `src/client/features/audit/graph/graphologyGraph.ts` _(new)_ — pure `buildGraphologyGraph`, `computeGraphMetrics`.
+- `src/client/features/audit/graph/graphSummary.ts` _(new)_ — pure `buildGraphSummary` (testable header logic).
+- `src/client/features/audit/graph/AuditGraphView.tsx` _(new)_ — Sigma render + summary; node panel + filters land in a later task.
 - `src/client/features/audit/results/ResultsView.tsx` — add `"graph"` tab.
 
 ---
@@ -42,10 +42,12 @@
 ## Task 1: Database schema — edges table + content key
 
 **Files:**
+
 - Modify: `src/db/app.schema.ts` (after `auditPages`, ~line 431)
 - Generated: `drizzle/` migration via `pnpm db:generate`
 
 **Interfaces:**
+
 - Produces: `auditPageLinks` table with columns `id, auditId, fromPageId, toUrl, toPageId, anchorText, isBroken`; `auditPages.contentR2Key`.
 
 - [ ] **Step 1: Add the column and table to the schema**
@@ -108,11 +110,13 @@ git commit -m "feat(audit): add audit_page_links table and content_r2_key column
 ## Task 2: Extract anchor text + cleaned body text in the analyzer
 
 **Files:**
+
 - Modify: `src/server/lib/audit/types.ts`
 - Modify: `src/server/lib/audit/page-analyzer.ts`
-- Test: `src/server/lib/audit/page-analyzer.test.ts` *(new)*
+- Test: `src/server/lib/audit/page-analyzer.test.ts` _(new)_
 
 **Interfaces:**
+
 - Produces: `PageAnalysis.internalLinkDetails: Array<{ url: string; anchorText: string | null }>` and `PageAnalysis.cleanedText: string`. `internalLinks: string[]` stays unchanged (the crawl frontier keeps using it).
 
 - [ ] **Step 1: Write the failing test**
@@ -152,10 +156,10 @@ Expected: FAIL — `internalLinkDetails`/`cleanedText` undefined.
 In `src/server/lib/audit/types.ts`, inside `interface PageAnalysis` after `externalLinks: string[];` add:
 
 ```typescript
-  // Internal links with anchor text, for the page graph
-  internalLinkDetails: Array<{ url: string; anchorText: string | null }>;
-  // Cleaned visible body text (for optional R2 storage / Graphify)
-  cleanedText: string;
+// Internal links with anchor text, for the page graph
+internalLinkDetails: Array<{ url: string; anchorText: string | null }>;
+// Cleaned visible body text (for optional R2 storage / Graphify)
+cleanedText: string;
 ```
 
 Add the same two fields to `interface StepPageResult` after its `externalLinks: string[];`.
@@ -165,28 +169,28 @@ Add the same two fields to `interface StepPageResult` after its `externalLinks: 
 In `src/server/lib/audit/page-analyzer.ts`, replace the `// --- Links ---` block so each internal link also records its trimmed anchor text, and capture the already-computed `bodyText` as cleaned text:
 
 ```typescript
-  // --- Links ---
-  const internalLinks: string[] = [];
-  const externalLinks: string[] = [];
-  const internalLinkDetails: Array<{ url: string; anchorText: string | null }> =
-    [];
+// --- Links ---
+const internalLinks: string[] = [];
+const externalLinks: string[] = [];
+const internalLinkDetails: Array<{ url: string; anchorText: string | null }> =
+  [];
 
-  $("a[href]").each((_, el) => {
-    const href = $(el).attr("href");
-    if (!href) return;
-    if (/^(javascript:|mailto:|tel:|#)/.test(href)) return;
+$("a[href]").each((_, el) => {
+  const href = $(el).attr("href");
+  if (!href) return;
+  if (/^(javascript:|mailto:|tel:|#)/.test(href)) return;
 
-    const resolved = normalizeUrl(href, pageUrl);
-    if (!resolved) return;
+  const resolved = normalizeUrl(href, pageUrl);
+  if (!resolved) return;
 
-    if (isSameOrigin(resolved, pageUrl)) {
-      internalLinks.push(resolved);
-      const anchor = $(el).text().replace(/\s+/g, " ").trim();
-      internalLinkDetails.push({ url: resolved, anchorText: anchor || null });
-    } else {
-      externalLinks.push(resolved);
-    }
-  });
+  if (isSameOrigin(resolved, pageUrl)) {
+    internalLinks.push(resolved);
+    const anchor = $(el).text().replace(/\s+/g, " ").trim();
+    internalLinkDetails.push({ url: resolved, anchorText: anchor || null });
+  } else {
+    externalLinks.push(resolved);
+  }
+});
 ```
 
 Then in the returned object add `internalLinkDetails,` and `cleanedText: bodyText,` (note: `bodyText` is the variable already computed for `wordCount`).
@@ -208,10 +212,12 @@ git commit -m "feat(audit): extract internal-link anchor text and cleaned body t
 ## Task 3: Thread link details + cleaned text into StepPageResult
 
 **Files:**
+
 - Modify: `src/server/workflows/siteAuditWorkflowCrawl.ts` (the `crawlPage` → `StepPageResult` mapping)
-- Test: `src/server/workflows/siteAuditWorkflowCrawl.test.ts` *(extend or new)*
+- Test: `src/server/workflows/siteAuditWorkflowCrawl.test.ts` _(extend or new)_
 
 **Interfaces:**
+
 - Consumes: `PageAnalysis.internalLinkDetails`, `PageAnalysis.cleanedText` (Task 2).
 - Produces: each `StepPageResult` carries `internalLinkDetails` and `cleanedText`.
 
@@ -335,11 +341,13 @@ git commit -m "feat(audit): thread internalLinkDetails and cleanedText through S
 ## Task 4: Persist edges in batchWriteResults
 
 **Files:**
+
 - Create: `src/server/lib/audit/graph-edges.ts`
 - Modify: `src/server/features/audit/repositories/AuditRepository.ts` (`batchWriteResults`)
-- Test: `src/server/lib/audit/graph-edges.test.ts` *(new)*
+- Test: `src/server/lib/audit/graph-edges.test.ts` _(new)_
 
 **Interfaces:**
+
 - Produces: `buildEdgeRows(auditId, pages): Array<{ id; auditId; fromPageId; toUrl; anchorText }>` — deduped per `(fromPageId, toUrl)`, id = `audit_page_links:${fromPageId}:${toUrl}`.
 
 - [ ] **Step 1: Write the failing test**
@@ -354,7 +362,10 @@ import type { StepPageResult } from "./types";
 const page = (id: string, links: Array<[string, string | null]>) =>
   ({
     id,
-    internalLinkDetails: links.map(([url, anchorText]) => ({ url, anchorText })),
+    internalLinkDetails: links.map(([url, anchorText]) => ({
+      url,
+      anchorText,
+    })),
   }) as unknown as StepPageResult;
 
 describe("buildEdgeRows", () => {
@@ -439,12 +450,12 @@ Expected: PASS.
 In `src/server/features/audit/repositories/AuditRepository.ts`: import `buildEdgeRows` and `auditPageLinks`, and after the `auditPages` insert loop in `batchWriteResults` (after line ~165), add:
 
 ```typescript
-  const edgeRows = buildEdgeRows(auditId, pages);
-  if (edgeRows.length > 0) {
-    await executeInBatches(edgeRows, (row) =>
-      db.insert(auditPageLinks).values(row).onConflictDoNothing(),
-    );
-  }
+const edgeRows = buildEdgeRows(auditId, pages);
+if (edgeRows.length > 0) {
+  await executeInBatches(edgeRows, (row) =>
+    db.insert(auditPageLinks).values(row).onConflictDoNothing(),
+  );
+}
 ```
 
 Add `auditPageLinks` to the `@/db/schema` import at the top of the file.
@@ -463,12 +474,14 @@ git commit -m "feat(audit): persist internal-link edges during crawl"
 ## Task 5: Store page text in R2 when captureContent is on
 
 **Files:**
+
 - Modify: `src/server/lib/audit/types.ts` (`AuditConfig` + zod schema)
 - Modify: `src/server/features/audit/repositories/AuditRepository.ts` (write `contentR2Key`)
 - Modify: `src/server/workflows/siteAuditWorkflowPhases.ts` (upload text when enabled)
-- Test: `src/server/lib/audit/types.test.ts` *(new)*
+- Test: `src/server/lib/audit/types.test.ts` _(new)_
 
 **Interfaces:**
+
 - Consumes: `putTextToR2(key, text)` from `@/server/lib/r2` (returns `{ key }`).
 - Produces: `AuditConfig.captureContent: boolean`; `auditPages.contentR2Key` populated when enabled.
 
@@ -523,16 +536,16 @@ In `AuditRepository.batchWriteResults`, add `contentR2Key: page.contentR2Key ?? 
 In `src/server/workflows/siteAuditWorkflowPhases.ts`, after the crawl produces `allPages` and before persisting, add a durable step that (only when `config.captureContent`) uploads each page's `cleanedText` to R2 and sets `contentR2Key`:
 
 ```typescript
-  if (config.captureContent) {
-    await step.do("store-page-content", async () => {
-      for (const page of allPages) {
-        if (!page.cleanedText) continue;
-        const key = `audits/${auditId}/content/${page.id}.txt`;
-        const uploaded = await putTextToR2(key, page.cleanedText);
-        page.contentR2Key = uploaded.key;
-      }
-    });
-  }
+if (config.captureContent) {
+  await step.do("store-page-content", async () => {
+    for (const page of allPages) {
+      if (!page.cleanedText) continue;
+      const key = `audits/${auditId}/content/${page.id}.txt`;
+      const uploaded = await putTextToR2(key, page.cleanedText);
+      page.contentR2Key = uploaded.key;
+    }
+  });
+}
 ```
 
 Add `import { putTextToR2 } from "@/server/lib/r2";` at the top. (`allPages` is the `StepPageResult[]` returned by `runCrawlPhase`; mutating before persistence is fine since persistence happens after this step.)
@@ -551,12 +564,14 @@ git commit -m "feat(audit): store page text in R2 when captureContent enabled"
 ## Task 6: Resolve edges (toPageId + isBroken) in a durable step
 
 **Files:**
+
 - Modify: `src/server/lib/audit/graph-edges.ts` (`resolveEdges` pure helper)
 - Modify: `src/server/features/audit/repositories/AuditRepository.ts` (`resolveAuditGraphEdges`)
 - Modify: `src/server/workflows/siteAuditWorkflowPhases.ts` (`resolve-graph` step)
 - Test: `src/server/lib/audit/graph-edges.test.ts` (extend)
 
 **Interfaces:**
+
 - Produces: `resolveEdges(edges, pagesByUrl)` returns per-edge `{ id, toPageId, isBroken }`. `AuditRepository.resolveAuditGraphEdges(auditId)` applies it in D1.
 
 - [ ] **Step 1: Write the failing test**
@@ -605,8 +620,7 @@ export function resolveEdges(
   const byUrl = new Map(pages.map((p) => [p.url, p]));
   return edges.map((edge) => {
     const target = byUrl.get(edge.toUrl) ?? null;
-    const isBroken =
-      target?.statusCode != null && target.statusCode >= 400;
+    const isBroken = target?.statusCode != null && target.statusCode >= 400;
     return {
       id: edge.id,
       toPageId: target?.id ?? null,
@@ -654,9 +668,9 @@ Import `resolveEdges` from `@/server/lib/audit/graph-edges`. Add `resolveAuditGr
 In `siteAuditWorkflowPhases.ts`, after pages+edges are persisted (after the write-results step, before/after Lighthouse), add:
 
 ```typescript
-  await step.do("resolve-graph", async () => {
-    await AuditRepository.resolveAuditGraphEdges(auditId);
-  });
+await step.do("resolve-graph", async () => {
+  await AuditRepository.resolveAuditGraphEdges(auditId);
+});
 ```
 
 (`AuditRepository` is already imported in this file.)
@@ -675,6 +689,7 @@ git commit -m "feat(audit): resolve graph edge targets and broken-link flags"
 ## Task 7: getAuditGraph payload + server function
 
 **Files:**
+
 - Modify: `src/server/lib/audit/graph-edges.ts` (`buildAuditGraphPayload`)
 - Modify: `src/server/lib/audit/types.ts` (`AuditGraphPayload` types)
 - Modify: `src/server/features/audit/repositories/AuditRepository.ts` (`getAuditGraphData`)
@@ -684,6 +699,7 @@ git commit -m "feat(audit): resolve graph edge targets and broken-link flags"
 - Test: `src/server/lib/audit/graph-edges.test.ts` (extend)
 
 **Interfaces:**
+
 - Produces: `AuditGraphPayload { nodes: AuditGraphNode[]; edges: AuditGraphEdge[]; meta: {...} }`; server function `getAuditGraph({ data: { projectId, auditId } })`.
 
 - [ ] **Step 1: Add payload types**
@@ -731,8 +747,24 @@ describe("buildAuditGraphPayload", () => {
       auditId: "a1",
       startUrl: "https://s.com/",
       pages: [
-        { id: "p1", url: "https://s.com/", title: "Home", statusCode: 200, wordCount: 10, internalLinkCount: 1, isIndexable: true },
-        { id: "p2", url: "https://s.com/a", title: "A", statusCode: 200, wordCount: 5, internalLinkCount: 0, isIndexable: true },
+        {
+          id: "p1",
+          url: "https://s.com/",
+          title: "Home",
+          statusCode: 200,
+          wordCount: 10,
+          internalLinkCount: 1,
+          isIndexable: true,
+        },
+        {
+          id: "p2",
+          url: "https://s.com/a",
+          title: "A",
+          statusCode: 200,
+          wordCount: 5,
+          internalLinkCount: 0,
+          isIndexable: true,
+        },
       ],
       edges: [
         { fromPageId: "p1", toPageId: "p2", anchorText: "A", isBroken: false },
@@ -758,10 +790,7 @@ Expected: FAIL — `buildAuditGraphPayload` not exported.
 Add to `src/server/lib/audit/graph-edges.ts`:
 
 ```typescript
-import type {
-  AuditGraphNode,
-  AuditGraphPayload,
-} from "./types";
+import type { AuditGraphNode, AuditGraphPayload } from "./types";
 
 export function buildAuditGraphPayload(input: {
   auditId: string;
@@ -811,13 +840,23 @@ async function getAuditGraphData(auditId: string, projectId: string) {
     db.query.auditPages.findMany({
       where: eq(auditPages.auditId, auditId),
       columns: {
-        id: true, url: true, title: true, statusCode: true,
-        wordCount: true, internalLinkCount: true, isIndexable: true,
+        id: true,
+        url: true,
+        title: true,
+        statusCode: true,
+        wordCount: true,
+        internalLinkCount: true,
+        isIndexable: true,
       },
     }),
     db.query.auditPageLinks.findMany({
       where: eq(auditPageLinks.auditId, auditId),
-      columns: { fromPageId: true, toPageId: true, anchorText: true, isBroken: true },
+      columns: {
+        fromPageId: true,
+        toPageId: true,
+        anchorText: true,
+        isBroken: true,
+      },
     }),
   ]);
   return { audit, pages, edges };
@@ -838,8 +877,12 @@ async function getGraph(auditId: string, projectId: string) {
     auditId,
     startUrl: data.audit.startUrl,
     pages: data.pages.map((p) => ({
-      id: p.id, url: p.url, title: p.title, statusCode: p.statusCode,
-      wordCount: p.wordCount, internalLinkCount: p.internalLinkCount,
+      id: p.id,
+      url: p.url,
+      title: p.title,
+      statusCode: p.statusCode,
+      wordCount: p.wordCount,
+      internalLinkCount: p.internalLinkCount,
       isIndexable: p.isIndexable,
     })),
     edges: data.edges,
@@ -889,11 +932,13 @@ git commit -m "feat(audit): add getAuditGraph server function and payload builde
 ## Task 8: Client graph builder + metrics (pure)
 
 **Files:**
+
 - Create: `src/client/features/audit/graph/graphologyGraph.ts`
 - Create: `src/client/features/audit/graph/graphologyGraph.test.ts`
 - Modify: `package.json` (add deps)
 
 **Interfaces:**
+
 - Consumes: `AuditGraphPayload` (Task 7).
 - Produces: `buildGraphologyGraph(payload): Graph`; `computeGraphMetrics(graph): { orphans: string[]; depthByNode: Map<string, number>; pagerank: Record<string, number> }`.
 
@@ -913,12 +958,41 @@ import type { AuditGraphPayload } from "@/server/lib/audit/types";
 
 const payload: AuditGraphPayload = {
   nodes: [
-    { id: "home", url: "https://s.com/", title: "Home", statusCode: 200, wordCount: 9, internalLinkCount: 1, isIndexable: true },
-    { id: "a", url: "https://s.com/a", title: "A", statusCode: 200, wordCount: 5, internalLinkCount: 0, isIndexable: true },
-    { id: "orphan", url: "https://s.com/orphan", title: "O", statusCode: 200, wordCount: 5, internalLinkCount: 0, isIndexable: true },
+    {
+      id: "home",
+      url: "https://s.com/",
+      title: "Home",
+      statusCode: 200,
+      wordCount: 9,
+      internalLinkCount: 1,
+      isIndexable: true,
+    },
+    {
+      id: "a",
+      url: "https://s.com/a",
+      title: "A",
+      statusCode: 200,
+      wordCount: 5,
+      internalLinkCount: 0,
+      isIndexable: true,
+    },
+    {
+      id: "orphan",
+      url: "https://s.com/orphan",
+      title: "O",
+      statusCode: 200,
+      wordCount: 5,
+      internalLinkCount: 0,
+      isIndexable: true,
+    },
   ],
   edges: [{ from: "home", to: "a", anchorText: "A", isBroken: false }],
-  meta: { auditId: "a1", startUrl: "https://s.com/", pagesCrawled: 3, generatedAt: "x" },
+  meta: {
+    auditId: "a1",
+    startUrl: "https://s.com/",
+    pagesCrawled: 3,
+    generatedAt: "x",
+  },
 };
 
 describe("graphologyGraph", () => {
@@ -1017,6 +1091,7 @@ git commit -m "feat(audit): add client graph builder and metrics"
 ## Task 9: AuditGraphView component + Graph tab
 
 **Files:**
+
 - Create: `src/client/features/audit/graph/graphSummary.ts`
 - Create: `src/client/features/audit/graph/graphSummary.test.ts`
 - Create: `src/client/features/audit/graph/AuditGraphView.tsx`
@@ -1024,6 +1099,7 @@ git commit -m "feat(audit): add client graph builder and metrics"
 - Modify: `src/routes/_project/p/$projectId/audit/index.tsx` (provide graph data)
 
 **Interfaces:**
+
 - Consumes: `getAuditGraph` server function (Task 7), `buildGraphologyGraph`/`computeGraphMetrics` (Task 8).
 - Produces: `buildGraphSummary(payload, metrics): { pagesCrawled; orphanCount; brokenCount }`.
 
@@ -1041,11 +1117,32 @@ import type { AuditGraphPayload } from "@/server/lib/audit/types";
 
 const payload: AuditGraphPayload = {
   nodes: [
-    { id: "home", url: "https://s.com/", title: "Home", statusCode: 200, wordCount: 9, internalLinkCount: 1, isIndexable: true },
-    { id: "orphan", url: "https://s.com/o", title: "O", statusCode: 200, wordCount: 1, internalLinkCount: 0, isIndexable: true },
+    {
+      id: "home",
+      url: "https://s.com/",
+      title: "Home",
+      statusCode: 200,
+      wordCount: 9,
+      internalLinkCount: 1,
+      isIndexable: true,
+    },
+    {
+      id: "orphan",
+      url: "https://s.com/o",
+      title: "O",
+      statusCode: 200,
+      wordCount: 1,
+      internalLinkCount: 0,
+      isIndexable: true,
+    },
   ],
   edges: [{ from: "home", to: "orphan", anchorText: null, isBroken: true }],
-  meta: { auditId: "a1", startUrl: "https://s.com/", pagesCrawled: 2, generatedAt: "x" },
+  meta: {
+    auditId: "a1",
+    startUrl: "https://s.com/",
+    pagesCrawled: 2,
+    generatedAt: "x",
+  },
 };
 
 describe("buildGraphSummary", () => {

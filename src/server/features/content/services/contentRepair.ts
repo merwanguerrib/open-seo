@@ -20,8 +20,8 @@ import {
   type ArticleMetricPoint,
 } from "@/server/features/content/services/repairDecision";
 import {
-  GscNotConnectedError,
   GscService,
+  isGscUnavailableError,
 } from "@/server/features/gsc/services/GscService";
 import { getContentModel } from "@/server/lib/openrouter";
 
@@ -65,7 +65,8 @@ async function snapshotArticleMetrics(
         });
       }
     } catch (error) {
-      if (!(error instanceof GscNotConnectedError)) {
+      // GSC is optional for metrics; only surface unexpected (non-GSC) errors.
+      if (!isGscUnavailableError(error)) {
         console.error(
           `[content-repair] GSC snapshot failed for ${article.id}:`,
           error,

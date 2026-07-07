@@ -31,7 +31,9 @@ export function ResultsView({
 }) {
   const { audit, pages, lighthouse } = data;
   const hasPerformanceTab = lighthouse.length > 0;
-  const activeTab = (tab === "performance" && !hasPerformanceTab ? "pages" : tab) as ResultsTab;
+  const activeTab = (
+    tab === "performance" && !hasPerformanceTab ? "pages" : tab
+  ) as ResultsTab;
   const stats = useResultStats(pages, lighthouse);
 
   return (
@@ -146,7 +148,12 @@ function ResultsHeader({
   const tabs: Array<{ tab: ResultsTab; label: string }> = [
     { tab: "pages", label: `Pages (${pageCount})` },
     ...(hasPerformanceTab
-      ? [{ tab: "performance" as ResultsTab, label: `Performance (${lighthouseCount})` }]
+      ? [
+          {
+            tab: "performance" as ResultsTab,
+            label: `Performance (${lighthouseCount})`,
+          },
+        ]
       : []),
     { tab: "graph", label: "Graph" },
   ];

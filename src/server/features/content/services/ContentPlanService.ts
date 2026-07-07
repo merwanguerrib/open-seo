@@ -7,6 +7,7 @@ import type {
 import { ContentRepository } from "@/server/features/content/repositories/ContentRepository";
 import { discoverTopics } from "@/server/features/content/services/topicDiscovery";
 import { ContentService } from "@/server/features/content/services/ContentService";
+import { KeywordResearchRepository } from "@/server/features/keywords/repositories/KeywordResearchRepository";
 import { AppError } from "@/server/lib/errors";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -69,11 +70,19 @@ async function runDiscovery(input: {
 }) {
   const plan = await ContentPlanRepository.getOrCreatePlan(input.projectId);
 
-  // Seed expansion from saved keywords when GSC has no click data yet.
-  const savedKeywords = await ContentRepository.listArticlesForProject(
+  // Seed expansion when GSC has no click data (not connected / token
+  // revoked): the project's top saved keywords, falling back to existing
+  // article keywords.
+  const savedSeeds = await KeywordResearchRepository.listTopSavedKeywordStrings(
     input.projectId,
+    3,
   );
-  const fallbackSeeds = savedKeywords.slice(0, 3).map((a) => a.keyword);
+  const fallbackSeeds =
+    savedSeeds.length > 0
+      ? savedSeeds
+      : (await ContentRepository.listArticlesForProject(input.projectId))
+          .slice(0, 3)
+          .map((article) => article.keyword);
 
   const result = await discoverTopics({
     projectId: input.projectId,

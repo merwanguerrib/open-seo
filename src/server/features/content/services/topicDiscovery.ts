@@ -2,8 +2,8 @@ import type { BillingCustomerContext } from "@/server/billing/subscription";
 import { ContentPlanRepository } from "@/server/features/content/repositories/ContentPlanRepository";
 import { ContentRepository } from "@/server/features/content/repositories/ContentRepository";
 import {
-  GscNotConnectedError,
   GscService,
+  isGscUnavailableError,
 } from "@/server/features/gsc/services/GscService";
 import { createDataforseoClient } from "@/server/lib/dataforseo";
 import { isRecord } from "@/server/lib/dataforseo/envelope";
@@ -98,7 +98,13 @@ async function discoverGscOpportunities(
     }
     return { topics, seeds };
   } catch (error) {
-    if (error instanceof GscNotConnectedError) return { topics: [], seeds: [] };
+    if (isGscUnavailableError(error)) {
+      console.warn(
+        `[topic-discovery] GSC opportunities skipped for ${projectId}:`,
+        error instanceof Error ? error.message : error,
+      );
+      return { topics: [], seeds: [] };
+    }
     throw error;
   }
 }

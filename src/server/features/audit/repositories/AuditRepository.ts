@@ -295,14 +295,26 @@ async function getAuditGraphData(auditId: string, projectId: string) {
     db.query.auditPages.findMany({
       where: eq(auditPages.auditId, auditId),
       columns: {
-        id: true, url: true, title: true, statusCode: true,
-        wordCount: true, internalLinkCount: true, isIndexable: true,
-        h1Count: true, externalLinkCount: true, canonicalUrl: true,
+        id: true,
+        url: true,
+        title: true,
+        statusCode: true,
+        wordCount: true,
+        internalLinkCount: true,
+        isIndexable: true,
+        h1Count: true,
+        externalLinkCount: true,
+        canonicalUrl: true,
       },
     }),
     db.query.auditPageLinks.findMany({
       where: eq(auditPageLinks.auditId, auditId),
-      columns: { fromPageId: true, toPageId: true, anchorText: true, isBroken: true },
+      columns: {
+        fromPageId: true,
+        toPageId: true,
+        anchorText: true,
+        isBroken: true,
+      },
     }),
     db.query.auditPageClusters.findMany({
       where: eq(auditPageClusters.auditId, auditId),

@@ -32,7 +32,11 @@ describe("mapGraphifyClustersToPages", () => {
           { id: "a", community: 0, source: "pages/index.md" },
           { id: "b", community: 0, source: "graphify-input/pages/index.md" },
           { id: "c", community: 1, source: "pages/index.md" },
-          { id: "d", community: 1, sources: ["pages/about.md", "pages/blog-post.md"] },
+          {
+            id: "d",
+            community: 1,
+            sources: ["pages/about.md", "pages/blog-post.md"],
+          },
           { id: "no-community", source: "pages/about.md" },
           { id: "no-source", community: 0 },
           { id: "unknown-file", community: 0, source: "pages/nope.md" },

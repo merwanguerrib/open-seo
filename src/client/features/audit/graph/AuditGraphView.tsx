@@ -34,9 +34,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { AuditGraphPayload } from "@/server/lib/audit/types";
 
-type Selection =
-  | { kind: "insight" | "category" | "cluster" | "semantic"; id: string }
-  | null;
+type Selection = {
+  kind: "insight" | "category" | "cluster" | "semantic";
+  id: string;
+} | null;
 type ColorMode = "category" | "community" | "semantic";
 
 export function AuditGraphView({
@@ -141,7 +142,11 @@ export function AuditGraphView({
         graph.setNodeAttribute(n, "x", Math.random());
         graph.setNodeAttribute(n, "y", Math.random());
         graph.setNodeAttribute(n, "size", 4);
-        graph.setNodeAttribute(n, "color", colorsRef.current.get(n) ?? "#999999");
+        graph.setNodeAttribute(
+          n,
+          "color",
+          colorsRef.current.get(n) ?? "#999999",
+        );
       });
       forceAtlas2.assign(graph, {
         iterations: 300,
@@ -193,17 +198,18 @@ export function AuditGraphView({
     );
   }, [payload]);
 
-  const selectedCategory =
-    selection?.kind === "category" ? selection.id : null;
-  const selectedInsightId =
-    selection?.kind === "insight" ? selection.id : null;
+  const selectedCategory = selection?.kind === "category" ? selection.id : null;
+  const selectedInsightId = selection?.kind === "insight" ? selection.id : null;
 
   const exportCsv = () => {
     const { headers, rows } = buildGraphExportRows(payload, graph, metrics);
     downloadCsv("audit-graph.csv", buildCsv(headers, rows));
   };
   const exportJson = () => {
-    downloadJson("audit-graph.json", buildGraphExportJson(payload, graph, metrics));
+    downloadJson(
+      "audit-graph.json",
+      buildGraphExportJson(payload, graph, metrics),
+    );
   };
 
   const [isExportingGraphify, setIsExportingGraphify] = useState(false);
@@ -257,10 +263,18 @@ export function AuditGraphView({
           broken internal link{summary.brokenCount === 1 ? "" : "s"}
         </div>
         <div className="flex shrink-0 gap-2">
-          <button type="button" className="btn btn-ghost btn-xs" onClick={exportCsv}>
+          <button
+            type="button"
+            className="btn btn-ghost btn-xs"
+            onClick={exportCsv}
+          >
             Export CSV
           </button>
-          <button type="button" className="btn btn-ghost btn-xs" onClick={exportJson}>
+          <button
+            type="button"
+            className="btn btn-ghost btn-xs"
+            onClick={exportJson}
+          >
             Export JSON
           </button>
           <div
@@ -359,9 +373,7 @@ export function AuditGraphView({
           <AuditInsightsPanel
             insights={insights}
             selectedId={selectedInsightId}
-            onSelect={(id) =>
-              setSelection(id ? { kind: "insight", id } : null)
-            }
+            onSelect={(id) => setSelection(id ? { kind: "insight", id } : null)}
           />
         </div>
         <div className="relative">

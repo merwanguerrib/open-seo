@@ -21,21 +21,22 @@ Add two related capabilities to the audit "Graph" tab:
 
 ## Decisions (from brainstorming)
 
-| Decision | Choice |
-| --- | --- |
-| Node detail panel placement | Right column of the Graph tab |
-| Detail fields (client-derived) | url, title, statusCode, isIndexable, inbound (inDegree), outbound internal (`internalLinkCount`), click depth, internal PageRank |
-| Detail fields (new server payload) | H1 count, external links count, canonical URL |
-| Meta description | Not included |
-| Category rule | First URL path segment only; home/root → `(root)` |
-| Category coloring | Base node color = category color; a fixed palette assigned deterministically |
-| Category legend | Left column, below insights; clickable to highlight that category's pages |
-| Highlight source | Generalized: a single active selection is either an insight OR a category |
-| Node text | Never exposed (privacy — consistent with Phase 1) |
+| Decision                           | Choice                                                                                                                           |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Node detail panel placement        | Right column of the Graph tab                                                                                                    |
+| Detail fields (client-derived)     | url, title, statusCode, isIndexable, inbound (inDegree), outbound internal (`internalLinkCount`), click depth, internal PageRank |
+| Detail fields (new server payload) | H1 count, external links count, canonical URL                                                                                    |
+| Meta description                   | Not included                                                                                                                     |
+| Category rule                      | First URL path segment only; home/root → `(root)`                                                                                |
+| Category coloring                  | Base node color = category color; a fixed palette assigned deterministically                                                     |
+| Category legend                    | Left column, below insights; clickable to highlight that category's pages                                                        |
+| Highlight source                   | Generalized: a single active selection is either an insight OR a category                                                        |
+| Node text                          | Never exposed (privacy — consistent with Phase 1)                                                                                |
 
 ## Layout
 
 Three columns on large screens: `[ left: category legend + insights panel | center: graph | right: node detail ]`.
+
 - Left column keeps the Phase 2 insights panel; the category legend sits above it.
 - Right column shows the node detail when a node is selected, otherwise a subtle
   placeholder ("Click a node to inspect it").

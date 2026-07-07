@@ -25,41 +25,46 @@
 ## File Structure
 
 **3a — structural communities (client):**
-- `src/client/features/audit/graph/structuralClusters.ts` *(new)* — Louvain partition + cluster naming heuristic + colors (pure).
-- `src/client/features/audit/graph/AuditClustersPanel.tsx` *(new)* — presentational clusters list.
-- `src/client/features/audit/graph/AuditGraphView.tsx` *(modify)* — color-mode state (`category`/`community`, later `semantic`), color swap effect, panel switch.
+
+- `src/client/features/audit/graph/structuralClusters.ts` _(new)_ — Louvain partition + cluster naming heuristic + colors (pure).
+- `src/client/features/audit/graph/AuditClustersPanel.tsx` _(new)_ — presentational clusters list.
+- `src/client/features/audit/graph/AuditGraphView.tsx` _(modify)_ — color-mode state (`category`/`community`, later `semantic`), color swap effect, panel switch.
 
 **3b — Graphify export:**
-- `src/server/lib/audit/graphify-export.ts` *(new)* — `buildSlugMap` + `buildGraphifyExportFiles` (pure).
-- `src/server/features/audit/repositories/AuditRepository.ts` *(modify)* — `getGraphifyExportData`.
-- `src/server/features/audit/services/AuditService.ts` *(modify)* — `exportForGraphify`, `contentCaptured` in graph meta.
-- `src/serverFunctions/audit.ts` + `src/types/schemas/audit.ts` *(modify)* — `exportAuditForGraphify` fn + schema, `captureContent` on `startAuditSchema`.
-- `src/client/features/audit/graph/graphifyZip.ts` *(new)* — fflate zip build + download.
-- `src/client/features/audit/launch/*` *(modify)* — "Capture page content" toggle.
+
+- `src/server/lib/audit/graphify-export.ts` _(new)_ — `buildSlugMap` + `buildGraphifyExportFiles` (pure).
+- `src/server/features/audit/repositories/AuditRepository.ts` _(modify)_ — `getGraphifyExportData`.
+- `src/server/features/audit/services/AuditService.ts` _(modify)_ — `exportForGraphify`, `contentCaptured` in graph meta.
+- `src/serverFunctions/audit.ts` + `src/types/schemas/audit.ts` _(modify)_ — `exportAuditForGraphify` fn + schema, `captureContent` on `startAuditSchema`.
+- `src/client/features/audit/graph/graphifyZip.ts` _(new)_ — fflate zip build + download.
+- `src/client/features/audit/launch/*` _(modify)_ — "Capture page content" toggle.
 
 **3c — semantic re-import:**
-- `src/db/app.schema.ts` *(modify)* — `audit_page_clusters` table + migration.
-- `src/server/lib/audit/graphify-import.ts` *(new)* — Zod schema for Graphify `graph.json` + URL-slug mapper (pure).
-- `AuditRepository` / `AuditService` / `serverFunctions/audit.ts` *(modify)* — `replaceGraphifyClusters`, clusters in graph payload, `importGraphifyClusters` fn.
-- `src/client/features/audit/graph/semanticClusters.ts` *(new)* — legend/colors from `semanticCluster` node field (pure).
-- `AuditGraphView.tsx` *(modify)* — third color mode + import button.
+
+- `src/db/app.schema.ts` _(modify)_ — `audit_page_clusters` table + migration.
+- `src/server/lib/audit/graphify-import.ts` _(new)_ — Zod schema for Graphify `graph.json` + URL-slug mapper (pure).
+- `AuditRepository` / `AuditService` / `serverFunctions/audit.ts` _(modify)_ — `replaceGraphifyClusters`, clusters in graph payload, `importGraphifyClusters` fn.
+- `src/client/features/audit/graph/semanticClusters.ts` _(new)_ — legend/colors from `semanticCluster` node field (pure).
+- `AuditGraphView.tsx` _(modify)_ — third color mode + import button.
 
 ---
 
 ## Task 1: Structural clusters pure module (Louvain + naming)
 
 **Files:**
+
 - Create: `src/client/features/audit/graph/structuralClusters.ts`
 - Test: `src/client/features/audit/graph/structuralClusters.test.ts`
 
 **Interfaces:**
+
 - Consumes: `AuditGraphPayload` (`@/server/lib/audit/types`), a graphology `Graph` (from `buildGraphologyGraph`), and `pagerank: Record<string, number>` (from `computeGraphMetrics`).
 - Produces:
 
 ```ts
 export interface StructuralCluster {
-  id: string;          // louvain community id, stringified
-  name: string;        // heuristic name (most frequent title/URL term) or "Cluster N"
+  id: string; // louvain community id, stringified
+  name: string; // heuristic name (most frequent title/URL term) or "Cluster N"
   size: number;
   color: string;
   pivotNodeId: string; // max pagerank in the cluster
@@ -113,10 +118,19 @@ const payload: AuditGraphPayload = {
     node("s3", "https://s.com/shop/green", "Shop item green"),
   ],
   edges: [
-    edge("b1", "b2"), edge("b2", "b3"), edge("b3", "b1"),
-    edge("s1", "s2"), edge("s2", "s3"), edge("s3", "s1"),
+    edge("b1", "b2"),
+    edge("b2", "b3"),
+    edge("b3", "b1"),
+    edge("s1", "s2"),
+    edge("s2", "s3"),
+    edge("s3", "s1"),
   ],
-  meta: { auditId: "x", startUrl: "https://s.com/blog/one", pagesCrawled: 6, generatedAt: "t" },
+  meta: {
+    auditId: "x",
+    startUrl: "https://s.com/blog/one",
+    pagesCrawled: 6,
+    generatedAt: "t",
+  },
 };
 
 describe("computeStructuralClusters", () => {
@@ -190,8 +204,21 @@ export interface StructuralCluster {
 }
 
 const STOPWORDS = new Set([
-  "the", "and", "for", "with", "from", "your", "our", "page", "home",
-  "index", "www", "com", "http", "https", "html",
+  "the",
+  "and",
+  "for",
+  "with",
+  "from",
+  "your",
+  "our",
+  "page",
+  "home",
+  "index",
+  "www",
+  "com",
+  "http",
+  "https",
+  "html",
 ]);
 
 function terms(text: string): string[] {
@@ -293,10 +320,12 @@ git commit -m "feat(audit): compute structural link communities with louvain"
 ## Task 2: Clusters panel + color-mode toggle in the graph view
 
 **Files:**
+
 - Create: `src/client/features/audit/graph/AuditClustersPanel.tsx`
 - Modify: `src/client/features/audit/graph/AuditGraphView.tsx`
 
 **Interfaces:**
+
 - Consumes: `StructuralCluster` + `computeStructuralClusters` (Task 1).
 - Produces: `AuditClustersPanel` with props `{ clusters: StructuralCluster[]; selectedClusterId: string | null; onSelect: (id: string | null) => void }`; `AuditGraphView` gains internal `colorMode: "category" | "community"` state (extended to `"semantic"` in Task 10).
 
@@ -375,29 +404,30 @@ import { AuditClustersPanel } from "@/client/features/audit/graph/AuditClustersP
 2. Replace the `Selection` type and add a color-mode type:
 
 ```typescript
-type Selection =
-  | { kind: "insight" | "category" | "cluster"; id: string }
-  | null;
+type Selection = {
+  kind: "insight" | "category" | "cluster";
+  id: string;
+} | null;
 type ColorMode = "category" | "community";
 ```
 
 3. Inside the component, after the `categories` memo, add:
 
 ```typescript
-  const [colorMode, setColorMode] = useState<ColorMode>("category");
-  const structural = useMemo(
-    () => computeStructuralClusters(payload, graph, metrics.pagerank),
-    [payload, graph, metrics],
-  );
+const [colorMode, setColorMode] = useState<ColorMode>("category");
+const structural = useMemo(
+  () => computeStructuralClusters(payload, graph, metrics.pagerank),
+  [payload, graph, metrics],
+);
 ```
 
 4. Extend the `highlightedIds` memo with the cluster case — inside it, before the category branch:
 
 ```typescript
-    if (selection.kind === "cluster") {
-      const cluster = structural.clusters.find((c) => c.id === selection.id);
-      return new Set(cluster?.nodeIds ?? []);
-    }
+if (selection.kind === "cluster") {
+  const cluster = structural.clusters.find((c) => c.id === selection.id);
+  return new Set(cluster?.nodeIds ?? []);
+}
 ```
 
 and add `structural` to its dependency array.
@@ -405,30 +435,30 @@ and add `structural` to its dependency array.
 5. Make the colors ref follow the mode. Replace:
 
 ```typescript
-  const colorsRef = useRef(categories.colorByNodeId);
-  colorsRef.current = categories.colorByNodeId;
+const colorsRef = useRef(categories.colorByNodeId);
+colorsRef.current = categories.colorByNodeId;
 ```
 
 with:
 
 ```typescript
-  const activeColors =
-    colorMode === "community"
-      ? structural.colorByNodeId
-      : categories.colorByNodeId;
-  const colorsRef = useRef(activeColors);
-  colorsRef.current = activeColors;
+const activeColors =
+  colorMode === "community"
+    ? structural.colorByNodeId
+    : categories.colorByNodeId;
+const colorsRef = useRef(activeColors);
+colorsRef.current = activeColors;
 ```
 
 6. Add an effect (below the existing `refresh` effect) that re-paints node colors when the mode changes:
 
 ```typescript
-  useEffect(() => {
-    graph.forEachNode((n) => {
-      graph.setNodeAttribute(n, "color", colorsRef.current.get(n) ?? "#999999");
-    });
-    rendererRef.current?.refresh();
-  }, [activeColors, graph]);
+useEffect(() => {
+  graph.forEachNode((n) => {
+    graph.setNodeAttribute(n, "color", colorsRef.current.get(n) ?? "#999999");
+  });
+  rendererRef.current?.refresh();
+}, [activeColors, graph]);
 ```
 
 7. Reset the mode with the other state on payload change — in the existing reset effect add `setColorMode("category");`.
@@ -436,43 +466,39 @@ with:
 8. In the JSX, above `<AuditCategoryLegend …/>`, add the toggle, and switch the left panel by mode. Replace the current `<AuditCategoryLegend …/>` block with:
 
 ```tsx
-          <div className="join w-full">
-            <button
-              type="button"
-              className={`btn join-item btn-xs flex-1 ${colorMode === "category" ? "btn-active" : ""}`}
-              onClick={() => setColorMode("category")}
-            >
-              Categories
-            </button>
-            <button
-              type="button"
-              className={`btn join-item btn-xs flex-1 ${colorMode === "community" ? "btn-active" : ""}`}
-              onClick={() => setColorMode("community")}
-            >
-              Communities
-            </button>
-          </div>
-          {colorMode === "category" ? (
-            <AuditCategoryLegend
-              legend={categories.legend}
-              selectedCategory={selectedCategory}
-              onSelect={(category) =>
-                setSelection(
-                  category ? { kind: "category", id: category } : null,
-                )
-              }
-            />
-          ) : (
-            <AuditClustersPanel
-              clusters={structural.clusters}
-              selectedClusterId={
-                selection?.kind === "cluster" ? selection.id : null
-              }
-              onSelect={(id) =>
-                setSelection(id ? { kind: "cluster", id } : null)
-              }
-            />
-          )}
+<div className="join w-full">
+  <button
+    type="button"
+    className={`btn join-item btn-xs flex-1 ${colorMode === "category" ? "btn-active" : ""}`}
+    onClick={() => setColorMode("category")}
+  >
+    Categories
+  </button>
+  <button
+    type="button"
+    className={`btn join-item btn-xs flex-1 ${colorMode === "community" ? "btn-active" : ""}`}
+    onClick={() => setColorMode("community")}
+  >
+    Communities
+  </button>
+</div>;
+{
+  colorMode === "category" ? (
+    <AuditCategoryLegend
+      legend={categories.legend}
+      selectedCategory={selectedCategory}
+      onSelect={(category) =>
+        setSelection(category ? { kind: "category", id: category } : null)
+      }
+    />
+  ) : (
+    <AuditClustersPanel
+      clusters={structural.clusters}
+      selectedClusterId={selection?.kind === "cluster" ? selection.id : null}
+      onSelect={(id) => setSelection(id ? { kind: "cluster", id } : null)}
+    />
+  );
+}
 ```
 
 - [ ] **Step 3: Type-check and run the suite**
@@ -483,6 +509,7 @@ Expected: no type errors, all tests pass.
 - [ ] **Step 4: Verify in the running app (REQUIRED — do not skip)**
 
 `pnpm dev` (http://localhost:3001) must return HTTP 200 for `/` (SSR guard). On a completed audit's **Graph** tab:
+
 - The Categories/Communities toggle switches node colors in place.
 - The Communities panel lists clusters with name, size, and pivot path; clicking one highlights its nodes; clicking again clears.
 
@@ -500,6 +527,7 @@ git commit -m "feat(audit): color graph by louvain communities with clusters pan
 The audit config flag exists (`AuditConfig.captureContent`, R2 push already gated in the workflow) but nothing can turn it on: `startAuditSchema` and the launch form don't expose it, and the Graph tab can't tell whether content was captured (needed to enable/disable the Graphify export button in Task 6).
 
 **Files:**
+
 - Modify: `src/types/schemas/audit.ts` (startAuditSchema)
 - Modify: `src/serverFunctions/audit.ts` (pass through)
 - Modify: `src/server/lib/audit/types.ts` (`AuditGraphPayload.meta.contentCaptured?`)
@@ -509,6 +537,7 @@ The audit config flag exists (`AuditConfig.captureContent`, R2 push already gate
 - Test: `src/server/lib/audit/graph-edges.test.ts` (extend)
 
 **Interfaces:**
+
 - Produces: `startAuditSchema` gains `captureContent: z.boolean().optional().default(false)`; `AuditGraphPayload.meta.contentCaptured?: boolean`; `buildAuditGraphPayload` gains optional `contentCaptured` input. Optional field ⇒ existing test fixtures stay valid.
 
 - [ ] **Step 1: Write the failing test**
@@ -516,16 +545,16 @@ The audit config flag exists (`AuditConfig.captureContent`, R2 push already gate
 In `src/server/lib/audit/graph-edges.test.ts`, append inside the existing `buildAuditGraphPayload` describe (or a new one):
 
 ```typescript
-  it("carries contentCaptured into the payload meta", () => {
-    const payload = buildAuditGraphPayload({
-      auditId: "a",
-      startUrl: "https://s.com/",
-      pages: [],
-      edges: [],
-      contentCaptured: true,
-    });
-    expect(payload.meta.contentCaptured).toBe(true);
+it("carries contentCaptured into the payload meta", () => {
+  const payload = buildAuditGraphPayload({
+    auditId: "a",
+    startUrl: "https://s.com/",
+    pages: [],
+    edges: [],
+    contentCaptured: true,
   });
+  expect(payload.meta.contentCaptured).toBe(true);
+});
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -599,24 +628,24 @@ export const DEFAULT_LAUNCH_FORM_VALUES: LaunchFormValues = {
 `src/client/features/audit/launch/LaunchFormCard.tsx` — in `LaunchOptions`, below the max-pages block, add:
 
 ```tsx
-      <label className="label cursor-pointer justify-start gap-2 p-0">
-        <launchForm.Field name="captureContent">
-          {(field) => (
-            <input
-              type="checkbox"
-              className="toggle toggle-sm toggle-primary"
-              checked={Boolean(field.state.value)}
-              onChange={(event) => field.handleChange(event.target.checked)}
-            />
-          )}
-        </launchForm.Field>
-        <span
-          className="text-sm font-medium text-base-content/80"
-          title="Stores each page's text so you can export the crawl for Graphify semantic clustering."
-        >
-          Capture page content
-        </span>
-      </label>
+<label className="label cursor-pointer justify-start gap-2 p-0">
+  <launchForm.Field name="captureContent">
+    {(field) => (
+      <input
+        type="checkbox"
+        className="toggle toggle-sm toggle-primary"
+        checked={Boolean(field.state.value)}
+        onChange={(event) => field.handleChange(event.target.checked)}
+      />
+    )}
+  </launchForm.Field>
+  <span
+    className="text-sm font-medium text-base-content/80"
+    title="Stores each page's text so you can export the crawl for Graphify semantic clustering."
+  >
+    Capture page content
+  </span>
+</label>
 ```
 
 - [ ] **Step 5: Run tests + type-check**
@@ -636,21 +665,36 @@ git commit -m "feat(audit): expose captureContent flag end-to-end and surface it
 ## Task 4: Graphify export builder (pure, server lib)
 
 **Files:**
+
 - Create: `src/server/lib/audit/graphify-export.ts`
 - Test: `src/server/lib/audit/graphify-export.test.ts`
 
 **Interfaces:**
+
 - Produces (consumed by Task 5's service and Task 8's import mapper — `buildSlugMap` is the shared URL↔file contract):
 
 ```ts
 export function buildSlugMap(urls: string[]): Map<string, string>; // url → slug, deterministic (sorted input, -2/-3 suffixes on collision)
-export interface GraphifyExportFile { path: string; content: string; }
+export interface GraphifyExportFile {
+  path: string;
+  content: string;
+}
 export function buildGraphifyExportFiles(input: {
   auditId: string;
   startUrl: string;
   generatedAt: string;
-  pages: Array<{ id: string; url: string; title: string | null; statusCode: number | null; text: string | null }>;
-  edges: Array<{ fromPageId: string; toPageId: string | null; anchorText: string | null }>;
+  pages: Array<{
+    id: string;
+    url: string;
+    title: string | null;
+    statusCode: number | null;
+    text: string | null;
+  }>;
+  edges: Array<{
+    fromPageId: string;
+    toPageId: string | null;
+    anchorText: string | null;
+  }>;
 }): GraphifyExportFile[];
 ```
 
@@ -693,9 +737,27 @@ describe("buildGraphifyExportFiles", () => {
     startUrl: "https://s.com/",
     generatedAt: "2026-07-02T00:00:00.000Z",
     pages: [
-      { id: "p1", url: "https://s.com/", title: "Home", statusCode: 200, text: "Welcome home" },
-      { id: "p2", url: "https://s.com/about", title: 'About "us"', statusCode: 200, text: "About text" },
-      { id: "p3", url: "https://s.com/no-content", title: "Empty", statusCode: 200, text: null },
+      {
+        id: "p1",
+        url: "https://s.com/",
+        title: "Home",
+        statusCode: 200,
+        text: "Welcome home",
+      },
+      {
+        id: "p2",
+        url: "https://s.com/about",
+        title: 'About "us"',
+        statusCode: 200,
+        text: "About text",
+      },
+      {
+        id: "p3",
+        url: "https://s.com/no-content",
+        title: "Empty",
+        statusCode: 200,
+        text: null,
+      },
     ],
     edges: [
       { fromPageId: "p1", toPageId: "p2", anchorText: "About" },
@@ -789,7 +851,9 @@ export function buildSlugMap(urls: string[]): Map<string, string> {
 }
 
 function frontmatterValue(value: string | number | null): string {
-  return typeof value === "number" ? String(value) : JSON.stringify(value ?? "");
+  return typeof value === "number"
+    ? String(value)
+    : JSON.stringify(value ?? "");
 }
 
 export function buildGraphifyExportFiles(input: {
@@ -872,6 +936,7 @@ git commit -m "feat(audit): build graphify export files from crawl data"
 ## Task 5: Export repository method + `exportAuditForGraphify` server function
 
 **Files:**
+
 - Modify: `src/server/features/audit/repositories/AuditRepository.ts`
 - Modify: `src/server/features/audit/services/AuditService.ts`
 - Modify: `src/types/schemas/audit.ts`
@@ -879,6 +944,7 @@ git commit -m "feat(audit): build graphify export files from crawl data"
 - Modify: `src/server/lib/r2.ts`
 
 **Interfaces:**
+
 - Consumes: `buildGraphifyExportFiles` (Task 4), `getJsonFromR2`-style R2 access.
 - Produces: server fn `exportAuditForGraphify({ data: { projectId, auditId } })` → `{ files: GraphifyExportFile[] }` (consumed by Task 6's client zip). Throws `AppError("CONFLICT")` when no page has captured content, `AppError("NOT_FOUND")` for a missing audit.
 
@@ -1010,6 +1076,7 @@ git commit -m "feat(audit): add exportAuditForGraphify server function"
 ## Task 6: Client zip + "Export for Graphify" button + help card
 
 **Files:**
+
 - Create: `src/client/features/audit/graph/graphifyZip.ts`
 - Test: `src/client/features/audit/graph/graphifyZip.test.ts`
 - Modify: `src/client/features/audit/graph/AuditGraphView.tsx`
@@ -1017,6 +1084,7 @@ git commit -m "feat(audit): add exportAuditForGraphify server function"
 - Modify: `package.json` (add fflate)
 
 **Interfaces:**
+
 - Consumes: `exportAuditForGraphify` (Task 5), `payload.meta.contentCaptured` (Task 3), `GraphifyExportFile` shape `{ path, content }`.
 - Produces: `buildGraphifyZip(files): Uint8Array` and `downloadZip(filename, bytes): void`; `AuditGraphView` gains a required `projectId: string` prop (passed by `ResultsView`, which already receives it).
 
@@ -1118,68 +1186,73 @@ export function AuditGraphView({
 3. Next to the existing `exportCsv`/`exportJson` handlers, add:
 
 ```typescript
-  const [isExportingGraphify, setIsExportingGraphify] = useState(false);
-  const contentCaptured = payload.meta.contentCaptured === true;
-  const exportGraphify = async () => {
-    setIsExportingGraphify(true);
-    try {
-      const { files } = await exportAuditForGraphify({
-        data: { projectId, auditId: payload.meta.auditId },
-      });
-      downloadZip("graphify-input.zip", buildGraphifyZip(files));
-    } catch {
-      toast.error("Graphify export failed. Try re-running the audit with content capture enabled.");
-    } finally {
-      setIsExportingGraphify(false);
-    }
-  };
+const [isExportingGraphify, setIsExportingGraphify] = useState(false);
+const contentCaptured = payload.meta.contentCaptured === true;
+const exportGraphify = async () => {
+  setIsExportingGraphify(true);
+  try {
+    const { files } = await exportAuditForGraphify({
+      data: { projectId, auditId: payload.meta.auditId },
+    });
+    downloadZip("graphify-input.zip", buildGraphifyZip(files));
+  } catch {
+    toast.error(
+      "Graphify export failed. Try re-running the audit with content capture enabled.",
+    );
+  } finally {
+    setIsExportingGraphify(false);
+  }
+};
 ```
 
 4. In the export-buttons `<div className="flex shrink-0 gap-2">`, add after the JSON button:
 
 ```tsx
-          <div
-            className={contentCaptured ? "" : "tooltip tooltip-left"}
-            data-tip="Re-run an audit with content capture enabled"
-          >
-            <button
-              type="button"
-              className="btn btn-ghost btn-xs"
-              disabled={!contentCaptured || isExportingGraphify}
-              onClick={() => void exportGraphify()}
-            >
-              Export for Graphify
-            </button>
-          </div>
+<div
+  className={contentCaptured ? "" : "tooltip tooltip-left"}
+  data-tip="Re-run an audit with content capture enabled"
+>
+  <button
+    type="button"
+    className="btn btn-ghost btn-xs"
+    disabled={!contentCaptured || isExportingGraphify}
+    onClick={() => void exportGraphify()}
+  >
+    Export for Graphify
+  </button>
+</div>
 ```
 
 5. Below the graph grid (bottom of the returned JSX, inside the outer `space-y-3` div), add the help card, shown only when export is possible:
 
 ```tsx
-      {contentCaptured && (
-        <div className="rounded-lg border border-base-300 bg-base-200/20 p-3 text-xs text-base-content/70">
-          <p className="font-medium text-base-content/80">
-            Semantic clustering with Graphify (runs on your machine)
-          </p>
-          <p className="mt-1">
-            Download the export, unzip it, then run:{" "}
-            <code className="rounded bg-base-300 px-1 py-0.5">
-              graphify ./graphify-input --directed --html
-            </code>
-            . You can re-import the resulting{" "}
-            <code className="rounded bg-base-300 px-1 py-0.5">graph.json</code>{" "}
-            to color this graph by semantic community.
-          </p>
-        </div>
-      )}
+{
+  contentCaptured && (
+    <div className="rounded-lg border border-base-300 bg-base-200/20 p-3 text-xs text-base-content/70">
+      <p className="font-medium text-base-content/80">
+        Semantic clustering with Graphify (runs on your machine)
+      </p>
+      <p className="mt-1">
+        Download the export, unzip it, then run:{" "}
+        <code className="rounded bg-base-300 px-1 py-0.5">
+          graphify ./graphify-input --directed --html
+        </code>
+        . You can re-import the resulting{" "}
+        <code className="rounded bg-base-300 px-1 py-0.5">graph.json</code> to
+        color this graph by semantic community.
+      </p>
+    </div>
+  );
+}
 ```
 
 6. In `src/client/features/audit/results/ResultsView.tsx`, pass the prop:
-`<AuditGraphView payload={graphPayload} projectId={projectId} />` (the component already receives `projectId`).
+   `<AuditGraphView payload={graphPayload} projectId={projectId} />` (the component already receives `projectId`).
 
 - [ ] **Step 7: Type-check + app run (REQUIRED)**
 
 Run: `pnpm types:check && pnpm vitest run`, then with `pnpm dev` confirm `/` returns 200 and on the Graph tab:
+
 - Without content capture: the button is disabled with the tooltip; no help card.
 - (If a content-captured audit exists) clicking downloads `graphify-input.zip` containing `graphify-input/pages/*.md`, `edges.json`, `manifest.json`.
 
@@ -1195,6 +1268,7 @@ git commit -m "feat(audit): add Export for Graphify zip download with help card"
 ## Task 7: `audit_page_clusters` table + migration
 
 **Files:**
+
 - Modify: `src/db/app.schema.ts`
 - Create (generated): `drizzle/*_<name>.sql` migration
 
@@ -1248,10 +1322,12 @@ git commit -m "feat(audit): add audit_page_clusters table for graphify re-import
 ## Task 8: Graphify import schema + URL mapper (pure, server lib)
 
 **Files:**
+
 - Create: `src/server/lib/audit/graphify-import.ts`
 - Test: `src/server/lib/audit/graphify-import.test.ts`
 
 **Interfaces:**
+
 - Consumes: `buildSlugMap` (Task 4) — the shared slug contract.
 - Produces (consumed by Task 9's service):
 
@@ -1304,7 +1380,11 @@ describe("mapGraphifyClustersToPages", () => {
           { id: "a", community: 0, source: "pages/index.md" },
           { id: "b", community: 0, source: "graphify-input/pages/index.md" },
           { id: "c", community: 1, source: "pages/index.md" },
-          { id: "d", community: 1, sources: ["pages/about.md", "pages/blog-post.md"] },
+          {
+            id: "d",
+            community: 1,
+            sources: ["pages/about.md", "pages/blog-post.md"],
+          },
           { id: "no-community", source: "pages/about.md" },
           { id: "no-source", community: 0 },
           { id: "unknown-file", community: 0, source: "pages/nope.md" },
@@ -1427,6 +1507,7 @@ git commit -m "feat(audit): validate and map graphify clusters to audit pages by
 ## Task 9: Import server function + semantic clusters in the graph payload
 
 **Files:**
+
 - Modify: `src/server/features/audit/repositories/AuditRepository.ts`
 - Modify: `src/server/lib/audit/types.ts` (`AuditGraphNode.semanticCluster?`)
 - Modify: `src/server/lib/audit/graph-edges.ts` (`buildAuditGraphPayload`)
@@ -1435,6 +1516,7 @@ git commit -m "feat(audit): validate and map graphify clusters to audit pages by
 - Test: `src/server/lib/audit/graph-edges.test.ts` (extend)
 
 **Interfaces:**
+
 - Consumes: `graphifyGraphJsonSchema` + `mapGraphifyClustersToPages` (Task 8), `auditPageClusters` table (Task 7).
 - Produces: server fn `importGraphifyClusters({ data: { projectId, auditId, graphJson } })` → `{ imported: number }`; `AuditGraphNode` gains optional `semanticCluster?: string | null`; `buildAuditGraphPayload` gains optional `clusters?: Array<{ pageId: string; clusterLabel: string }>` input (consumed by Task 10's UI).
 
@@ -1443,29 +1525,31 @@ git commit -m "feat(audit): validate and map graphify clusters to audit pages by
 Append to `src/server/lib/audit/graph-edges.test.ts`:
 
 ```typescript
-  it("attaches semantic cluster labels to nodes when clusters are provided", () => {
-    const page = {
-      id: "p1",
-      url: "https://s.com/",
-      title: "Home",
-      statusCode: 200,
-      wordCount: 10,
-      internalLinkCount: 0,
-      isIndexable: true,
-      h1Count: 1,
-      externalLinkCount: 0,
-      canonicalUrl: null,
-    };
-    const payload = buildAuditGraphPayload({
-      auditId: "a",
-      startUrl: "https://s.com/",
-      pages: [page, { ...page, id: "p2", url: "https://s.com/b" }],
-      edges: [],
-      clusters: [{ pageId: "p1", clusterLabel: "Docs" }],
-    });
-    expect(payload.nodes.find((n) => n.id === "p1")?.semanticCluster).toBe("Docs");
-    expect(payload.nodes.find((n) => n.id === "p2")?.semanticCluster).toBeNull();
+it("attaches semantic cluster labels to nodes when clusters are provided", () => {
+  const page = {
+    id: "p1",
+    url: "https://s.com/",
+    title: "Home",
+    statusCode: 200,
+    wordCount: 10,
+    internalLinkCount: 0,
+    isIndexable: true,
+    h1Count: 1,
+    externalLinkCount: 0,
+    canonicalUrl: null,
+  };
+  const payload = buildAuditGraphPayload({
+    auditId: "a",
+    startUrl: "https://s.com/",
+    pages: [page, { ...page, id: "p2", url: "https://s.com/b" }],
+    edges: [],
+    clusters: [{ pageId: "p1", clusterLabel: "Docs" }],
   });
+  expect(payload.nodes.find((n) => n.id === "p1")?.semanticCluster).toBe(
+    "Docs",
+  );
+  expect(payload.nodes.find((n) => n.id === "p2")?.semanticCluster).toBeNull();
+});
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -1622,12 +1706,14 @@ git commit -m "feat(audit): import graphify clusters and expose them on graph no
 ## Task 10: Semantic color mode + "Import Graphify clusters" button
 
 **Files:**
+
 - Create: `src/client/features/audit/graph/semanticClusters.ts`
 - Test: `src/client/features/audit/graph/semanticClusters.test.ts`
 - Modify: `src/client/features/audit/graph/AuditCategoryLegend.tsx` (title prop)
 - Modify: `src/client/features/audit/graph/AuditGraphView.tsx`
 
 **Interfaces:**
+
 - Consumes: `payload.nodes[].semanticCluster` (Task 9), `importGraphifyClusters` server fn (Task 9), `CategoryLegendEntry` + `CATEGORY_PALETTE` (existing).
 - Produces: `computeSemanticClusters(payload): { legend: CategoryLegendEntry[]; colorByNodeId: Map<string, string> }` — legend entries reuse `CategoryLegendEntry` so `AuditCategoryLegend` renders them.
 
@@ -1664,10 +1750,19 @@ describe("computeSemanticClusters", () => {
         node("d", null),
       ],
       edges: [],
-      meta: { auditId: "x", startUrl: "https://s.com/a", pagesCrawled: 4, generatedAt: "t" },
+      meta: {
+        auditId: "x",
+        startUrl: "https://s.com/a",
+        pagesCrawled: 4,
+        generatedAt: "t",
+      },
     } as AuditGraphPayload;
     const { legend, colorByNodeId } = computeSemanticClusters(payload);
-    expect(legend.map((e) => e.category)).toEqual(["Docs", "Blog", "(unclustered)"]);
+    expect(legend.map((e) => e.category)).toEqual([
+      "Docs",
+      "Blog",
+      "(unclustered)",
+    ]);
     expect(legend.map((e) => e.count)).toEqual([2, 1, 1]);
     expect(colorByNodeId.get("a")).toBe(colorByNodeId.get("b"));
     expect(colorByNodeId.get("a")).not.toBe(colorByNodeId.get("c"));
@@ -1678,7 +1773,12 @@ describe("computeSemanticClusters", () => {
     const payload = {
       nodes: [node("a", null)],
       edges: [],
-      meta: { auditId: "x", startUrl: "https://s.com/a", pagesCrawled: 1, generatedAt: "t" },
+      meta: {
+        auditId: "x",
+        startUrl: "https://s.com/a",
+        pagesCrawled: 1,
+        generatedAt: "t",
+      },
     } as AuditGraphPayload;
     expect(computeSemanticClusters(payload).legend).toEqual([]);
   });
@@ -1741,10 +1841,7 @@ export function computeSemanticClusters(payload: AuditGraphPayload): {
   const colorByCluster = new Map(legend.map((e) => [e.category, e.color]));
   const colorByNodeId = new Map<string, string>();
   for (const [nodeId, cluster] of clusterByNode) {
-    colorByNodeId.set(
-      nodeId,
-      colorByCluster.get(cluster) ?? UNCLUSTERED_COLOR,
-    );
+    colorByNodeId.set(nodeId, colorByCluster.get(cluster) ?? UNCLUSTERED_COLOR);
   }
   return { legend, colorByNodeId };
 }
@@ -1774,95 +1871,95 @@ import { computeSemanticClusters } from "@/client/features/audit/graph/semanticC
 2. Extend the types from Task 2:
 
 ```typescript
-type Selection =
-  | { kind: "insight" | "category" | "cluster" | "semantic"; id: string }
-  | null;
+type Selection = {
+  kind: "insight" | "category" | "cluster" | "semantic";
+  id: string;
+} | null;
 type ColorMode = "category" | "community" | "semantic";
 ```
 
 3. After the `structural` memo, add:
 
 ```typescript
-  const semantic = useMemo(() => computeSemanticClusters(payload), [payload]);
-  const hasSemantic = semantic.legend.length > 0;
-  const queryClient = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isImporting, setIsImporting] = useState(false);
+const semantic = useMemo(() => computeSemanticClusters(payload), [payload]);
+const hasSemantic = semantic.legend.length > 0;
+const queryClient = useQueryClient();
+const fileInputRef = useRef<HTMLInputElement>(null);
+const [isImporting, setIsImporting] = useState(false);
 
-  const onImportFile = async (file: File) => {
-    setIsImporting(true);
-    try {
-      const graphJson: unknown = JSON.parse(await file.text());
-      const { imported } = await importGraphifyClusters({
-        data: { projectId, auditId: payload.meta.auditId, graphJson },
-      });
-      toast.success(`Imported semantic clusters for ${imported} pages.`);
-      await queryClient.invalidateQueries({ queryKey: ["audit-graph"] });
-      setColorMode("semantic");
-    } catch (error) {
-      toast.error(
-        error instanceof SyntaxError
-          ? "That file is not valid JSON."
-          : "Import failed. Use the graph.json produced by graphify on this audit's export.",
-      );
-    } finally {
-      setIsImporting(false);
-    }
-  };
+const onImportFile = async (file: File) => {
+  setIsImporting(true);
+  try {
+    const graphJson: unknown = JSON.parse(await file.text());
+    const { imported } = await importGraphifyClusters({
+      data: { projectId, auditId: payload.meta.auditId, graphJson },
+    });
+    toast.success(`Imported semantic clusters for ${imported} pages.`);
+    await queryClient.invalidateQueries({ queryKey: ["audit-graph"] });
+    setColorMode("semantic");
+  } catch (error) {
+    toast.error(
+      error instanceof SyntaxError
+        ? "That file is not valid JSON."
+        : "Import failed. Use the graph.json produced by graphify on this audit's export.",
+    );
+  } finally {
+    setIsImporting(false);
+  }
+};
 ```
 
 Note: `setColorMode("semantic")` runs before the payload-reset effect re-fires on the refetched payload; that effect resets the mode to `"category"`. To keep the semantic mode after import, change the reset effect to:
 
 ```typescript
-  useEffect(() => {
-    setSelection(null);
-    setSelectedNodeId(null);
-    setColorMode((mode) =>
-      mode === "semantic" &&
-      payload.nodes.some((n) => n.semanticCluster != null)
-        ? "semantic"
-        : "category",
-    );
-  }, [payload]);
+useEffect(() => {
+  setSelection(null);
+  setSelectedNodeId(null);
+  setColorMode((mode) =>
+    mode === "semantic" && payload.nodes.some((n) => n.semanticCluster != null)
+      ? "semantic"
+      : "category",
+  );
+}, [payload]);
 ```
 
 4. Update `activeColors` (from Task 2):
 
 ```typescript
-  const activeColors =
-    colorMode === "community"
-      ? structural.colorByNodeId
-      : colorMode === "semantic"
-        ? semantic.colorByNodeId
-        : categories.colorByNodeId;
+const activeColors =
+  colorMode === "community"
+    ? structural.colorByNodeId
+    : colorMode === "semantic"
+      ? semantic.colorByNodeId
+      : categories.colorByNodeId;
 ```
 
 5. In the `highlightedIds` memo, add the semantic case:
 
 ```typescript
-    if (selection.kind === "semantic") {
-      return new Set(
-        payload.nodes
-          .filter(
-            (n) => (n.semanticCluster ?? "(unclustered)") === selection.id,
-          )
-          .map((n) => n.id),
-      );
-    }
+if (selection.kind === "semantic") {
+  return new Set(
+    payload.nodes
+      .filter((n) => (n.semanticCluster ?? "(unclustered)") === selection.id)
+      .map((n) => n.id),
+  );
+}
 ```
 
 6. Extend the mode toggle with a third button, rendered only when `hasSemantic`:
 
 ```tsx
-            {hasSemantic && (
-              <button
-                type="button"
-                className={`btn join-item btn-xs flex-1 ${colorMode === "semantic" ? "btn-active" : ""}`}
-                onClick={() => setColorMode("semantic")}
-              >
-                Semantic
-              </button>
-            )}
+{
+  hasSemantic && (
+    <button
+      type="button"
+      className={`btn join-item btn-xs flex-1 ${colorMode === "semantic" ? "btn-active" : ""}`}
+      onClick={() => setColorMode("semantic")}
+    >
+      Semantic
+    </button>
+  );
+}
 ```
 
 and add the semantic branch to the panel switch:
@@ -1913,6 +2010,7 @@ and add the semantic branch to the panel switch:
 - [ ] **Step 7: Full suite + type-check + app run (REQUIRED)**
 
 Run: `pnpm vitest run && pnpm types:check`, then with `pnpm dev`:
+
 - `/` returns 200 (SSR guard).
 - Graph tab: "Import Graphify clusters" with a random JSON file shows the validation toast and leaves existing coloring untouched.
 - With a real (or hand-crafted) `graph.json` whose nodes carry `source: "pages/<slug>.md"` + `community`, the import succeeds, the Semantic toggle appears, nodes recolor, and the semantic legend highlights/filters.

@@ -26,10 +26,19 @@ describe("computeSemanticClusters", () => {
         node("d", null),
       ],
       edges: [],
-      meta: { auditId: "x", startUrl: "https://s.com/a", pagesCrawled: 4, generatedAt: "t" },
+      meta: {
+        auditId: "x",
+        startUrl: "https://s.com/a",
+        pagesCrawled: 4,
+        generatedAt: "t",
+      },
     } as AuditGraphPayload;
     const { legend, colorByNodeId } = computeSemanticClusters(payload);
-    expect(legend.map((e) => e.category)).toEqual(["Docs", "Blog", "(unclustered)"]);
+    expect(legend.map((e) => e.category)).toEqual([
+      "Docs",
+      "Blog",
+      "(unclustered)",
+    ]);
     expect(legend.map((e) => e.count)).toEqual([2, 1, 1]);
     expect(colorByNodeId.get("a")).toBe(colorByNodeId.get("b"));
     expect(colorByNodeId.get("a")).not.toBe(colorByNodeId.get("c"));
@@ -40,7 +49,12 @@ describe("computeSemanticClusters", () => {
     const payload = {
       nodes: [node("a", null)],
       edges: [],
-      meta: { auditId: "x", startUrl: "https://s.com/a", pagesCrawled: 1, generatedAt: "t" },
+      meta: {
+        auditId: "x",
+        startUrl: "https://s.com/a",
+        pagesCrawled: 1,
+        generatedAt: "t",
+      },
     } as AuditGraphPayload;
     expect(computeSemanticClusters(payload).legend).toEqual([]);
   });

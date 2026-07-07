@@ -18,7 +18,10 @@ export interface NodeDetail {
 export function buildNodeDetail(
   payload: AuditGraphPayload,
   graph: Graph,
-  metrics: { depthByNode: Map<string, number>; pagerank: Record<string, number> },
+  metrics: {
+    depthByNode: Map<string, number>;
+    pagerank: Record<string, number>;
+  },
   nodeId: string,
 ): NodeDetail | null {
   const node = payload.nodes.find((n) => n.id === nodeId);

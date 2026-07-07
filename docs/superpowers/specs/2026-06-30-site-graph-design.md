@@ -14,7 +14,7 @@ The feature **extends the existing Site Audit** rather than introducing a new
 crawler. OpenSEO's native audit crawler (fetch + cheerio HTML parsing, running in
 a Cloudflare Workflow) already extracts the full list of internal link targets per
 page (`page.internalLinks: string[]`) to build its crawl frontier, but only the
-*count* is persisted (`audit_pages.internalLinkCount`). The graph data is therefore
+_count_ is persisted (`audit_pages.internalLinkCount`). The graph data is therefore
 already computed during every audit and simply discarded. This feature persists it
 and builds on top.
 
@@ -27,15 +27,15 @@ Cloudflare Workers runtime, so the coupling is deliberately file-based.
 
 ## Decisions (from brainstorming)
 
-| Decision | Choice |
-| --- | --- |
-| Scope | All three layers (structure, SEO insights, semantic clustering) in one spec, built incrementally |
-| Integration | Extend the existing Site Audit; new "Graph" tab on audit results |
-| Crawl source | Reuse the audit crawl; persist edges + page text instead of re-crawling |
-| Viz library | Sigma.js + graphology |
-| Clustering | In-app structural (Louvain) + offline Graphify export/import |
-| Metrics location | Client-side via graphology by default; server pre-compute only if perf demands |
-| Page text storage | R2 (same pattern as Lighthouse payloads), gated by a config flag |
+| Decision          | Choice                                                                                           |
+| ----------------- | ------------------------------------------------------------------------------------------------ |
+| Scope             | All three layers (structure, SEO insights, semantic clustering) in one spec, built incrementally |
+| Integration       | Extend the existing Site Audit; new "Graph" tab on audit results                                 |
+| Crawl source      | Reuse the audit crawl; persist edges + page text instead of re-crawling                          |
+| Viz library       | Sigma.js + graphology                                                                            |
+| Clustering        | In-app structural (Louvain) + offline Graphify export/import                                     |
+| Metrics location  | Client-side via graphology by default; server pre-compute only if perf demands                   |
+| Page text storage | R2 (same pattern as Lighthouse payloads), gated by a config flag                                 |
 
 ## Phasing
 
@@ -47,7 +47,7 @@ The spec covers three phases; implementation proceeds phase by phase.
 - **Phase 2 — Actionable SEO insights:** an insights panel translating metrics into
   recommendations, each linkable to the graph, with CSV export.
 - **Phase 3 — Semantic clustering:** in-app Louvain coloring + "Export for Graphify"
-  + optional re-import of Graphify's semantic clusters.
+  - optional re-import of Graphify's semantic clusters.
 
 Phases 2 and 3 depend on the data persisted in Phase 1 (edges + page content), so
 Phase 1 is the prerequisite foundation.

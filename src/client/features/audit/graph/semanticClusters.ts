@@ -44,10 +44,7 @@ export function computeSemanticClusters(payload: AuditGraphPayload): {
   const colorByCluster = new Map(legend.map((e) => [e.category, e.color]));
   const colorByNodeId = new Map<string, string>();
   for (const [nodeId, cluster] of clusterByNode) {
-    colorByNodeId.set(
-      nodeId,
-      colorByCluster.get(cluster) ?? UNCLUSTERED_COLOR,
-    );
+    colorByNodeId.set(nodeId, colorByCluster.get(cluster) ?? UNCLUSTERED_COLOR);
   }
   return { legend, colorByNodeId };
 }
