@@ -8,10 +8,13 @@ import { isHostedServerAuthMode } from "@/server/lib/runtime-env";
 import { requireProjectContext } from "@/serverFunctions/middleware";
 import {
   deleteAuditSchema,
+  exportAuditForGraphifySchema,
+  getAuditGraphSchema,
   getAuditHistorySchema,
   getAuditResultsSchema,
   getAuditStatusSchema,
   getCrawlProgressSchema,
+  importGraphifyClustersSchema,
   startAuditSchema,
 } from "@/types/schemas/audit";
 
@@ -35,6 +38,7 @@ export const startAudit = createServerFn({ method: "POST" })
       startUrl: data.startUrl,
       maxPages: data.maxPages,
       lighthouseStrategy: data.lighthouseStrategy,
+      captureContent: data.captureContent,
     });
 
     waitUntil(
@@ -87,4 +91,29 @@ export const deleteAudit = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await AuditService.remove(data.auditId, context.projectId);
     return { success: true };
+  });
+
+export const getAuditGraph = createServerFn({ method: "POST" })
+  .middleware(requireProjectContext)
+  .inputValidator((data: unknown) => getAuditGraphSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    return AuditService.getGraph(data.auditId, context.projectId);
+  });
+
+export const exportAuditForGraphify = createServerFn({ method: "POST" })
+  .middleware(requireProjectContext)
+  .inputValidator((data: unknown) => exportAuditForGraphifySchema.parse(data))
+  .handler(async ({ data, context }) => {
+    return AuditService.exportForGraphify(data.auditId, context.projectId);
+  });
+
+export const importGraphifyClusters = createServerFn({ method: "POST" })
+  .middleware(requireProjectContext)
+  .inputValidator((data: unknown) => importGraphifyClustersSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    return AuditService.importGraphifyClusters(
+      data.auditId,
+      context.projectId,
+      data.graphJson,
+    );
   });

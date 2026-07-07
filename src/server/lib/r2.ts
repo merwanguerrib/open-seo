@@ -9,6 +9,11 @@ export async function getJsonFromR2(key: string): Promise<string> {
   return object.text();
 }
 
+export async function getTextFromR2(key: string): Promise<string | null> {
+  const object = await env.R2.get(key);
+  return object ? object.text() : null;
+}
+
 export async function putTextToR2(
   key: string,
   body: string,

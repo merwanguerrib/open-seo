@@ -187,15 +187,22 @@
     {
       "idx": 26,
       "version": "6",
-      "when": 1783154365629,
-      "tag": "0026_short_nicolaos",
+      "when": 1782824944743,
+      "tag": "0026_daffy_ronan",
       "breakpoints": true
     },
     {
       "idx": 27,
       "version": "6",
-      "when": 1783209998710,
-      "tag": "0027_large_lord_hawal",
+      "when": 1783059203964,
+      "tag": "0027_pale_wong",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "6",
+      "when": 1783413677960,
+      "tag": "0028_medical_sage",
       "breakpoints": true
     }
   ]

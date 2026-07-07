@@ -74,12 +74,12 @@ export function analyzeHtml(
   // --- Links ---
   const internalLinks: string[] = [];
   const externalLinks: string[] = [];
+  const internalLinkDetails: Array<{ url: string; anchorText: string | null }> =
+    [];
 
   $("a[href]").each((_, el) => {
     const href = $(el).attr("href");
     if (!href) return;
-
-    // Skip javascript:, mailto:, tel:, #anchors
     if (/^(javascript:|mailto:|tel:|#)/.test(href)) return;
 
     const resolved = normalizeUrl(href, pageUrl);
@@ -87,6 +87,8 @@ export function analyzeHtml(
 
     if (isSameOrigin(resolved, pageUrl)) {
       internalLinks.push(resolved);
+      const anchor = $(el).text().replace(/\s+/g, " ").trim();
+      internalLinkDetails.push({ url: resolved, anchorText: anchor || null });
     } else {
       externalLinks.push(resolved);
     }
@@ -122,6 +124,8 @@ export function analyzeHtml(
     images,
     internalLinks,
     externalLinks,
+    internalLinkDetails,
+    cleanedText: bodyText,
     hasStructuredData,
     hreflangTags,
   };

@@ -14,6 +14,13 @@ import {
   type LighthouseStrategy,
 } from "@/server/lib/audit/types";
 import { normalizeAndValidateStartUrl } from "@/server/lib/audit/url-policy";
+import { buildAuditGraphPayload } from "@/server/lib/audit/graph-edges";
+import { buildGraphifyExportFiles } from "@/server/lib/audit/graphify-export";
+import {
+  graphifyGraphJsonSchema,
+  mapGraphifyClustersToPages,
+} from "@/server/lib/audit/graphify-import";
+import { getTextFromR2 } from "@/server/lib/r2";
 
 async function startAudit(input: {
   actorUserId: string;
@@ -22,9 +29,11 @@ async function startAudit(input: {
   startUrl: string;
   maxPages?: number;
   lighthouseStrategy?: LighthouseStrategy;
+  captureContent?: boolean;
 }) {
   const maxPages = clampAuditMaxPages(input.maxPages);
   const lighthouseStrategy = input.lighthouseStrategy ?? "auto";
+  const captureContent = input.captureContent ?? false;
   const reservation = getEstimatedAuditCapacity({
     maxPages,
     lighthouseStrategy,
@@ -39,7 +48,7 @@ async function startAudit(input: {
   }
 
   const auditId = crypto.randomUUID();
-  const config: AuditConfig = { maxPages, lighthouseStrategy };
+  const config: AuditConfig = { maxPages, lighthouseStrategy, captureContent };
   const startUrl = await normalizeAndValidateStartUrl(input.startUrl);
 
   await AuditRepository.createAudit({
@@ -159,6 +168,102 @@ async function getCrawlProgress(auditId: string, projectId: string) {
   return AuditProgressKV.getCrawledUrls(auditId);
 }
 
+async function getGraph(auditId: string, projectId: string) {
+  const data = await AuditRepository.getAuditGraphData(auditId, projectId);
+  if (!data) return null;
+  return buildAuditGraphPayload({
+    auditId,
+    startUrl: data.audit.startUrl,
+    contentCaptured:
+      parseAuditConfig(data.audit.config)?.captureContent ?? false,
+    pages: data.pages.map((p) => ({
+      id: p.id, url: p.url, title: p.title, statusCode: p.statusCode,
+      wordCount: p.wordCount, internalLinkCount: p.internalLinkCount,
+      isIndexable: p.isIndexable,
+      h1Count: p.h1Count, externalLinkCount: p.externalLinkCount,
+      canonicalUrl: p.canonicalUrl,
+    })),
+    edges: data.edges,
+    clusters: data.clusters,
+  });
+}
+
+async function importGraphifyClusters(
+  auditId: string,
+  projectId: string,
+  graphJsonRaw: unknown,
+) {
+  const audit = await AuditRepository.getAuditForProject(auditId, projectId);
+  if (!audit) throw new AppError("NOT_FOUND");
+
+  const parsed = graphifyGraphJsonSchema.safeParse(graphJsonRaw);
+  if (!parsed.success) {
+    throw new AppError(
+      "VALIDATION_ERROR",
+      "This file does not look like a Graphify graph.json export.",
+    );
+  }
+
+  const data = await AuditRepository.getAuditGraphData(auditId, projectId);
+  if (!data) throw new AppError("NOT_FOUND");
+
+  const rows = mapGraphifyClustersToPages({
+    graphJson: parsed.data,
+    pages: data.pages.map((p) => ({ id: p.id, url: p.url })),
+  });
+  if (rows.length === 0) {
+    // Do not wipe existing clusters on a non-matching file (spec: no
+    // overwrite when the import is invalid for this audit).
+    throw new AppError(
+      "VALIDATION_ERROR",
+      "No Graphify nodes matched this audit's pages. Was the export generated from this audit?",
+    );
+  }
+
+  await AuditRepository.replaceGraphifyClusters(auditId, rows);
+  return { imported: rows.length };
+}
+
+async function exportForGraphify(auditId: string, projectId: string) {
+  const data = await AuditRepository.getGraphifyExportData(auditId, projectId);
+  if (!data) throw new AppError("NOT_FOUND");
+
+  const withContent = data.pages.filter((p) => p.contentR2Key != null);
+  if (withContent.length === 0) {
+    throw new AppError(
+      "CONFLICT",
+      "This audit has no captured page content. Re-run it with content capture enabled.",
+    );
+  }
+
+  const texts = await Promise.all(
+    data.pages.map(async (page) => {
+      if (!page.contentR2Key) return null;
+      try {
+        return await getTextFromR2(page.contentR2Key);
+      } catch {
+        return null; // a missing/unreadable object just drops that page
+      }
+    }),
+  );
+
+  const files = buildGraphifyExportFiles({
+    auditId,
+    startUrl: data.audit.startUrl,
+    generatedAt: new Date().toISOString(),
+    pages: data.pages.map((page, index) => ({
+      id: page.id,
+      url: page.url,
+      title: page.title,
+      statusCode: page.statusCode,
+      text: texts[index],
+    })),
+    edges: data.edges,
+  });
+
+  return { files };
+}
+
 async function remove(auditId: string, projectId: string) {
   const audit = await AuditRepository.getAuditForProject(auditId, projectId);
   if (!audit) {
@@ -194,4 +299,7 @@ export const AuditService = {
   getResults,
   getHistory,
   remove,
+  getGraph,
+  exportForGraphify,
+  importGraphifyClusters,
 } as const;

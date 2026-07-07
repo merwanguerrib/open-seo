@@ -426,8 +426,53 @@ export const auditPages = sqliteTable(
       .default(true),
     // Performance
     responseTimeMs: integer("response_time_ms"),
+    contentR2Key: text("content_r2_key"),
   },
   (table) => [index("audit_pages_audit_id_idx").on(table.auditId)],
+);
+
+// One row per internal link (graph edge) discovered during the crawl
+export const auditPageLinks = sqliteTable(
+  "audit_page_links",
+  {
+    id: text("id").primaryKey(),
+    auditId: text("audit_id")
+      .notNull()
+      .references(() => audits.id, { onDelete: "cascade" }),
+    fromPageId: text("from_page_id")
+      .notNull()
+      .references(() => auditPages.id, { onDelete: "cascade" }),
+    toUrl: text("to_url").notNull(),
+    toPageId: text("to_page_id").references(() => auditPages.id, {
+      onDelete: "set null",
+    }),
+    anchorText: text("anchor_text"),
+    isBroken: integer("is_broken", { mode: "boolean" })
+      .notNull()
+      .default(false),
+  },
+  (table) => [
+    index("audit_page_links_audit_id_idx").on(table.auditId),
+    index("audit_page_links_from_page_id_idx").on(table.fromPageId),
+    index("audit_page_links_to_page_id_idx").on(table.toPageId),
+  ],
+);
+
+// Semantic cluster assignment per page, re-imported from Graphify (Phase 3)
+export const auditPageClusters = sqliteTable(
+  "audit_page_clusters",
+  {
+    id: text("id").primaryKey(),
+    auditId: text("audit_id")
+      .notNull()
+      .references(() => audits.id, { onDelete: "cascade" }),
+    pageId: text("page_id")
+      .notNull()
+      .references(() => auditPages.id, { onDelete: "cascade" }),
+    clusterLabel: text("cluster_label").notNull(),
+    source: text("source").notNull(), // 'graphify'
+  },
+  (table) => [index("audit_page_clusters_audit_id_idx").on(table.auditId)],
 );
 
 // One row per Lighthouse test (mobile + desktop per page).
