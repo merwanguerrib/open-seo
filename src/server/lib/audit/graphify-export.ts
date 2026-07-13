@@ -42,7 +42,9 @@ export function buildSlugMap(urls: string[]): Map<string, string> {
 }
 
 function frontmatterValue(value: string | number | null): string {
-  return typeof value === "number" ? String(value) : JSON.stringify(value ?? "");
+  return typeof value === "number"
+    ? String(value)
+    : JSON.stringify(value ?? "");
 }
 
 export function buildGraphifyExportFiles(input: {

@@ -7,8 +7,16 @@ export interface CategoryLegendEntry {
 }
 
 export const CATEGORY_PALETTE = [
-  "#2563eb", "#16a34a", "#db2777", "#d97706", "#7c3aed",
-  "#0891b2", "#dc2626", "#65a30d", "#c026d3", "#0d9488",
+  "#2563eb",
+  "#16a34a",
+  "#db2777",
+  "#d97706",
+  "#7c3aed",
+  "#0891b2",
+  "#dc2626",
+  "#65a30d",
+  "#c026d3",
+  "#0d9488",
 ];
 
 export function deriveCategory(url: string): string {

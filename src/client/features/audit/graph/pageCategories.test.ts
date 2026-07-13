@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { deriveCategory, computeCategories, CATEGORY_PALETTE } from "./pageCategories";
+import {
+  deriveCategory,
+  computeCategories,
+  CATEGORY_PALETTE,
+} from "./pageCategories";
 import type { AuditGraphPayload } from "@/server/lib/audit/types";
 
 describe("deriveCategory", () => {
@@ -16,8 +20,16 @@ describe("deriveCategory", () => {
 
 describe("computeCategories", () => {
   const node = (id: string, url: string) => ({
-    id, url, title: id, statusCode: 200, wordCount: 0, internalLinkCount: 0,
-    isIndexable: true, h1Count: 0, externalLinkCount: 0, canonicalUrl: null,
+    id,
+    url,
+    title: id,
+    statusCode: 200,
+    wordCount: 0,
+    internalLinkCount: 0,
+    isIndexable: true,
+    h1Count: 0,
+    externalLinkCount: 0,
+    canonicalUrl: null,
   });
   const payload = {
     nodes: [
@@ -27,7 +39,12 @@ describe("computeCategories", () => {
       node("g1", "https://s.com/guides/a"),
     ],
     edges: [],
-    meta: { auditId: "a", startUrl: "https://s.com/", pagesCrawled: 4, generatedAt: "t" },
+    meta: {
+      auditId: "a",
+      startUrl: "https://s.com/",
+      pagesCrawled: 4,
+      generatedAt: "t",
+    },
   } as AuditGraphPayload;
 
   it("counts categories and sorts by count desc then name", () => {

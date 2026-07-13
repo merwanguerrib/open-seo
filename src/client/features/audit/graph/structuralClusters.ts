@@ -14,8 +14,21 @@ export interface StructuralCluster {
 }
 
 const STOPWORDS = new Set([
-  "the", "and", "for", "with", "from", "your", "our", "page", "home",
-  "index", "www", "com", "http", "https", "html",
+  "the",
+  "and",
+  "for",
+  "with",
+  "from",
+  "your",
+  "our",
+  "page",
+  "home",
+  "index",
+  "www",
+  "com",
+  "http",
+  "https",
+  "html",
 ]);
 
 function terms(text: string): string[] {

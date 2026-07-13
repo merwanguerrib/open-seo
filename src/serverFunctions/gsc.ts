@@ -2,7 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { waitUntil } from "cloudflare:workers";
 import { z } from "zod";
-import { GscService } from "@/server/features/gsc/services/GscService";
+import {
+  GscService,
+  isGscUnavailableError,
+} from "@/server/features/gsc/services/GscService";
 import { hasSelfHostedGscConfig } from "@/server/features/gsc/oauth-config";
 import { createSelfHostedGscAuthorizationUrl } from "@/server/features/gsc/selfHostedOAuth";
 import { captureServerEvent } from "@/server/lib/posthog";
@@ -16,7 +19,6 @@ import {
   GSC_DATE_RANGES,
   type GscDateRange,
 } from "@/server/features/gsc/searchAnalytics";
-import { GscNotConnectedError } from "@/server/features/gsc/services/GscService";
 
 const projectScopedSchema = z.object({ projectId: z.string().min(1) });
 const gscPerformanceSchema = projectScopedSchema.extend({
@@ -180,7 +182,7 @@ export const getGscPerformanceOverview = createServerFn({ method: "POST" })
         topPages: byPage.rows,
       };
     } catch (error) {
-      if (error instanceof GscNotConnectedError) {
+      if (isGscUnavailableError(error)) {
         return { connected: false as const };
       }
       throw error;
@@ -198,7 +200,7 @@ export const inspectGscUrls = createServerFn({ method: "POST" })
       });
       return { connected: true as const, ...result };
     } catch (error) {
-      if (error instanceof GscNotConnectedError) {
+      if (isGscUnavailableError(error)) {
         return { connected: false as const };
       }
       throw error;

@@ -1,9 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { computeAuditInsights } from "./auditInsights";
-import {
-  buildGraphologyGraph,
-  computeGraphMetrics,
-} from "./graphologyGraph";
+import { buildGraphologyGraph, computeGraphMetrics } from "./graphologyGraph";
 import type { AuditGraphPayload } from "@/server/lib/audit/types";
 
 const node = (
@@ -39,7 +36,12 @@ const payload: AuditGraphPayload = {
     { from: "a", to: "b", anchorText: "B2", isBroken: false },
     { from: "b", to: "dead", anchorText: "dead", isBroken: true },
   ],
-  meta: { auditId: "x", startUrl: "https://s.com/", pagesCrawled: 5, generatedAt: "t" },
+  meta: {
+    auditId: "x",
+    startUrl: "https://s.com/",
+    pagesCrawled: 5,
+    generatedAt: "t",
+  },
 };
 
 describe("computeAuditInsights", () => {
@@ -71,7 +73,7 @@ describe("under-linked-rich-pages population filter", () => {
   // but must be excluded from the under-linked insight's candidate population.
   const nodes = [
     node("home", "https://s.com/", 100),
-    node("rich-404", "https://s.com/rich-404", 9999, 404),        // excluded: wrong status
+    node("rich-404", "https://s.com/rich-404", 9999, 404), // excluded: wrong status
     node("rich-noindex", "https://s.com/rich-noindex", 9999, 200, false), // excluded: not indexable
     node("a", "https://s.com/a", 500),
     node("b", "https://s.com/b", 50),
@@ -86,12 +88,21 @@ describe("under-linked-rich-pages population filter", () => {
       { from: "a", to: "b", anchorText: "B2", isBroken: false },
       { from: "a", to: "c", anchorText: "C2", isBroken: false },
     ],
-    meta: { auditId: "pop", startUrl: "https://s.com/", pagesCrawled: 6, generatedAt: "t" },
+    meta: {
+      auditId: "pop",
+      startUrl: "https://s.com/",
+      pagesCrawled: 6,
+      generatedAt: "t",
+    },
   };
 
   const graph = buildGraphologyGraph(populationPayload);
   const metrics = computeGraphMetrics(graph, "home");
-  const insights = computeAuditInsights({ payload: populationPayload, graph, metrics });
+  const insights = computeAuditInsights({
+    payload: populationPayload,
+    graph,
+    metrics,
+  });
   const byId = (id: string) => insights.find((i) => i.id === id);
 
   it("excludes the 404 page from under-linked-rich-pages nodeIds", () => {

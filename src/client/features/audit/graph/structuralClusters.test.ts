@@ -33,10 +33,19 @@ const payload: AuditGraphPayload = {
     node("s3", "https://s.com/shop/green", "Shop item green"),
   ],
   edges: [
-    edge("b1", "b2"), edge("b2", "b3"), edge("b3", "b1"),
-    edge("s1", "s2"), edge("s2", "s3"), edge("s3", "s1"),
+    edge("b1", "b2"),
+    edge("b2", "b3"),
+    edge("b3", "b1"),
+    edge("s1", "s2"),
+    edge("s2", "s3"),
+    edge("s3", "s1"),
   ],
-  meta: { auditId: "x", startUrl: "https://s.com/blog/one", pagesCrawled: 6, generatedAt: "t" },
+  meta: {
+    auditId: "x",
+    startUrl: "https://s.com/blog/one",
+    pagesCrawled: 6,
+    generatedAt: "t",
+  },
 };
 
 describe("computeStructuralClusters", () => {

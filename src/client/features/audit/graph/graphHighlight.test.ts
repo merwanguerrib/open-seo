@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { nodeHighlightReducer, HIGHLIGHT_COLOR, DIMMED_COLOR } from "./graphHighlight";
+import {
+  nodeHighlightReducer,
+  HIGHLIGHT_COLOR,
+  DIMMED_COLOR,
+} from "./graphHighlight";
 
 describe("nodeHighlightReducer", () => {
   it("returns no override when nothing is highlighted", () => {

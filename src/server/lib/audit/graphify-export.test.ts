@@ -28,9 +28,27 @@ describe("buildGraphifyExportFiles", () => {
     startUrl: "https://s.com/",
     generatedAt: "2026-07-02T00:00:00.000Z",
     pages: [
-      { id: "p1", url: "https://s.com/", title: "Home", statusCode: 200, text: "Welcome home" },
-      { id: "p2", url: "https://s.com/about", title: 'About "us"', statusCode: 200, text: "About text" },
-      { id: "p3", url: "https://s.com/no-content", title: "Empty", statusCode: 200, text: null },
+      {
+        id: "p1",
+        url: "https://s.com/",
+        title: "Home",
+        statusCode: 200,
+        text: "Welcome home",
+      },
+      {
+        id: "p2",
+        url: "https://s.com/about",
+        title: 'About "us"',
+        statusCode: 200,
+        text: "About text",
+      },
+      {
+        id: "p3",
+        url: "https://s.com/no-content",
+        title: "Empty",
+        statusCode: 200,
+        text: null,
+      },
     ],
     edges: [
       { fromPageId: "p1", toPageId: "p2", anchorText: "About" },

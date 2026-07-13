@@ -4,10 +4,7 @@ import {
   buildGraphExportJson,
   GRAPH_EXPORT_HEADERS,
 } from "./graphExport";
-import {
-  buildGraphologyGraph,
-  computeGraphMetrics,
-} from "./graphologyGraph";
+import { buildGraphologyGraph, computeGraphMetrics } from "./graphologyGraph";
 import type { AuditGraphPayload } from "@/server/lib/audit/types";
 
 const payload: AuditGraphPayload = {
@@ -38,7 +35,12 @@ const payload: AuditGraphPayload = {
     },
   ],
   edges: [{ from: "home", to: "a", anchorText: "A", isBroken: false }],
-  meta: { auditId: "x", startUrl: "https://s.com/", pagesCrawled: 2, generatedAt: "t" },
+  meta: {
+    auditId: "x",
+    startUrl: "https://s.com/",
+    pagesCrawled: 2,
+    generatedAt: "t",
+  },
 };
 
 const graph = buildGraphologyGraph(payload);

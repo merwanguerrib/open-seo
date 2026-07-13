@@ -23,10 +23,10 @@
 
 ## File Structure
 
-- `src/client/features/audit/graph/auditInsights.ts` *(new)* — pure `computeAuditInsights` + `AuditInsight` type.
-- `src/client/features/audit/graph/graphHighlight.ts` *(new)* — pure `nodeHighlightReducer` (accent/dim decision for the Sigma node reducer).
-- `src/client/features/audit/graph/AuditInsightsPanel.tsx` *(new)* — presentational insight list + per-insight CSV export button.
-- `src/client/features/audit/graph/AuditGraphView.tsx` *(modify)* — compute insights, hold selected-insight state, drive the Sigma `nodeReducer`, render the panel beside the graph.
+- `src/client/features/audit/graph/auditInsights.ts` _(new)_ — pure `computeAuditInsights` + `AuditInsight` type.
+- `src/client/features/audit/graph/graphHighlight.ts` _(new)_ — pure `nodeHighlightReducer` (accent/dim decision for the Sigma node reducer).
+- `src/client/features/audit/graph/AuditInsightsPanel.tsx` _(new)_ — presentational insight list + per-insight CSV export button.
+- `src/client/features/audit/graph/AuditGraphView.tsx` _(modify)_ — compute insights, hold selected-insight state, drive the Sigma `nodeReducer`, render the panel beside the graph.
 
 `ResultsView.tsx` is unchanged: it still renders `<AuditGraphView payload={graphPayload} />`; the panel lives inside `AuditGraphView`.
 
@@ -35,20 +35,22 @@
 ## Task 1: Pure insights computation
 
 **Files:**
+
 - Create: `src/client/features/audit/graph/auditInsights.ts`
 - Test: `src/client/features/audit/graph/auditInsights.test.ts`
 
 **Interfaces:**
+
 - Consumes: `AuditGraphPayload` (`@/server/lib/audit/types`), a graphology `Graph`, and `computeGraphMetrics`' return shape `{ orphans: string[]; depthByNode: Map<string, number>; pagerank: Record<string, number> }`.
 - Produces: `AuditInsight` and `computeAuditInsights(input): AuditInsight[]`.
 
 ```ts
 export interface AuditInsight {
-  id: string;                 // stable key, e.g. "orphans"
+  id: string; // stable key, e.g. "orphans"
   title: string;
-  description: string;        // human summary including the count
+  description: string; // human summary including the count
   severity: "warning" | "info";
-  nodeIds: string[];          // affected node ids → graph highlight
+  nodeIds: string[]; // affected node ids → graph highlight
   csvHeaders: string[];
   csvRows: (string | number | null)[][];
 }
@@ -61,10 +63,7 @@ Create `src/client/features/audit/graph/auditInsights.test.ts`:
 ```typescript
 import { describe, it, expect } from "vitest";
 import { computeAuditInsights } from "./auditInsights";
-import {
-  buildGraphologyGraph,
-  computeGraphMetrics,
-} from "./graphologyGraph";
+import { buildGraphologyGraph, computeGraphMetrics } from "./graphologyGraph";
 import type { AuditGraphPayload } from "@/server/lib/audit/types";
 
 const node = (
@@ -96,7 +95,12 @@ const payload: AuditGraphPayload = {
     { from: "a", to: "b", anchorText: "B2", isBroken: false },
     { from: "b", to: "dead", anchorText: "dead", isBroken: true },
   ],
-  meta: { auditId: "x", startUrl: "https://s.com/", pagesCrawled: 5, generatedAt: "t" },
+  meta: {
+    auditId: "x",
+    startUrl: "https://s.com/",
+    pagesCrawled: 5,
+    generatedAt: "t",
+  },
 };
 
 describe("computeAuditInsights", () => {
@@ -183,7 +187,10 @@ export function computeAuditInsights(input: InsightInput): AuditInsight[] {
       severity: "warning",
       nodeIds: metrics.orphans,
       csvHeaders: ["URL", "Title"],
-      csvRows: metrics.orphans.map((id) => [url(id), nodeById.get(id)?.title ?? ""]),
+      csvRows: metrics.orphans.map((id) => [
+        url(id),
+        nodeById.get(id)?.title ?? "",
+      ]),
     });
   }
 
@@ -206,9 +213,7 @@ export function computeAuditInsights(input: InsightInput): AuditInsight[] {
   // Broken internal links (target crawled with a 4xx/5xx status).
   const brokenEdges = payload.edges.filter((e) => e.isBroken);
   if (brokenEdges.length > 0) {
-    const nodeIds = [
-      ...new Set(brokenEdges.flatMap((e) => [e.from, e.to])),
-    ];
+    const nodeIds = [...new Set(brokenEdges.flatMap((e) => [e.from, e.to]))];
     insights.push({
       id: "broken-internal-links",
       title: "Broken internal links",
@@ -225,8 +230,7 @@ export function computeAuditInsights(input: InsightInput): AuditInsight[] {
   const medianPr = median(Object.values(metrics.pagerank));
   const underLinked = payload.nodes.filter(
     (n) =>
-      n.wordCount >= medianWords &&
-      (metrics.pagerank[n.id] ?? 0) <= medianPr,
+      n.wordCount >= medianWords && (metrics.pagerank[n.id] ?? 0) <= medianPr,
   );
   if (underLinked.length > 0) {
     insights.push({
@@ -283,10 +287,12 @@ git commit -m "feat(audit): compute actionable SEO insights from the page graph"
 ## Task 2: Pure node-highlight reducer
 
 **Files:**
+
 - Create: `src/client/features/audit/graph/graphHighlight.ts`
 - Test: `src/client/features/audit/graph/graphHighlight.test.ts`
 
 **Interfaces:**
+
 - Produces: `nodeHighlightReducer(isHighlighted, anyHighlighted): { color?: string; zIndex?: number }` — the display override the Sigma `nodeReducer` merges onto a node when an insight is selected.
 
 - [ ] **Step 1: Write the failing test**
@@ -295,7 +301,11 @@ Create `src/client/features/audit/graph/graphHighlight.test.ts`:
 
 ```typescript
 import { describe, it, expect } from "vitest";
-import { nodeHighlightReducer, HIGHLIGHT_COLOR, DIMMED_COLOR } from "./graphHighlight";
+import {
+  nodeHighlightReducer,
+  HIGHLIGHT_COLOR,
+  DIMMED_COLOR,
+} from "./graphHighlight";
 
 describe("nodeHighlightReducer", () => {
   it("returns no override when nothing is highlighted", () => {
@@ -357,9 +367,11 @@ git commit -m "feat(audit): add pure node-highlight reducer for the graph"
 ## Task 3: Insights panel component
 
 **Files:**
+
 - Create: `src/client/features/audit/graph/AuditInsightsPanel.tsx`
 
 **Interfaces:**
+
 - Consumes: `AuditInsight` (Task 1), `buildCsv`/`downloadCsv` (`@/client/lib/csv`).
 - Produces: `AuditInsightsPanel` component with props `{ insights: AuditInsight[]; selectedId: string | null; onSelect: (id: string | null) => void }`.
 
@@ -461,9 +473,11 @@ git commit -m "feat(audit): add SEO insights panel with per-insight CSV export"
 ## Task 4: Wire insights + highlighting into AuditGraphView
 
 **Files:**
+
 - Modify: `src/client/features/audit/graph/AuditGraphView.tsx`
 
 **Interfaces:**
+
 - Consumes: `computeAuditInsights` (Task 1), `nodeHighlightReducer` (Task 2), `AuditInsightsPanel` (Task 3).
 
 - [ ] **Step 1: Replace AuditGraphView with the insights-aware container**
@@ -598,6 +612,7 @@ Expected: all pass (the Phase 1 graphSummary/graphologyGraph tests plus the new 
 - [ ] **Step 4: Verify in the running app (REQUIRED — do not skip)**
 
 Ensure the dev server is running (`pnpm dev`, http://localhost:3001) and that it returns HTTP 200 for `/` (this catches SSR crashes like the Phase 1 sigma import). Then, on a completed audit's **Graph** tab:
+
 - The insights panel lists issues (orphans / broken links / hubs / etc.).
 - Clicking an insight accents its nodes (red) and dims the rest; clicking again clears it.
 - "Export CSV" downloads a file for that insight.

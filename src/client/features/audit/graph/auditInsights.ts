@@ -44,7 +44,10 @@ export function computeAuditInsights(input: InsightInput): AuditInsight[] {
       severity: "warning",
       nodeIds: metrics.orphans,
       csvHeaders: ["URL", "Title"],
-      csvRows: metrics.orphans.map((id) => [url(id), nodeById.get(id)?.title ?? ""]),
+      csvRows: metrics.orphans.map((id) => [
+        url(id),
+        nodeById.get(id)?.title ?? "",
+      ]),
     });
   }
 
@@ -67,9 +70,7 @@ export function computeAuditInsights(input: InsightInput): AuditInsight[] {
   // Broken internal links (target crawled with a 4xx/5xx status).
   const brokenEdges = payload.edges.filter((e) => e.isBroken);
   if (brokenEdges.length > 0) {
-    const nodeIds = [
-      ...new Set(brokenEdges.flatMap((e) => [e.from, e.to])),
-    ];
+    const nodeIds = [...new Set(brokenEdges.flatMap((e) => [e.from, e.to]))];
     insights.push({
       id: "broken-internal-links",
       title: "Broken internal links",

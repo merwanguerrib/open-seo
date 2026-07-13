@@ -45,6 +45,17 @@ export class GscNotConnectedError extends Error {
   }
 }
 
+/** True when Search Console can't serve this project — not connected, token
+ *  expired/revoked, or an API failure. Callers that treat GSC as optional use
+ *  this to degrade gracefully instead of surfacing an error. */
+export function isGscUnavailableError(error: unknown): boolean {
+  return (
+    error instanceof GscNotConnectedError ||
+    error instanceof GscTokenError ||
+    error instanceof GscApiError
+  );
+}
+
 async function getConnection(projectId: string): Promise<GscConnection | null> {
   return GscConnectionRepository.getByProjectId(projectId);
 }

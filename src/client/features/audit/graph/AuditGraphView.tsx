@@ -11,32 +11,24 @@ import {
   deriveCategory,
 } from "@/client/features/audit/graph/pageCategories";
 import { buildNodeDetail } from "@/client/features/audit/graph/nodeDetail";
+import {
+  useDirectionalEdgeHover,
+  HoverLinkBadge,
+} from "@/client/features/audit/graph/edgeDirectionHover";
 import { computeStructuralClusters } from "@/client/features/audit/graph/structuralClusters";
 import { computeSemanticClusters } from "@/client/features/audit/graph/semanticClusters";
 import { AuditClustersPanel } from "@/client/features/audit/graph/AuditClustersPanel";
 import { AuditInsightsPanel } from "@/client/features/audit/graph/AuditInsightsPanel";
 import { AuditCategoryLegend } from "@/client/features/audit/graph/AuditCategoryLegend";
 import { AuditNodeDetailPanel } from "@/client/features/audit/graph/AuditNodeDetailPanel";
-import {
-  buildGraphExportRows,
-  buildGraphExportJson,
-} from "@/client/features/audit/graph/graphExport";
-import { buildCsv, downloadCsv, downloadJson } from "@/client/lib/csv";
-import {
-  buildGraphifyZip,
-  downloadZip,
-} from "@/client/features/audit/graph/graphifyZip";
-import {
-  exportAuditForGraphify,
-  importGraphifyClusters,
-} from "@/serverFunctions/audit";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { AuditGraphToolbar } from "@/client/features/audit/graph/AuditGraphToolbar";
+import { useAuditGraphActions } from "@/client/features/audit/graph/useAuditGraphActions";
 import type { AuditGraphPayload } from "@/server/lib/audit/types";
 
-type Selection =
-  | { kind: "insight" | "category" | "cluster" | "semantic"; id: string }
-  | null;
+type Selection = {
+  kind: "insight" | "category" | "cluster" | "semantic";
+  id: string;
+} | null;
 type ColorMode = "category" | "community" | "semantic";
 
 export function AuditGraphView({
@@ -54,6 +46,9 @@ export function AuditGraphView({
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
   const graph = useMemo(() => buildGraphologyGraph(payload), [payload]);
+  // Recolors a hovered node's edges by direction (inbound vs outbound).
+  const { hoverInfo, edgeReducer, handleEnterNode, handleLeaveNode } =
+    useDirectionalEdgeHover(graph);
   const startId = useMemo(
     () =>
       payload.nodes.find((n) => n.url === payload.meta.startUrl)?.id ??
@@ -141,7 +136,11 @@ export function AuditGraphView({
         graph.setNodeAttribute(n, "x", Math.random());
         graph.setNodeAttribute(n, "y", Math.random());
         graph.setNodeAttribute(n, "size", 4);
-        graph.setNodeAttribute(n, "color", colorsRef.current.get(n) ?? "#999999");
+        graph.setNodeAttribute(
+          n,
+          "color",
+          colorsRef.current.get(n) ?? "#999999",
+        );
       });
       forceAtlas2.assign(graph, {
         iterations: 300,
@@ -158,9 +157,18 @@ export function AuditGraphView({
           const h = highlightRef.current;
           return { ...data, ...nodeHighlightReducer(h.has(node), h.size > 0) };
         },
+        edgeReducer,
       });
       sigmaInstance.on("clickNode", ({ node }) => setSelectedNodeId(node));
       sigmaInstance.on("clickStage", () => setSelectedNodeId(null));
+      sigmaInstance.on("enterNode", ({ node }) => {
+        handleEnterNode(node);
+        sigmaInstance.refresh();
+      });
+      sigmaInstance.on("leaveNode", () => {
+        handleLeaveNode();
+        sigmaInstance.refresh();
+      });
       renderer = sigmaInstance;
       rendererRef.current = sigmaInstance;
     })();
@@ -169,7 +177,7 @@ export function AuditGraphView({
       renderer?.kill();
       rendererRef.current = null;
     };
-  }, [graph]);
+  }, [graph, edgeReducer, handleEnterNode, handleLeaveNode]);
 
   useEffect(() => {
     rendererRef.current?.refresh();
@@ -193,110 +201,39 @@ export function AuditGraphView({
     );
   }, [payload]);
 
-  const selectedCategory =
-    selection?.kind === "category" ? selection.id : null;
-  const selectedInsightId =
-    selection?.kind === "insight" ? selection.id : null;
+  const selectedCategory = selection?.kind === "category" ? selection.id : null;
+  const selectedInsightId = selection?.kind === "insight" ? selection.id : null;
 
-  const exportCsv = () => {
-    const { headers, rows } = buildGraphExportRows(payload, graph, metrics);
-    downloadCsv("audit-graph.csv", buildCsv(headers, rows));
-  };
-  const exportJson = () => {
-    downloadJson("audit-graph.json", buildGraphExportJson(payload, graph, metrics));
-  };
-
-  const [isExportingGraphify, setIsExportingGraphify] = useState(false);
-  const contentCaptured = payload.meta.contentCaptured === true;
-  const queryClient = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isImporting, setIsImporting] = useState(false);
-
-  const onImportFile = async (file: File) => {
-    setIsImporting(true);
-    try {
-      const graphJson: unknown = JSON.parse(await file.text());
-      const { imported } = await importGraphifyClusters({
-        data: { projectId, auditId: payload.meta.auditId, graphJson },
-      });
-      toast.success(`Imported semantic clusters for ${imported} pages.`);
-      await queryClient.invalidateQueries({ queryKey: ["audit-graph"] });
-      setColorMode("semantic");
-    } catch (error) {
-      toast.error(
-        error instanceof SyntaxError
-          ? "That file is not valid JSON."
-          : "Import failed. Use the graph.json produced by graphify on this audit's export.",
-      );
-    } finally {
-      setIsImporting(false);
-    }
-  };
-  const exportGraphify = async () => {
-    setIsExportingGraphify(true);
-    try {
-      const { files } = await exportAuditForGraphify({
-        data: { projectId, auditId: payload.meta.auditId },
-      });
-      downloadZip("graphify-input.zip", buildGraphifyZip(files));
-    } catch {
-      toast.error(
-        "Graphify export failed. Try re-running the audit with content capture enabled.",
-      );
-    } finally {
-      setIsExportingGraphify(false);
-    }
-  };
+  const {
+    fileInputRef,
+    contentCaptured,
+    isExportingGraphify,
+    isImporting,
+    exportCsv,
+    exportJson,
+    onImportFile,
+    exportGraphify,
+  } = useAuditGraphActions({
+    payload,
+    projectId,
+    graph,
+    metrics,
+    onImported: () => setColorMode("semantic"),
+  });
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-3">
-        <div className="text-sm text-base-content/70">
-          {summary.pagesCrawled} pages &middot; {summary.orphanCount} orphan
-          {summary.orphanCount === 1 ? "" : "s"} &middot; {summary.brokenCount}{" "}
-          broken internal link{summary.brokenCount === 1 ? "" : "s"}
-        </div>
-        <div className="flex shrink-0 gap-2">
-          <button type="button" className="btn btn-ghost btn-xs" onClick={exportCsv}>
-            Export CSV
-          </button>
-          <button type="button" className="btn btn-ghost btn-xs" onClick={exportJson}>
-            Export JSON
-          </button>
-          <div
-            className={contentCaptured ? "" : "tooltip tooltip-left"}
-            data-tip="Re-run an audit with content capture enabled"
-          >
-            <button
-              type="button"
-              className="btn btn-ghost btn-xs"
-              disabled={!contentCaptured || isExportingGraphify}
-              onClick={() => void exportGraphify()}
-            >
-              Export for Graphify
-            </button>
-          </div>
-          <button
-            type="button"
-            className="btn btn-ghost btn-xs"
-            disabled={isImporting}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            Import Graphify clusters
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="application/json,.json"
-            className="hidden"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              event.target.value = "";
-              if (file) void onImportFile(file);
-            }}
-          />
-        </div>
-      </div>
+      <AuditGraphToolbar
+        summary={summary}
+        contentCaptured={contentCaptured}
+        isExportingGraphify={isExportingGraphify}
+        isImporting={isImporting}
+        fileInputRef={fileInputRef}
+        onExportCsv={exportCsv}
+        onExportJson={exportJson}
+        onExportGraphify={() => void exportGraphify()}
+        onImportFile={(file) => void onImportFile(file)}
+      />
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[300px_1fr]">
         <div className="max-h-[600px] space-y-4 overflow-y-auto">
           <div className="join w-full">
@@ -359,9 +296,7 @@ export function AuditGraphView({
           <AuditInsightsPanel
             insights={insights}
             selectedId={selectedInsightId}
-            onSelect={(id) =>
-              setSelection(id ? { kind: "insight", id } : null)
-            }
+            onSelect={(id) => setSelection(id ? { kind: "insight", id } : null)}
           />
         </div>
         <div className="relative">
@@ -369,6 +304,7 @@ export function AuditGraphView({
             ref={containerRef}
             className="h-[600px] w-full rounded-lg border border-base-300"
           />
+          {hoverInfo && <HoverLinkBadge info={hoverInfo} />}
           {nodeDetail && (
             <div className="absolute right-3 top-3 z-10 max-h-[calc(100%-1.5rem)] w-[300px] overflow-y-auto rounded-lg bg-base-100 shadow-xl">
               <AuditNodeDetailPanel

@@ -177,10 +177,15 @@ async function getGraph(auditId: string, projectId: string) {
     contentCaptured:
       parseAuditConfig(data.audit.config)?.captureContent ?? false,
     pages: data.pages.map((p) => ({
-      id: p.id, url: p.url, title: p.title, statusCode: p.statusCode,
-      wordCount: p.wordCount, internalLinkCount: p.internalLinkCount,
+      id: p.id,
+      url: p.url,
+      title: p.title,
+      statusCode: p.statusCode,
+      wordCount: p.wordCount,
+      internalLinkCount: p.internalLinkCount,
       isIndexable: p.isIndexable,
-      h1Count: p.h1Count, externalLinkCount: p.externalLinkCount,
+      h1Count: p.h1Count,
+      externalLinkCount: p.externalLinkCount,
       canonicalUrl: p.canonicalUrl,
     })),
     edges: data.edges,

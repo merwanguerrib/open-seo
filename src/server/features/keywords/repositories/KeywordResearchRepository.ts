@@ -360,11 +360,37 @@ async function removeSavedKeywords(
   return deletedCount;
 }
 
+/** The project's highest-volume saved keywords, as plain strings. Used as
+ *  expansion seeds for content topic discovery when GSC has no click data. */
+async function listTopSavedKeywordStrings(
+  projectId: string,
+  limit: number,
+): Promise<string[]> {
+  const rows = await db
+    .select({
+      keyword: savedKeywords.keyword,
+      searchVolume: keywordMetrics.searchVolume,
+    })
+    .from(savedKeywords)
+    .leftJoin(
+      keywordMetrics,
+      and(
+        eq(keywordMetrics.projectId, savedKeywords.projectId),
+        eq(keywordMetrics.keyword, savedKeywords.keyword),
+      ),
+    )
+    .where(eq(savedKeywords.projectId, projectId))
+    .orderBy(desc(keywordMetrics.searchVolume))
+    .limit(limit);
+  return rows.map((row) => row.keyword);
+}
+
 export const KeywordResearchRepository = {
   upsertKeywordMetric,
   countSavedKeywords,
   saveKeywordsToProject,
   listSavedKeywordsByProject,
+  listTopSavedKeywordStrings,
   addTagsToSavedKeywords: SavedKeywordTagsRepository.addTagsToSavedKeywords,
   replaceTagsForSavedKeywords:
     SavedKeywordTagsRepository.replaceTagsForSavedKeywords,

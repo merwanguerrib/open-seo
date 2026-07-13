@@ -1,11 +1,18 @@
 import { describe, it, expect } from "vitest";
-import { buildEdgeRows, resolveEdges, buildAuditGraphPayload } from "./graph-edges";
+import {
+  buildEdgeRows,
+  resolveEdges,
+  buildAuditGraphPayload,
+} from "./graph-edges";
 import type { StepPageResult } from "./types";
 
 const page = (id: string, links: Array<[string, string | null]>) =>
   ({
     id,
-    internalLinkDetails: links.map(([url, anchorText]) => ({ url, anchorText })),
+    internalLinkDetails: links.map(([url, anchorText]) => ({
+      url,
+      anchorText,
+    })),
   }) as unknown as StepPageResult;
 
 describe("buildEdgeRows", () => {
@@ -61,8 +68,30 @@ describe("buildAuditGraphPayload", () => {
       auditId: "a1",
       startUrl: "https://s.com/",
       pages: [
-        { id: "p1", url: "https://s.com/", title: "Home", statusCode: 200, wordCount: 10, internalLinkCount: 1, isIndexable: true, h1Count: 1, externalLinkCount: 0, canonicalUrl: null },
-        { id: "p2", url: "https://s.com/a", title: "A", statusCode: 200, wordCount: 5, internalLinkCount: 0, isIndexable: true, h1Count: 1, externalLinkCount: 0, canonicalUrl: null },
+        {
+          id: "p1",
+          url: "https://s.com/",
+          title: "Home",
+          statusCode: 200,
+          wordCount: 10,
+          internalLinkCount: 1,
+          isIndexable: true,
+          h1Count: 1,
+          externalLinkCount: 0,
+          canonicalUrl: null,
+        },
+        {
+          id: "p2",
+          url: "https://s.com/a",
+          title: "A",
+          statusCode: 200,
+          wordCount: 5,
+          internalLinkCount: 0,
+          isIndexable: true,
+          h1Count: 1,
+          externalLinkCount: 0,
+          canonicalUrl: null,
+        },
       ],
       edges: [
         { fromPageId: "p1", toPageId: "p2", anchorText: "A", isBroken: false },
@@ -82,9 +111,16 @@ describe("buildAuditGraphPayload", () => {
       startUrl: "https://s.com/",
       pages: [
         {
-          id: "p1", url: "https://s.com/", title: "Home", statusCode: 200,
-          wordCount: 10, internalLinkCount: 1, isIndexable: true,
-          h1Count: 2, externalLinkCount: 3, canonicalUrl: "https://s.com/",
+          id: "p1",
+          url: "https://s.com/",
+          title: "Home",
+          statusCode: 200,
+          wordCount: 10,
+          internalLinkCount: 1,
+          isIndexable: true,
+          h1Count: 2,
+          externalLinkCount: 3,
+          canonicalUrl: "https://s.com/",
         },
       ],
       edges: [],
@@ -116,8 +152,12 @@ describe("buildAuditGraphPayload", () => {
       edges: [],
       clusters: [{ pageId: "p1", clusterLabel: "Docs" }],
     });
-    expect(payload.nodes.find((n) => n.id === "p1")?.semanticCluster).toBe("Docs");
-    expect(payload.nodes.find((n) => n.id === "p2")?.semanticCluster).toBeNull();
+    expect(payload.nodes.find((n) => n.id === "p1")?.semanticCluster).toBe(
+      "Docs",
+    );
+    expect(
+      payload.nodes.find((n) => n.id === "p2")?.semanticCluster,
+    ).toBeNull();
   });
 
   it("carries contentCaptured into the payload meta", () => {
