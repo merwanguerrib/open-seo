@@ -5,7 +5,8 @@ import {
   type RowSelectionState,
   type SortingState,
 } from "@tanstack/react-table";
-import { Search } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { FileText, Search } from "lucide-react";
 import { useMemo } from "react";
 import {
   AppDataTable,
@@ -27,6 +28,7 @@ const columnHelper = createColumnHelper<SavedKeywordRow>();
 
 export function SavedKeywordsTable({
   rows,
+  projectId,
   rowSelection,
   sorting,
   isLoading,
@@ -35,6 +37,7 @@ export function SavedKeywordsTable({
   onSortingChange,
 }: {
   rows: SavedKeywordRow[];
+  projectId: string;
   rowSelection: RowSelectionState;
   sorting: SortingState;
   isLoading: boolean;
@@ -114,8 +117,24 @@ export function SavedKeywordsTable({
           </span>
         ),
       }),
+      columnHelper.display({
+        id: "generate-article",
+        header: () => "",
+        cell: ({ row }) => (
+          <Link
+            to="/p/$projectId/content"
+            params={{ projectId }}
+            search={{ keyword: row.original.keyword }}
+            className="btn btn-ghost btn-xs"
+            title="Generate an SEO article for this keyword"
+          >
+            <FileText className="size-3.5" />
+          </Link>
+        ),
+        enableSorting: false,
+      }),
     ],
-    [selectAnchorRef],
+    [selectAnchorRef, projectId],
   );
   const table = useAppTable({
     data: rows,

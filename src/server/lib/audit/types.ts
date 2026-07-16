@@ -11,6 +11,7 @@ export type LighthouseStrategy = "auto" | "none";
 export interface AuditConfig {
   maxPages: number;
   lighthouseStrategy: LighthouseStrategy;
+  captureContent: boolean;
 }
 
 // Read-side only (writes stringify a typed AuditConfig). Stored rows may hold
@@ -29,6 +30,7 @@ const lighthouseStrategySchema = z
 const auditConfigSchema = z.object({
   maxPages: z.number().int().min(MIN_AUDIT_PAGES).max(PAID_MAX_AUDIT_PAGES),
   lighthouseStrategy: lighthouseStrategySchema,
+  captureContent: z.boolean().default(false),
 });
 
 const auditConfigCodec = jsonCodec(auditConfigSchema);
@@ -80,6 +82,11 @@ export interface PageAnalysis {
   // Links (normalized, deduped by target)
   links: PageLink[];
 
+  // Internal links with anchor text, for the page graph
+  internalLinkDetails: Array<{ url: string; anchorText: string | null }>;
+  // Cleaned visible body text (for optional R2 storage / Graphify)
+  cleanedText: string;
+
   // Structured data
   hasStructuredData: boolean;
 
@@ -103,6 +110,37 @@ export interface LighthouseResult {
   errorMessage?: string | null;
   r2Key?: string | null;
   payloadSizeBytes?: number | null;
+}
+
+export interface AuditGraphNode {
+  id: string;
+  url: string;
+  title: string | null;
+  statusCode: number | null;
+  wordCount: number;
+  internalLinkCount: number;
+  isIndexable: boolean;
+  h1Count: number;
+  externalLinkCount: number;
+  canonicalUrl: string | null;
+  semanticCluster?: string | null;
+}
+export interface AuditGraphEdge {
+  from: string;
+  to: string;
+  anchorText: string | null;
+  isBroken: boolean;
+}
+export interface AuditGraphPayload {
+  nodes: AuditGraphNode[];
+  edges: AuditGraphEdge[];
+  meta: {
+    auditId: string;
+    startUrl: string;
+    pagesCrawled: number;
+    generatedAt: string;
+    contentCaptured?: boolean;
+  };
 }
 
 /**
@@ -143,6 +181,8 @@ export interface CrawledPageResult {
   imagesMissingAlt: number;
   images: Array<{ src: string | null; alt: string | null }>;
   links: PageLink[];
+  internalLinkDetails: Array<{ url: string; anchorText: string | null }>;
+  cleanedText: string;
   hasStructuredData: boolean;
   hreflangTags: string[];
   isIndexable: boolean;
@@ -150,6 +190,7 @@ export interface CrawledPageResult {
   /** null = not reached via links (e.g. sitemap-seeded). */
   crawlDepth: number | null;
   inSitemap: boolean;
+  contentR2Key?: string | null;
 }
 
 /**

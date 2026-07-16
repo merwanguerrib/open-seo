@@ -48,7 +48,8 @@
     "billing:brand-lookup": "tsx scripts/brand-lookup-cost-profile.ts",
     "cleanup:default-projects:d1": "tsx scripts/d1-default-project-cleanup.ts",
     "seed:rank-tracking": "tsx scripts/seed-rank-tracking.ts",
-    "ci:check": "prettier --check . && knip && tsc --noEmit && tsc --noEmit -p badseo/tsconfig.json && oxlint . --type-aware"
+    "ci:check": "prettier --check . && knip && tsc --noEmit && tsc --noEmit -p badseo/tsconfig.json && oxlint . --type-aware",
+    "mcp:bridge": "node scripts/mcp-terminal-bridge.mjs"
   },
   "cloudflare": {
     "bindings": {
@@ -94,8 +95,14 @@
     "dataforseo-client": "^2.0.19",
     "drizzle-orm": "^0.45.2",
     "fast-xml-parser": "^5.4.1",
+    "fflate": "^0.8.3",
+    "graphology": "^0.26.0",
+    "graphology-communities-louvain": "^2.0.2",
+    "graphology-layout-forceatlas2": "^0.10.1",
+    "graphology-metrics": "^2.4.0",
     "jose": "^6.0.12",
     "lucide-react": "^0.542.0",
+    "marked": "^18.0.5",
     "papaparse": "^5.5.3",
     "postgres": "^3.4.9",
     "posthog-js": "^1.395.0",
@@ -107,6 +114,7 @@
     "remark-gfm": "^4.0.1",
     "remeda": "^2.33.6",
     "robots-parser": "^3.0.1",
+    "sigma": "^3.0.3",
     "sonner": "^2.0.7",
     "tailwindcss": "^4.1.16",
     "tldts": "^7.0.25",

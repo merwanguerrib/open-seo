@@ -6,6 +6,7 @@ import * as sqliteAuth from "./better-auth-schema";
 import * as sqliteBilling from "./billing.schema";
 import * as sqliteGsc from "./gsc.schema";
 import * as sqliteReddit from "./reddit-attribution.schema";
+import * as sqliteContent from "./content.schema";
 import * as pgApp from "./pg/app.schema";
 import * as pgAudit from "./pg/audit.schema";
 import * as pgSam from "./pg/sam.schema";
@@ -30,7 +31,8 @@ type AppSchema = typeof sqliteApp &
   typeof sqliteAuth &
   typeof sqliteBilling &
   typeof sqliteGsc &
-  typeof sqliteReddit;
+  typeof sqliteReddit &
+  typeof sqliteContent;
 
 const runtimeSchema =
   getDatabaseProvider() === "postgres"
@@ -42,6 +44,10 @@ const runtimeSchema =
         ...pgBilling,
         ...pgGsc,
         ...pgReddit,
+        // TODO: content.schema has no Postgres counterpart yet (added on a
+        // fork branch before the dual-backend split existed). Content tables
+        // are unavailable under DATABASE_PROVIDER=postgres until pg/content.schema
+        // is written and schema-parity.test.ts is updated to cover it.
       }
     : {
         ...sqliteApp,
@@ -51,6 +57,7 @@ const runtimeSchema =
         ...sqliteBilling,
         ...sqliteGsc,
         ...sqliteReddit,
+        ...sqliteContent,
       };
 
 // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- guarded by schema-parity.test.ts
@@ -70,6 +77,8 @@ export const {
   audits,
   auditPages,
   auditLinks,
+  auditPageLinks,
+  auditPageClusters,
   auditIssues,
   auditLighthouseResults,
   samSessions,
@@ -84,4 +93,10 @@ export const {
   billingCustomerStatus,
   gscConnections,
   redditAttributions,
+  contentArticles,
+  contentPlans,
+  contentClusters,
+  contentTopics,
+  contentArticleMetrics,
+  contentApiKeys,
 } = schema;

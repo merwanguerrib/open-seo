@@ -39,6 +39,26 @@ export async function getChatAgentModel(): Promise<LanguageModelV3> {
   return buildChatAgentModel(apiKey, modelId);
 }
 
+// Stronger model for SEO article generation (brief + long-form writing).
+// Override with OPENROUTER_CONTENT_MODEL to swap without a code change.
+const DEFAULT_CONTENT_MODEL = "anthropic/claude-sonnet-5";
+
+/**
+ * Model for article generation. Unlike the chat agents, routing is left to
+ * OpenRouter's defaults (Anthropic models have a single first-party
+ * provider), and no reasoning channel is requested — long-form writing
+ * quality doesn't benefit enough to justify the extra tokens.
+ */
+export async function getContentModel(): Promise<LanguageModelV3> {
+  const apiKey = await getRequiredEnvValue("OPENROUTER_API_KEY");
+  const modelId =
+    (await getOptionalEnvValue("OPENROUTER_CONTENT_MODEL")) ??
+    DEFAULT_CONTENT_MODEL;
+  return createOpenRouter({ apiKey })(modelId, {
+    usage: { include: true },
+  });
+}
+
 /**
  * Synchronous variant for callers that already hold the env values. Think's
  * `getModel()` hook is sync and runs on every turn, so the SAM agent reads the

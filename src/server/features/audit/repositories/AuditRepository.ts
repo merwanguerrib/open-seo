@@ -11,6 +11,8 @@ import {
   auditLighthouseResults,
   auditLinks,
   auditPages,
+  auditPageClusters,
+  auditPageLinks,
 } from "@/db/schema";
 import { executeInBatches } from "@/db/runBatch";
 import { AUDIT_ISSUE_TYPES } from "@/shared/audit-issues";
@@ -21,6 +23,7 @@ import type {
   CrawledPageResult,
   LighthouseResult,
 } from "@/server/lib/audit/types";
+import { buildEdgeRows, resolveEdges } from "@/server/lib/audit/graph-edges";
 
 // Only internal links are stored: both consumers (broken-internal-link and
 // orphan checks) filter on isInternal, and per-page external counts already
@@ -183,6 +186,7 @@ async function insertCrawledBatch(
       crawlDepth: page.crawlDepth,
       inSitemap: page.inSitemap,
       responseTimeMs: page.responseTimeMs,
+      contentR2Key: page.contentR2Key ?? null,
     };
     return tx
       .insert(auditPages)
@@ -210,6 +214,13 @@ async function insertCrawledBatch(
   await executeInBatches(linkRows, (tx, row) =>
     tx.insert(auditLinks).values(row).onConflictDoNothing(),
   );
+
+  const edgeRows = buildEdgeRows(auditId, pages);
+  if (edgeRows.length > 0) {
+    await executeInBatches(edgeRows, (tx, row) =>
+      tx.insert(auditPageLinks).values(row).onConflictDoNothing(),
+    );
+  }
 
   await insertIssues(auditId, issues);
 }
@@ -417,10 +428,106 @@ async function getLighthouseResultById(input: {
   };
 }
 
+async function getAuditGraphData(auditId: string, projectId: string) {
+  const audit = await getAuditForProject(auditId, projectId);
+  if (!audit) return null;
+  const [pages, edges, clusters] = await Promise.all([
+    db.query.auditPages.findMany({
+      where: eq(auditPages.auditId, auditId),
+      columns: {
+        id: true,
+        url: true,
+        title: true,
+        statusCode: true,
+        wordCount: true,
+        internalLinkCount: true,
+        isIndexable: true,
+        h1Count: true,
+        externalLinkCount: true,
+        canonicalUrl: true,
+      },
+    }),
+    db.query.auditPageLinks.findMany({
+      where: eq(auditPageLinks.auditId, auditId),
+      columns: {
+        fromPageId: true,
+        toPageId: true,
+        anchorText: true,
+        isBroken: true,
+      },
+    }),
+    db.query.auditPageClusters.findMany({
+      where: eq(auditPageClusters.auditId, auditId),
+      columns: { pageId: true, clusterLabel: true },
+    }),
+  ]);
+  return { audit, pages, edges, clusters };
+}
+
+async function getGraphifyExportData(auditId: string, projectId: string) {
+  const audit = await getAuditForProject(auditId, projectId);
+  if (!audit) return null;
+  const [pages, edges] = await Promise.all([
+    db.query.auditPages.findMany({
+      where: eq(auditPages.auditId, auditId),
+      columns: {
+        id: true,
+        url: true,
+        title: true,
+        statusCode: true,
+        contentR2Key: true,
+      },
+    }),
+    db.query.auditPageLinks.findMany({
+      where: eq(auditPageLinks.auditId, auditId),
+      columns: { fromPageId: true, toPageId: true, anchorText: true },
+    }),
+  ]);
+  return { audit, pages, edges };
+}
+
+async function replaceGraphifyClusters(
+  auditId: string,
+  rows: Array<{ pageId: string; clusterLabel: string }>,
+) {
+  await db
+    .delete(auditPageClusters)
+    .where(eq(auditPageClusters.auditId, auditId));
+  await executeInBatches(rows, (tx, row) =>
+    tx.insert(auditPageClusters).values({
+      id: `audit_page_clusters:${auditId}:${row.pageId}`,
+      auditId,
+      pageId: row.pageId,
+      clusterLabel: row.clusterLabel,
+      source: "graphify",
+    }),
+  );
+}
+
 async function deleteAuditForProject(auditId: string, projectId: string) {
   await db
     .delete(audits)
     .where(and(eq(audits.id, auditId), eq(audits.projectId, projectId)));
+}
+
+async function resolveAuditGraphEdges(auditId: string) {
+  const [edges, pages] = await Promise.all([
+    db.query.auditPageLinks.findMany({
+      where: eq(auditPageLinks.auditId, auditId),
+      columns: { id: true, toUrl: true },
+    }),
+    db.query.auditPages.findMany({
+      where: eq(auditPages.auditId, auditId),
+      columns: { id: true, url: true, statusCode: true },
+    }),
+  ]);
+  const resolved = resolveEdges(edges, pages);
+  await executeInBatches(resolved, (tx, row) =>
+    tx
+      .update(auditPageLinks)
+      .set({ toPageId: row.toPageId, isBroken: row.isBroken })
+      .where(eq(auditPageLinks.id, row.id)),
+  );
 }
 
 export const AuditRepository = {
@@ -442,4 +549,8 @@ export const AuditRepository = {
   getAuditResultsForProject,
   getLighthouseResultById,
   deleteAuditForProject,
+  resolveAuditGraphEdges,
+  getAuditGraphData,
+  getGraphifyExportData,
+  replaceGraphifyClusters,
 } as const;

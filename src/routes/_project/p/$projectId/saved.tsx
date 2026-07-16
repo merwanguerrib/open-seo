@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   keepPreviousData,
   useMutation,
@@ -49,6 +49,7 @@ const FILTER_DEBOUNCE_MS = 350;
 
 function SavedKeywordsPage() {
   const { projectId } = Route.useParams();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
@@ -285,6 +286,7 @@ function SavedKeywordsPage() {
             />
             <SavedKeywordsTable
               rows={savedKeywords}
+              projectId={projectId}
               rowSelection={rowSelection}
               sorting={sorting}
               isLoading={isLoading}
@@ -319,6 +321,19 @@ function SavedKeywordsPage() {
             );
           }}
           onOpenTags={() => setShowTagModal(true)}
+          onAnalyzeCompetitors={() => {
+            // SERP competitors accepts up to 20 keywords, comma-separated.
+            void navigate({
+              to: "/p/$projectId/serp-competitors",
+              params: { projectId },
+              search: {
+                keywords: selectedRows
+                  .slice(0, 20)
+                  .map((row) => row.keyword)
+                  .join(","),
+              },
+            });
+          }}
           onExportCsv={() => exporter.exportSelectionCsv(selectedRows)}
           onExportSheets={() =>
             void exporter.exportSelectionSheets(selectedRows)

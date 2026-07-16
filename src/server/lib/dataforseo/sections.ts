@@ -45,6 +45,8 @@ export {
 
 export { fetchLighthouseResult } from "@/server/lib/dataforseo/lighthouse";
 
+export { fetchPageContentParsing } from "@/server/lib/dataforseo/onpage";
+
 export {
   fetchLlmAggregatedMetrics,
   fetchLlmCrossAggregatedMetrics,

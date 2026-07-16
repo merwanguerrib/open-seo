@@ -16,24 +16,29 @@ import {
   ExportDropdown,
   PerformanceTable,
 } from "@/client/features/audit/results/ResultsTables";
+import { AuditGraphView } from "@/client/features/audit/graph/AuditGraphView";
+import type { AuditGraphPayload } from "@/server/lib/audit/types";
 
-type ResultsTab = "issues" | "pages" | "performance";
+type ResultsTab = "issues" | "pages" | "performance" | "graph";
 
 export function ResultsView({
   projectId,
   data,
   onTabChange,
   tab,
+  graphPayload,
 }: {
   projectId: string;
   data: AuditResultsData;
   tab: string;
   onTabChange: (tab: ResultsTab) => void;
+  graphPayload: AuditGraphPayload | null;
 }) {
   const { audit, pages, lighthouse, issues } = data;
   const hasPerformanceTab = lighthouse.length > 0;
-  const activeTab =
-    tab === "performance" && !hasPerformanceTab ? "issues" : tab;
+  const activeTab = (
+    tab === "performance" && !hasPerformanceTab ? "issues" : tab
+  ) as ResultsTab;
   const stats = useResultStats(pages, lighthouse);
   const blockedCount = useMemo(
     () => pages.filter((page) => page.fetchClass === "blocked").length,
@@ -106,6 +111,14 @@ export function ResultsView({
               pages={pages}
             />
           )}
+          {activeTab === "graph" &&
+            (graphPayload ? (
+              <AuditGraphView payload={graphPayload} projectId={projectId} />
+            ) : (
+              <p className="text-sm text-base-content/60 py-4">
+                Graph unavailable for this run
+              </p>
+            ))}
         </div>
       </div>
     </>
@@ -184,6 +197,7 @@ function ResultsHeader({
           },
         ]
       : []),
+    { tab: "graph" as const, label: "Graph" },
   ];
 
   return (

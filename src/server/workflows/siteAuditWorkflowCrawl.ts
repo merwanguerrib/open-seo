@@ -9,6 +9,7 @@ import { AuditRepository } from "@/server/features/audit/repositories/AuditRepos
 import { AuditProgressKV } from "@/server/lib/audit/progress-kv";
 import { crawlPage } from "@/server/workflows/site-audit-workflow-helpers";
 import { pgStep } from "@/server/workflows/pgStep";
+import { putTextToR2 } from "@/server/lib/r2";
 
 const CRAWL_CONCURRENCY = 25;
 // Keep durable step state under the ~1MiB limit: full link lists live in D1;
@@ -47,6 +48,7 @@ type CrawlPhaseParams = {
   maxPages: number;
   robots: RobotsResult;
   sitemapUrls: string[];
+  captureContent: boolean;
 };
 
 /** What later phases need per page — no link lists (those stay in D1). */
@@ -70,6 +72,7 @@ export async function runCrawlPhase(
     maxPages,
     robots,
     sitemapUrls,
+    captureContent,
   } = params;
   const visited = new Set<string>();
   const queued = new Set<string>();
@@ -124,6 +127,7 @@ export async function runCrawlPhase(
       sitemapSet,
       visited,
       queued,
+      captureContent,
     });
     // Keep only the slim summary in memory: at 10k pages, retaining link
     // lists for the whole crawl would not fit in the 128MB Worker heap.
@@ -196,6 +200,7 @@ async function runCrawlBatch(
     sitemapSet: Set<string>;
     visited: Set<string>;
     queued: Set<string>;
+    captureContent: boolean;
   },
 ): Promise<StepPageSummary[]> {
   const {
@@ -205,6 +210,7 @@ async function runCrawlBatch(
     sitemapSet,
     visited,
     queued,
+    captureContent,
   } = input;
   return pgStep(step, `crawl-batch-${crawlBatchIndex}`, undefined, async () => {
     const pages = await Promise.all(
@@ -216,6 +222,15 @@ async function runCrawlBatch(
     // Deterministic ids keep the D1 writes idempotent across step retries.
     for (const page of pages) {
       page.id = await deterministicAuditRowId(auditId, page.url);
+    }
+
+    if (captureContent) {
+      for (const page of pages) {
+        if (!page.cleanedText) continue;
+        const key = `audits/${auditId}/content/${page.id}.txt`;
+        const uploaded = await putTextToR2(key, page.cleanedText);
+        page.contentR2Key = uploaded.key;
+      }
     }
 
     const issues = pages.flatMap((page) => runPageReporters(page));

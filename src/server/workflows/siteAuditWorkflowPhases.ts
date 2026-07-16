@@ -79,6 +79,7 @@ export async function runAuditPhases(
     maxPages,
     robots,
     sitemapUrls: discovery.sitemapUrls,
+    captureContent: config.captureContent,
   });
   await runLighthousePhase(step, {
     auditId,
@@ -285,6 +286,10 @@ async function finalizeAudit(args: {
     });
     await AuditRepository.insertIssues(auditId, issues);
     return { issueCount: issues.length };
+  });
+
+  await pgStep(step, "resolve-graph", undefined, async () => {
+    await AuditRepository.resolveAuditGraphEdges(auditId);
   });
 
   await pgStep(step, "finalize", undefined, async () => {

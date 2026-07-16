@@ -18,6 +18,7 @@ export const startAuditSchema = z.object({
     .optional()
     .default(DEFAULT_AUDIT_PAGES),
   lighthouseStrategy: z.enum(["auto", "none"]).optional().default("auto"),
+  captureContent: z.boolean().optional().default(false),
 });
 
 export const getAuditStatusSchema = z.object({
@@ -44,9 +45,25 @@ export const getCrawlProgressSchema = z.object({
   auditId: z.string().min(1),
 });
 
+export const getAuditGraphSchema = z.object({
+  projectId: z.string(),
+  auditId: z.string(),
+});
+
+export const exportAuditForGraphifySchema = z.object({
+  projectId: z.string().min(1),
+  auditId: z.string().min(1),
+});
+
+export const importGraphifyClustersSchema = z.object({
+  projectId: z.string().min(1),
+  auditId: z.string().min(1),
+  graphJson: z.unknown(),
+});
+
 // ─── URL search params schema for /p/$projectId/audit ────────────────────────
 
-const auditTabs = ["issues", "pages", "performance"] as const;
+const auditTabs = ["issues", "pages", "performance", "graph"] as const;
 
 export const auditSearchSchema = z.object({
   auditId: z.string().optional().catch(undefined),

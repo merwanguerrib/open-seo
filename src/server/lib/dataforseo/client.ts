@@ -121,6 +121,11 @@ export function createDataforseoClient(customer: BillingCustomerContext) {
     lighthouse: {
       live: meter(customer, (s) => s.fetchLighthouseResult),
     },
+    onPage: {
+      // Used by article generation to read competitor pages; billed to the
+      // content feature rather than the on_page default (site_audit).
+      contentParsing: meter(customer, (s) => s.fetchPageContentParsing, "content"),
+    },
     aiSearch: {
       mentionsSearch: meter(customer, (s) => s.fetchLlmMentionsSearch),
       aggregatedMetrics: meter(customer, (s) => s.fetchLlmAggregatedMetrics),

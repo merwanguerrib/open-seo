@@ -73,24 +73,29 @@ export function analyzeHtml(
 
   // --- Links (deduped by target URL; first anchor wins) ---
   const linksByTarget = new Map<string, PageLink>();
+  const internalLinkDetails: Array<{ url: string; anchorText: string | null }> =
+    [];
 
   $("a[href]").each((_, el) => {
     const href = $(el).attr("href");
     if (!href) return;
-
-    // Skip javascript:, mailto:, tel:, #anchors
     if (/^(javascript:|mailto:|tel:|#)/.test(href)) return;
 
     const resolved = normalizeUrl(href, pageUrl);
     if (!resolved) return;
-    if (linksByTarget.has(resolved)) return;
 
-    const anchor = $(el).text().replace(/\s+/g, " ").trim().slice(0, 200);
+    const anchor = $(el).text().replace(/\s+/g, " ").trim();
+    const isInternal = isSameOrigin(resolved, pageUrl);
+    if (isInternal) {
+      internalLinkDetails.push({ url: resolved, anchorText: anchor || null });
+    }
+
+    if (linksByTarget.has(resolved)) return;
     const rel = $(el).attr("rel")?.toLowerCase() ?? "";
     linksByTarget.set(resolved, {
       targetUrl: resolved,
-      anchor: anchor || null,
-      isInternal: isSameOrigin(resolved, pageUrl),
+      anchor: anchor.slice(0, 200) || null,
+      isInternal,
       isNofollow: rel.split(/\s+/).includes("nofollow"),
     });
   });
@@ -126,6 +131,8 @@ export function analyzeHtml(
     bodyText,
     images,
     links,
+    internalLinkDetails,
+    cleanedText: bodyText,
     hasStructuredData,
     hreflangTags,
   };
