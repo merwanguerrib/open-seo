@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
-import { FileDown, Loader2, Sheet, Trash2 } from "lucide-react";
+import { FileDown, FileText, Loader2, Sheet, Trash2 } from "lucide-react";
 import { Modal } from "@/client/components/Modal";
 import {
   AppDataTable,
@@ -17,6 +17,7 @@ import { exportTableToSheets } from "@/client/lib/exportToSheets";
 import { captureClientEvent } from "@/client/lib/posthog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { removeTrackingKeywords } from "@/serverFunctions/rank-tracking";
+import { launchArticlesFromKeywords } from "@/serverFunctions/contentStrategy";
 import { getStandardErrorMessage } from "@/client/lib/error-messages";
 import type { RankTrackingRow } from "@/types/schemas/rank-tracking";
 import { useRankTrackingColumns } from "./RankTrackingColumns";
@@ -126,6 +127,28 @@ export function RankTrackingTable({
     captureClientEvent("rank_tracking:export_csv", { scope: "selection" });
   };
 
+  const launchArticlesMutation = useMutation({
+    mutationFn: () =>
+      launchArticlesFromKeywords({
+        data: {
+          projectId,
+          sourceName: "Rank Tracking",
+          keywords: selectedRankRows.map((row) => ({
+            keyword: row.keyword,
+            searchVolume: row.searchVolume,
+          })),
+        },
+      }),
+    onSuccess: (result) => {
+      table.resetRowSelection();
+      toast.success(
+        `Queued ${result.queued} new topic${result.queued !== 1 ? "s" : ""}`,
+      );
+    },
+    onError: (error) =>
+      toast.error(getStandardErrorMessage(error, "Could not queue articles")),
+  });
+
   const removeMutation = useMutation({
     mutationFn: (keywordIds: string[]) =>
       removeTrackingKeywords({ data: { projectId, configId, keywordIds } }),
@@ -172,6 +195,12 @@ export function RankTrackingTable({
         onClear={() => table.resetRowSelection()}
         actions={
           <div className="flex items-center px-1.5">
+            <TableBulkActionButton
+              icon={<FileText className="size-3.5" />}
+              onClick={() => launchArticlesMutation.mutate()}
+            >
+              Generate Article{selectedCount !== 1 ? "s" : ""}
+            </TableBulkActionButton>
             <TableBulkActionButton
               icon={<Trash2 className="size-3.5" />}
               onClick={() => setShowConfirm(true)}
