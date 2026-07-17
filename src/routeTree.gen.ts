@@ -47,7 +47,6 @@ import { Route as ProjectPProjectIdRankTrackingRouteImport } from './routes/_pro
 import { Route as ProjectPProjectIdPromptExplorerRouteImport } from './routes/_project/p/$projectId/prompt-explorer'
 import { Route as ProjectPProjectIdLocalRouteImport } from './routes/_project/p/$projectId/local'
 import { Route as ProjectPProjectIdKeywordsRouteImport } from './routes/_project/p/$projectId/keywords'
-import { Route as ProjectPProjectIdGscRouteImport } from './routes/_project/p/$projectId/gsc'
 import { Route as ProjectPProjectIdDomainRouteImport } from './routes/_project/p/$projectId/domain'
 import { Route as ProjectPProjectIdContentRouteImport } from './routes/_project/p/$projectId/content'
 import { Route as ProjectPProjectIdBrandLookupRouteImport } from './routes/_project/p/$projectId/brand-lookup'
@@ -258,11 +257,6 @@ const ProjectPProjectIdKeywordsRoute =
     path: '/keywords',
     getParentRoute: () => ProjectPProjectIdRouteRoute,
   } as any)
-const ProjectPProjectIdGscRoute = ProjectPProjectIdGscRouteImport.update({
-  id: '/gsc',
-  path: '/gsc',
-  getParentRoute: () => ProjectPProjectIdRouteRoute,
-} as any)
 const ProjectPProjectIdDomainRoute = ProjectPProjectIdDomainRouteImport.update({
   id: '/domain',
   path: '/domain',
@@ -368,7 +362,6 @@ export interface FileRoutesByFullPath {
   '/p/$projectId/brand-lookup': typeof ProjectPProjectIdBrandLookupRoute
   '/p/$projectId/content': typeof ProjectPProjectIdContentRouteWithChildren
   '/p/$projectId/domain': typeof ProjectPProjectIdDomainRoute
-  '/p/$projectId/gsc': typeof ProjectPProjectIdGscRoute
   '/p/$projectId/keywords': typeof ProjectPProjectIdKeywordsRoute
   '/p/$projectId/local': typeof ProjectPProjectIdLocalRoute
   '/p/$projectId/prompt-explorer': typeof ProjectPProjectIdPromptExplorerRoute
@@ -415,7 +408,6 @@ export interface FileRoutesByTo {
   '/p/$projectId/backlinks': typeof ProjectPProjectIdBacklinksRoute
   '/p/$projectId/brand-lookup': typeof ProjectPProjectIdBrandLookupRoute
   '/p/$projectId/domain': typeof ProjectPProjectIdDomainRoute
-  '/p/$projectId/gsc': typeof ProjectPProjectIdGscRoute
   '/p/$projectId/keywords': typeof ProjectPProjectIdKeywordsRoute
   '/p/$projectId/local': typeof ProjectPProjectIdLocalRoute
   '/p/$projectId/prompt-explorer': typeof ProjectPProjectIdPromptExplorerRoute
@@ -469,7 +461,6 @@ export interface FileRoutesById {
   '/_project/p/$projectId/brand-lookup': typeof ProjectPProjectIdBrandLookupRoute
   '/_project/p/$projectId/content': typeof ProjectPProjectIdContentRouteWithChildren
   '/_project/p/$projectId/domain': typeof ProjectPProjectIdDomainRoute
-  '/_project/p/$projectId/gsc': typeof ProjectPProjectIdGscRoute
   '/_project/p/$projectId/keywords': typeof ProjectPProjectIdKeywordsRoute
   '/_project/p/$projectId/local': typeof ProjectPProjectIdLocalRoute
   '/_project/p/$projectId/prompt-explorer': typeof ProjectPProjectIdPromptExplorerRoute
@@ -521,7 +512,6 @@ export interface FileRouteTypes {
     | '/p/$projectId/brand-lookup'
     | '/p/$projectId/content'
     | '/p/$projectId/domain'
-    | '/p/$projectId/gsc'
     | '/p/$projectId/keywords'
     | '/p/$projectId/local'
     | '/p/$projectId/prompt-explorer'
@@ -568,7 +558,6 @@ export interface FileRouteTypes {
     | '/p/$projectId/backlinks'
     | '/p/$projectId/brand-lookup'
     | '/p/$projectId/domain'
-    | '/p/$projectId/gsc'
     | '/p/$projectId/keywords'
     | '/p/$projectId/local'
     | '/p/$projectId/prompt-explorer'
@@ -621,7 +610,6 @@ export interface FileRouteTypes {
     | '/_project/p/$projectId/brand-lookup'
     | '/_project/p/$projectId/content'
     | '/_project/p/$projectId/domain'
-    | '/_project/p/$projectId/gsc'
     | '/_project/p/$projectId/keywords'
     | '/_project/p/$projectId/local'
     | '/_project/p/$projectId/prompt-explorer'
@@ -927,13 +915,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectPProjectIdKeywordsRouteImport
       parentRoute: typeof ProjectPProjectIdRouteRoute
     }
-    '/_project/p/$projectId/gsc': {
-      id: '/_project/p/$projectId/gsc'
-      path: '/gsc'
-      fullPath: '/p/$projectId/gsc'
-      preLoaderRoute: typeof ProjectPProjectIdGscRouteImport
-      parentRoute: typeof ProjectPProjectIdRouteRoute
-    }
     '/_project/p/$projectId/domain': {
       id: '/_project/p/$projectId/domain'
       path: '/domain'
@@ -1113,7 +1094,6 @@ interface ProjectPProjectIdRouteRouteChildren {
   ProjectPProjectIdBrandLookupRoute: typeof ProjectPProjectIdBrandLookupRoute
   ProjectPProjectIdContentRoute: typeof ProjectPProjectIdContentRouteWithChildren
   ProjectPProjectIdDomainRoute: typeof ProjectPProjectIdDomainRoute
-  ProjectPProjectIdGscRoute: typeof ProjectPProjectIdGscRoute
   ProjectPProjectIdKeywordsRoute: typeof ProjectPProjectIdKeywordsRoute
   ProjectPProjectIdLocalRoute: typeof ProjectPProjectIdLocalRoute
   ProjectPProjectIdPromptExplorerRoute: typeof ProjectPProjectIdPromptExplorerRoute
@@ -1135,7 +1115,6 @@ const ProjectPProjectIdRouteRouteChildren: ProjectPProjectIdRouteRouteChildren =
     ProjectPProjectIdBrandLookupRoute: ProjectPProjectIdBrandLookupRoute,
     ProjectPProjectIdContentRoute: ProjectPProjectIdContentRouteWithChildren,
     ProjectPProjectIdDomainRoute: ProjectPProjectIdDomainRoute,
-    ProjectPProjectIdGscRoute: ProjectPProjectIdGscRoute,
     ProjectPProjectIdKeywordsRoute: ProjectPProjectIdKeywordsRoute,
     ProjectPProjectIdLocalRoute: ProjectPProjectIdLocalRoute,
     ProjectPProjectIdPromptExplorerRoute: ProjectPProjectIdPromptExplorerRoute,

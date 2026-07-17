@@ -1,5 +1,4 @@
 import {
-  BarChart3,
   Bookmark,
   Bot,
   ClipboardCheck,
@@ -71,12 +70,6 @@ const projectNavItems = [
     to: "/p/$projectId/audit" as const,
     label: "Site Audit",
     icon: ClipboardCheck,
-  },
-  {
-    to: "/p/$projectId/gsc" as const,
-    label: "Search Console",
-    icon: BarChart3,
-    matchSegment: "/gsc",
   },
   {
     to: "/p/$projectId/local" as const,
@@ -158,13 +151,7 @@ export function getProjectNavGroups(projectId: string) {
     },
     {
       label: "Tools",
-      items: [
-        // GSC insights currently exist as two parallel pages (search-performance
-        // above, and this one) — kept side by side pending a follow-up dedupe.
-        byPath("/p/$projectId/gsc"),
-        byPath("/p/$projectId/local"),
-        byPath("/p/$projectId/tools"),
-      ],
+      items: [byPath("/p/$projectId/local"), byPath("/p/$projectId/tools")],
     },
   ];
 }

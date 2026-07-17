@@ -39,6 +39,7 @@ export function SearchConsoleConnectionCard({
   });
   const connection = connectionQuery.data;
   const connected = Boolean(connection?.connected);
+  const connectionNeedsReconnect = Boolean(connection?.requiresReconnect);
   const selfHostedNeedsSetup =
     !hosted && connectionQuery.isSuccess && !connection?.googleOAuthConfigured;
 
@@ -129,9 +130,11 @@ export function SearchConsoleConnectionCard({
           ? undefined
           : selfHostedNeedsSetup
             ? "setup_required"
-            : connected
-              ? "connected"
-              : "disconnected"
+            : connected && connectionNeedsReconnect
+              ? "reconnect_required"
+              : connected
+                ? "connected"
+                : "disconnected"
       }
     >
       {connectionQuery.isLoading ? (
@@ -141,6 +144,19 @@ export function SearchConsoleConnectionCard({
         </div>
       ) : selfHostedNeedsSetup ? (
         <SelfHostedSetupWarning />
+      ) : connected && connectionNeedsReconnect && !picking ? (
+        <ConnectedState
+          siteUrl={connection?.siteUrl ?? ""}
+          connectedByEmail={connection?.connectedByEmail ?? null}
+          needsReconnect
+          onChange={() => {
+            setSelection(null);
+            setPicking(true);
+          }}
+          onReconnect={handleConnect}
+          onDisconnect={() => disconnectMutation.mutate()}
+          disconnecting={disconnectMutation.isPending}
+        />
       ) : connected && !picking ? (
         <ConnectedState
           siteUrl={connection?.siteUrl ?? ""}
@@ -201,7 +217,7 @@ function IntegrationCard({
   status,
   children,
 }: {
-  status?: "connected" | "disconnected" | "setup_required";
+  status?: "connected" | "disconnected" | "setup_required" | "reconnect_required";
   children: React.ReactNode;
 }) {
   return (
@@ -220,17 +236,17 @@ function IntegrationCard({
 function StatusPill({
   status,
 }: {
-  status: "connected" | "disconnected" | "setup_required";
+  status: "connected" | "disconnected" | "setup_required" | "reconnect_required";
 }) {
   const connected = status === "connected";
-  const setupRequired = status === "setup_required";
+  const needsAttention = status === "setup_required" || status === "reconnect_required";
   return (
     <span
       className={[
         "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium",
         connected
           ? "border-success/30 bg-success/10 text-success"
-          : setupRequired
+          : needsAttention
             ? "border-warning/30 bg-warning/10 text-warning"
             : "border-base-300 bg-base-200 text-base-content/60",
       ].join(" ")}
@@ -240,16 +256,18 @@ function StatusPill({
           "size-1.5 rounded-full",
           connected
             ? "bg-success"
-            : setupRequired
+            : needsAttention
               ? "bg-warning"
               : "bg-base-content/40",
         ].join(" ")}
       />
       {connected
         ? "Connected"
-        : setupRequired
+        : status === "setup_required"
           ? "Setup required"
-          : "Not connected"}
+          : status === "reconnect_required"
+            ? "Reconnect required"
+            : "Not connected"}
     </span>
   );
 }
@@ -261,13 +279,17 @@ function StatusPill({
 function ConnectedState({
   siteUrl,
   connectedByEmail,
+  needsReconnect = false,
   onChange,
+  onReconnect,
   onDisconnect,
   disconnecting,
 }: {
   siteUrl: string;
   connectedByEmail: string | null;
+  needsReconnect?: boolean;
   onChange: () => void;
+  onReconnect?: () => void;
   onDisconnect: () => void;
   disconnecting: boolean;
 }) {
@@ -286,7 +308,21 @@ function ConnectedState({
           ) : null}
         </div>
       </div>
+      {needsReconnect ? (
+        <p className="text-sm text-warning">
+          Google access expired or was revoked. Reconnect to keep seeing data.
+        </p>
+      ) : null}
       <div className="flex items-center gap-1">
+        {needsReconnect ? (
+          <button
+            type="button"
+            className="btn btn-warning btn-sm"
+            onClick={onReconnect}
+          >
+            Reconnect
+          </button>
+        ) : null}
         <button
           type="button"
           className="btn btn-ghost btn-sm"

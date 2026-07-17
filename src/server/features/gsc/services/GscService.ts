@@ -103,6 +103,28 @@ export function isExpectedGrantFailure(error: unknown): boolean {
   );
 }
 
+/** Live health check for one bound connection's grant — a project's
+ *  `getConnection()` row can go stale (token revoked/expired) without the row
+ *  itself changing, so callers that show "Connected" must check this too. */
+async function checkGrantHealth(connection: {
+  connectedByUserId: string;
+  gscAccountId: string | null;
+}): Promise<{ requiresReconnect: boolean }> {
+  const client = createGscClient({
+    userId: connection.connectedByUserId,
+    gscAccountId: connection.gscAccountId ?? undefined,
+  });
+  try {
+    await client.listSites();
+    return { requiresReconnect: false };
+  } catch (error) {
+    if (!isExpectedGrantFailure(error)) {
+      console.error("Failed to verify Search Console grant health", error);
+    }
+    return { requiresReconnect: true };
+  }
+}
+
 async function listSitesForUserWithGrantStatus(
   userId: string,
 ): Promise<GscSiteListResult> {
@@ -318,6 +340,7 @@ async function inspectUrls(input: {
 
 export const GscService = {
   getConnection,
+  checkGrantHealth,
   userHasGrant,
   listSitesForUserWithGrantStatus,
   setSite,

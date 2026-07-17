@@ -466,3 +466,47 @@ describe("GscService.disconnect", () => {
     expect(mocks.dbDelete).not.toHaveBeenCalled();
   });
 });
+
+describe("GscService.checkGrantHealth", () => {
+  beforeEach(() => {
+    mocks.listSites.mockReset();
+  });
+
+  it("reports no reconnect needed when the grant can still list sites", async () => {
+    mocks.listSites.mockResolvedValue([
+      { siteUrl: "https://x/", permissionLevel: "siteOwner" },
+    ]);
+    const { GscService } = await import("./GscService");
+
+    const result = await GscService.checkGrantHealth({
+      connectedByUserId: "u1",
+      gscAccountId: "sub-a",
+    });
+
+    expect(result).toEqual({ requiresReconnect: false });
+  });
+
+  it("reports reconnect needed when the token is revoked or expired", async () => {
+    mocks.listSites.mockRejectedValue(new mocks.GscTokenError());
+    const { GscService } = await import("./GscService");
+
+    const result = await GscService.checkGrantHealth({
+      connectedByUserId: "u1",
+      gscAccountId: "sub-a",
+    });
+
+    expect(result).toEqual({ requiresReconnect: true });
+  });
+
+  it("reports reconnect needed when Google rejects the call with 401", async () => {
+    mocks.listSites.mockRejectedValue(new mocks.GscApiError(401, "denied"));
+    const { GscService } = await import("./GscService");
+
+    const result = await GscService.checkGrantHealth({
+      connectedByUserId: "u1",
+      gscAccountId: "sub-a",
+    });
+
+    expect(result).toEqual({ requiresReconnect: true });
+  });
+});
