@@ -33,13 +33,14 @@ import { useSavedKeywordsFilters } from "@/client/features/saved-keywords/useSav
 import { useTagManage } from "@/client/features/saved-keywords/useTagManage";
 import { getStandardErrorMessage } from "@/client/lib/error-messages";
 import { captureClientEvent } from "@/client/lib/posthog";
+import { launchArticlesFromKeywords } from "@/serverFunctions/contentStrategy";
 import {
   getSavedKeywords,
   refreshSavedKeywordMetrics,
   removeSavedKeywords,
   updateSavedKeywordTags,
 } from "@/serverFunctions/keywords";
-import type { SavedKeywordTag } from "@/types/keywords";
+import type { SavedKeywordRow, SavedKeywordTag } from "@/types/keywords";
 
 export const Route = createFileRoute("/_project/p/$projectId/saved")({
   component: SavedKeywordsPage,
@@ -165,6 +166,28 @@ function SavedKeywordsPage() {
     onError: (error) => {
       setRemoveError(getStandardErrorMessage(error, "Remove failed."));
     },
+  });
+
+  const launchArticlesMutation = useMutation({
+    mutationFn: (rows: SavedKeywordRow[]) =>
+      launchArticlesFromKeywords({
+        data: {
+          projectId,
+          sourceName: "Saved Keywords",
+          keywords: rows.map((row) => ({
+            keyword: row.keyword,
+            searchVolume: row.searchVolume,
+          })),
+        },
+      }),
+    onSuccess: (result) => {
+      setRowSelection({});
+      toast.success(
+        `Queued ${result.queued} new topic${result.queued !== 1 ? "s" : ""}`,
+      );
+    },
+    onError: (error) =>
+      toast.error(getStandardErrorMessage(error, "Could not queue articles")),
   });
 
   const tagMutation = useMutation({
@@ -312,6 +335,7 @@ function SavedKeywordsPage() {
         <SavedKeywordsBulkActionBar
           selectedCount={selectedCount}
           exportingSelection={exporter.exportingSelection}
+          onGenerateArticles={() => launchArticlesMutation.mutate(selectedRows)}
           onCopy={() => {
             void navigator.clipboard.writeText(
               selectedRows.map((row) => row.keyword).join("\n"),
