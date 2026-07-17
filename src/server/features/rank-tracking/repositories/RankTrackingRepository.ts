@@ -246,6 +246,23 @@ async function getKeywordsForConfig(configId: string) {
     .orderBy(rankTrackingKeywords.createdAt);
 }
 
+async function listTopTrackedKeywordStrings(
+  projectId: string,
+  limit: number,
+): Promise<string[]> {
+  const rows = await db
+    .select({ keyword: rankTrackingKeywords.keyword })
+    .from(rankTrackingKeywords)
+    .innerJoin(
+      rankTrackingConfigs,
+      eq(rankTrackingConfigs.id, rankTrackingKeywords.configId),
+    )
+    .where(eq(rankTrackingConfigs.projectId, projectId))
+    .orderBy(desc(rankTrackingKeywords.searchVolume))
+    .limit(limit);
+  return rows.map((row) => row.keyword);
+}
+
 async function addKeywordsToConfig(
   keywords: Array<{ id: string; configId: string; keyword: string }>,
 ) {
@@ -385,6 +402,7 @@ export const RankTrackingRepository = {
   insertSnapshots,
   getSnapshotsForRun,
   getKeywordsForConfig,
+  listTopTrackedKeywordStrings,
   addKeywordsToConfig,
   removeKeywordsFromConfig,
   updateKeywordMetrics,
