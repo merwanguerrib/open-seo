@@ -105,6 +105,7 @@ async function generateArticle(input: {
   source?: "manual" | "autopilot";
   clusterId?: string | null;
   blogUrlPattern?: string | null;
+  liveUrl?: string | null;
   autoPublishAt?: string | null;
 }) {
   const articleId = crypto.randomUUID();
@@ -127,7 +128,7 @@ async function generateArticle(input: {
     workflowRunId,
     source: input.source ?? "manual",
     clusterId: input.clusterId ?? null,
-    liveUrl: buildLiveUrl(input.blogUrlPattern, slug),
+    liveUrl: input.liveUrl ?? buildLiveUrl(input.blogUrlPattern, slug),
     autoPublishAt: input.autoPublishAt ?? null,
   });
 

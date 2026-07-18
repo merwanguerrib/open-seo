@@ -46,6 +46,17 @@ describe("buildBriefPrompt", () => {
     });
     expect(prompt.length).toBeLessThan(12_000);
   });
+
+  it("includes project strategy context", () => {
+    const prompt = buildBriefPrompt({
+      keyword: "k",
+      languageCode: "en",
+      serpContext,
+      competitors,
+      strategyContext: "Use the approved pillar URL and avoid cannibalization.",
+    });
+    expect(prompt).toContain("approved pillar URL");
+  });
 });
 
 describe("buildArticlePrompt", () => {
@@ -109,5 +120,17 @@ describe("buildArticlePrompt", () => {
       internalLinks: [],
     });
     expect(prompt).not.toContain("Internal links to weave in");
+  });
+
+  it("includes editorial instructions in the writing prompt", () => {
+    const prompt = buildArticlePrompt({
+      keyword: "k",
+      languageCode: "en",
+      brief,
+      competitors,
+      siteDomain: null,
+      strategyContext: "Always include a reusable classroom artifact.",
+    });
+    expect(prompt).toContain("reusable classroom artifact");
   });
 });

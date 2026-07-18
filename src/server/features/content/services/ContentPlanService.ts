@@ -5,7 +5,9 @@ import type {
   ContentTopicRow,
 } from "@/server/features/content/repositories/ContentPlanRepository";
 import { ContentRepository } from "@/server/features/content/repositories/ContentRepository";
+import { ContentStrategyRepository } from "@/server/features/content/repositories/ContentStrategyRepository";
 import { discoverTopics } from "@/server/features/content/services/topicDiscovery";
+import { normalizeKeyword } from "@/server/features/content/services/contentStrategyParsing";
 import { ContentService } from "@/server/features/content/services/ContentService";
 import { KeywordResearchRepository } from "@/server/features/keywords/repositories/KeywordResearchRepository";
 import { AppError } from "@/server/lib/errors";
@@ -73,16 +75,18 @@ async function runDiscovery(input: {
   // Seed expansion when GSC has no click data (not connected / token
   // revoked): the project's top saved keywords, falling back to existing
   // article keywords.
-  const savedSeeds = await KeywordResearchRepository.listTopSavedKeywordStrings(
-    input.projectId,
-    3,
-  );
+  const [strategySeeds, savedSeeds] = await Promise.all([
+    ContentStrategyRepository.listKeywordSeeds(input.projectId, 3),
+    KeywordResearchRepository.listTopSavedKeywordStrings(input.projectId, 3),
+  ]);
   const fallbackSeeds =
-    savedSeeds.length > 0
-      ? savedSeeds
-      : (await ContentRepository.listArticlesForProject(input.projectId))
-          .slice(0, 3)
-          .map((article) => article.keyword);
+    strategySeeds.length > 0
+      ? strategySeeds
+      : savedSeeds.length > 0
+        ? savedSeeds
+        : (await ContentRepository.listArticlesForProject(input.projectId))
+            .slice(0, 3)
+            .map((article) => article.keyword);
 
   const result = await discoverTopics({
     projectId: input.projectId,
@@ -161,6 +165,7 @@ async function listCalendar(projectId: string) {
       id: topic.id,
       keyword: topic.keyword,
       source: topic.source,
+      contentKeywordId: topic.contentKeywordId,
       role: topic.role,
       status: topic.status,
       searchVolume: topic.searchVolume,
@@ -217,6 +222,15 @@ async function generateFromTopic(input: {
   languageCode: string;
 }) {
   const { topic, plan } = input;
+  const strategyKeyword = topic.contentKeywordId
+    ? await ContentStrategyRepository.getKeywordById(
+        topic.contentKeywordId,
+        input.projectId,
+      )
+    : await ContentStrategyRepository.getKeywordForProject(
+        input.projectId,
+        normalizeKeyword(topic.keyword),
+      );
   const autoPublishAt =
     plan.autoPublish && plan.reviewWindowHours >= 0
       ? new Date(
@@ -233,6 +247,7 @@ async function generateFromTopic(input: {
     source: "autopilot",
     clusterId: topic.clusterId,
     blogUrlPattern: plan.blogUrlPattern,
+    liveUrl: strategyKeyword?.targetUrl ?? null,
     autoPublishAt,
   });
 

@@ -14,6 +14,7 @@ import * as pgAuth from "./pg/better-auth-schema";
 import * as pgBilling from "./pg/billing.schema";
 import * as pgGsc from "./pg/gsc.schema";
 import * as pgReddit from "./pg/reddit-attribution.schema";
+import * as pgContent from "./pg/content.schema";
 
 // Canonical schema barrel. Repositories import their tables from here and the
 // provider-aware `db` from "@/db", so each repository is written ONCE for both
@@ -44,10 +45,7 @@ const runtimeSchema =
         ...pgBilling,
         ...pgGsc,
         ...pgReddit,
-        // TODO: content.schema has no Postgres counterpart yet (added on a
-        // fork branch before the dual-backend split existed). Content tables
-        // are unavailable under DATABASE_PROVIDER=postgres until pg/content.schema
-        // is written and schema-parity.test.ts is updated to cover it.
+        ...pgContent,
       }
     : {
         ...sqliteApp,
@@ -95,6 +93,9 @@ export const {
   redditAttributions,
   contentArticles,
   contentPlans,
+  contentDocuments,
+  contentKeywords,
+  contentAssets,
   contentClusters,
   contentTopics,
   contentArticleMetrics,

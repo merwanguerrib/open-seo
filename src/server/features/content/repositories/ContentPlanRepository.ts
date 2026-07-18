@@ -83,6 +83,23 @@ async function createCluster(data: {
   return id;
 }
 
+async function getOrCreateCluster(data: {
+  projectId: string;
+  name: string;
+}): Promise<string> {
+  const rows = await db
+    .select({ id: contentClusters.id })
+    .from(contentClusters)
+    .where(
+      and(
+        eq(contentClusters.projectId, data.projectId),
+        eq(contentClusters.name, data.name),
+      ),
+    )
+    .limit(1);
+  return rows[0]?.id ?? createCluster(data);
+}
+
 async function listClusters(projectId: string): Promise<ContentClusterRow[]> {
   return db
     .select()
@@ -109,8 +126,9 @@ async function insertTopics(
   topics: Array<{
     projectId: string;
     clusterId: string | null;
+    contentKeywordId?: string | null;
     keyword: string;
-    source: "gsc" | "expansion";
+    source: ContentTopicRow["source"];
     role: "pillar" | "satellite";
     searchVolume: number | null;
     difficulty: number | null;
@@ -211,6 +229,19 @@ async function updateTopicStatus(
     .where(eq(contentTopics.id, topicId));
 }
 
+async function dismissTopicsForKeywords(keywordIds: string[]): Promise<void> {
+  if (keywordIds.length === 0) return;
+  await db
+    .update(contentTopics)
+    .set({ status: "dismissed", ...touchUpdatedAt })
+    .where(
+      and(
+        inArray(contentTopics.contentKeywordId, keywordIds),
+        inArray(contentTopics.status, ["suggested", "scheduled"]),
+      ),
+    );
+}
+
 async function getTopic(
   topicId: string,
   projectId: string,
@@ -269,6 +300,7 @@ export const ContentPlanRepository = {
   updatePlan,
   getDuePlans,
   createCluster,
+  getOrCreateCluster,
   listClusters,
   setClusterPillar,
   insertTopics,
@@ -278,6 +310,7 @@ export const ContentPlanRepository = {
   getDueScheduledTopics,
   scheduleTopic,
   updateTopicStatus,
+  dismissTopicsForKeywords,
   getTopic,
   upsertArticleMetric,
   listArticleMetrics,

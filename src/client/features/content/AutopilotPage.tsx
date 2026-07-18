@@ -4,6 +4,7 @@ import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { getStandardErrorMessage } from "@/client/lib/error-messages";
 import { AutopilotTopicQueue } from "@/client/features/content/AutopilotTopicQueue";
+import { ContentStrategyWorkspace } from "@/client/features/content/ContentStrategyWorkspace";
 import {
   getContentPlan,
   listContentCalendar,
@@ -79,6 +80,8 @@ export function AutopilotPage({ projectId }: { projectId: string }) {
           onSaved={invalidate}
         />
       )}
+
+      <ContentStrategyWorkspace projectId={projectId} onChanged={invalidate} />
 
       <AutopilotTopicQueue
         projectId={projectId}

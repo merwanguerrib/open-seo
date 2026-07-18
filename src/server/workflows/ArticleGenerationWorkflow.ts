@@ -17,6 +17,7 @@ import {
 import { generateObject } from "ai";
 import type { BillingCustomerContext } from "@/server/billing/subscription";
 import { ContentRepository } from "@/server/features/content/repositories/ContentRepository";
+import { ContentStrategyService } from "@/server/features/content/services/ContentStrategyService";
 import {
   briefSchema,
   buildArticlePrompt,
@@ -105,6 +106,10 @@ export class ArticleGenerationWorkflow extends WorkflowEntrypoint<
             articleId,
           )
         : [];
+      const strategyContext = await ContentStrategyService.buildPromptContext(
+        row.projectId,
+        row.keyword,
+      );
       return {
         projectId: row.projectId,
         keyword: row.keyword,
@@ -112,6 +117,7 @@ export class ArticleGenerationWorkflow extends WorkflowEntrypoint<
         languageCode: row.languageCode,
         siteDomain: projectRows[0]?.domain ?? null,
         internalLinks,
+        strategyContext,
       };
     });
 
@@ -198,6 +204,7 @@ export class ArticleGenerationWorkflow extends WorkflowEntrypoint<
               languageCode: article.languageCode,
               serpContext,
               competitors,
+              strategyContext: article.strategyContext,
             }),
           });
           await ContentRepository.updateArticleFromWorkflow(
@@ -223,6 +230,7 @@ export class ArticleGenerationWorkflow extends WorkflowEntrypoint<
             competitors,
             siteDomain: article.siteDomain,
             internalLinks: article.internalLinks,
+            strategyContext: article.strategyContext,
           }),
         });
 

@@ -90,6 +90,7 @@ export function buildBriefPrompt(input: {
   languageCode: string;
   serpContext: SerpContext;
   competitors: CompetitorPage[];
+  strategyContext?: string;
 }): string {
   return [
     `You are an SEO content strategist. Build a content brief for an article targeting the keyword "${input.keyword}" (language: ${input.languageCode}).`,
@@ -100,9 +101,12 @@ export function buildBriefPrompt(input: {
     "",
     "## Content of the top-ranking pages",
     formatCompetitors(input.competitors),
+    input.strategyContext ? `\n${input.strategyContext}` : null,
     "",
     "Return the intent, the winning angle, an H2/H3 outline, the entities the article must cover, and the questions it must answer.",
-  ].join("\n");
+  ]
+    .filter((line): line is string => line !== null)
+    .join("\n");
 }
 
 export const titleRewriteSchema = z.object({
@@ -153,6 +157,7 @@ export function buildArticlePrompt(input: {
   competitors: CompetitorPage[];
   siteDomain: string | null;
   internalLinks?: InternalLink[];
+  strategyContext?: string;
 }): string {
   return [
     `You are an expert SEO writer. Write a complete article targeting the keyword "${input.keyword}", entirely in the language with code "${input.languageCode}".`,
@@ -162,6 +167,7 @@ export function buildArticlePrompt(input: {
     input.internalLinks && input.internalLinks.length > 0
       ? `\n${formatInternalLinks(input.internalLinks)}`
       : null,
+    input.strategyContext ? `\n${input.strategyContext}` : null,
     "",
     "## Brief",
     `Intent: ${input.brief.intent}`,
