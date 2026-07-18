@@ -110,6 +110,46 @@ async function upsertKeywords(
     );
 }
 
+/** Insert-only: discovery suggestions must never downgrade an existing
+ *  keyword's status (e.g. a row already "planned" or "covered" stays as-is
+ *  if rediscovered — onConflictDoNothing is the guard). */
+async function insertSuggestedKeywords(
+  rows: Array<{
+    projectId: string;
+    keyword: string;
+    normalizedKeyword: string;
+    source: "competitor" | "related";
+    sourceName: string;
+    role: ContentKeywordRow["role"];
+    clusterName: string | null;
+    searchVolume: number | null;
+    difficulty: number | null;
+  }>,
+): Promise<void> {
+  for (const row of rows) {
+    await db
+      .insert(contentKeywords)
+      .values({
+        id: crypto.randomUUID(),
+        projectId: row.projectId,
+        keyword: row.keyword,
+        normalizedKeyword: row.normalizedKeyword,
+        source: row.source,
+        sourceName: row.sourceName,
+        status: "suggested",
+        role: row.role,
+        clusterName: row.clusterName,
+        targetUrl: null,
+        title: null,
+        intent: null,
+        priority: null,
+        searchVolume: row.searchVolume,
+        difficulty: row.difficulty,
+      })
+      .onConflictDoNothing();
+  }
+}
+
 async function listKeywords(projectId: string): Promise<ContentKeywordRow[]> {
   return db
     .select()
@@ -255,6 +295,7 @@ export const ContentStrategyRepository = {
   listDocuments,
   deleteDocument,
   upsertKeywords,
+  insertSuggestedKeywords,
   listKeywords,
   getKeywordForProject,
   getKeywordById,
