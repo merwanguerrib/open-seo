@@ -63,3 +63,7 @@ export const launchArticlesFromKeywordsSchema = z.object({
     .min(1)
     .max(50),
 });
+
+export const runCompetitorDiscoverySchema = z.object({
+  projectId: z.string().min(1),
+});

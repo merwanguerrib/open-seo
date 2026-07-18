@@ -1,3 +1,4 @@
+import type { BillingCustomerContext } from "@/server/billing/subscription";
 import {
   analyzeExistingContent,
   getWorkspace,
@@ -10,6 +11,29 @@ import {
   saveDocument,
 } from "@/server/features/content/services/contentStrategyImports";
 import { buildPromptContext } from "@/server/features/content/services/contentStrategyPromptContext";
+import { ContentPlanRepository } from "@/server/features/content/repositories/ContentPlanRepository";
+import { discoverCompetitorKeywords } from "@/server/features/content/services/competitorDiscovery";
+
+async function runCompetitorDiscovery(input: {
+  projectId: string;
+  projectDomain: string | null;
+  billingCustomer: BillingCustomerContext;
+  locationCode: number;
+  languageCode: string;
+}) {
+  const plan = await ContentPlanRepository.getOrCreatePlan(input.projectId);
+  return discoverCompetitorKeywords({
+    projectId: input.projectId,
+    projectDomain: input.projectDomain,
+    billingCustomer: input.billingCustomer,
+    locationCode: input.locationCode,
+    languageCode: input.languageCode,
+    plan: {
+      minSearchVolume: plan.minSearchVolume,
+      maxDifficulty: plan.maxDifficulty,
+    },
+  });
+}
 
 export const ContentStrategyService = {
   importKeywords,
@@ -20,4 +44,5 @@ export const ContentStrategyService = {
   analyzeExistingContent,
   getWorkspace,
   buildPromptContext,
+  runCompetitorDiscovery,
 };

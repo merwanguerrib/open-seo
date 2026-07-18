@@ -8,6 +8,7 @@ import {
   importContentKeywordsSchema,
   importContentUrlsSchema,
   launchArticlesFromKeywordsSchema,
+  runCompetitorDiscoverySchema,
   saveContentDocumentSchema,
 } from "@/types/schemas/contentStrategy";
 
@@ -87,5 +88,18 @@ export const launchArticlesFromKeywords = createServerFn({ method: "POST" })
       projectId: context.projectId,
       sourceName: data.sourceName,
       keywords: data.keywords,
+    });
+  });
+
+export const runCompetitorDiscovery = createServerFn({ method: "POST" })
+  .middleware(requireProjectContext)
+  .inputValidator((data: unknown) => runCompetitorDiscoverySchema.parse(data))
+  .handler(async ({ context }) => {
+    return ContentStrategyService.runCompetitorDiscovery({
+      projectId: context.projectId,
+      projectDomain: context.project.domain,
+      billingCustomer: context,
+      locationCode: context.project.locationCode,
+      languageCode: context.project.languageCode,
     });
   });
