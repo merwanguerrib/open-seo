@@ -38,7 +38,7 @@ function asNumber(value: unknown): number | null {
 }
 
 /** Extract keyword + volume + difficulty from a DataForSEO Labs suggestion item. */
-function readSuggestion(raw: unknown): {
+export function readSuggestion(raw: unknown): {
   keyword: string;
   searchVolume: number | null;
   difficulty: number | null;
