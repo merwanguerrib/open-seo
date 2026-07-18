@@ -18,7 +18,9 @@ import {
 } from "@/server/features/content/services/contentStrategyShared";
 import { AppError } from "@/server/lib/errors";
 
-export async function queueKeywords(rows: ContentKeywordRow[]): Promise<number> {
+export async function queueKeywords(
+  rows: ContentKeywordRow[],
+): Promise<number> {
   const planned = rows.filter((row) => row.status === "planned");
   const first = planned[0];
   if (!first) return 0;
@@ -95,13 +97,19 @@ export async function launchFromKeywords(input: {
         normalizedKeyword,
         source: "manual" as const,
         sourceName: input.sourceName,
+        // A solo launch preserves an existing keyword's cluster role instead
+        // of detaching it (e.g. a "satellite" keyword re-launched by itself
+        // should stay linked to its pillar's clusterName, not reset to
+        // "standalone"). The multi-keyword path always forms a fresh
+        // pillar/satellite cluster and is intentionally left as-is.
         role:
           pillar === null
-            ? ("standalone" as const)
+            ? (existing?.role ?? ("standalone" as const))
             : isPillar
               ? ("pillar" as const)
               : ("satellite" as const),
-        clusterName,
+        clusterName:
+          pillar === null ? (existing?.clusterName ?? null) : clusterName,
         targetUrl: existing?.targetUrl ?? null,
         title: existing?.title ?? null,
         intent: existing?.intent ?? null,
@@ -115,7 +123,10 @@ export async function launchFromKeywords(input: {
   // A keyword may already exist with a non-"planned" status (e.g. a
   // discovery "suggested" row the user never reviewed) — launching it is a
   // deliberate action, so force it into the queueable state regardless.
-  await ContentStrategyRepository.markKeywordsPlanned(rows.map((row) => row.id));
+  await ContentStrategyRepository.markKeywordsPlanned(
+    rows.map((row) => row.id),
+    input.projectId,
+  );
   const queued = await queueKeywords(
     rows.map((row) => ({ ...row, status: "planned" as const })),
   );
@@ -397,7 +408,10 @@ export async function importSuggestedKeywords(input: {
   projectId: string;
   keywordIds: string[];
 }): Promise<{ imported: number; queued: number }> {
-  await ContentStrategyRepository.markKeywordsPlanned(input.keywordIds);
+  await ContentStrategyRepository.markKeywordsPlanned(
+    input.keywordIds,
+    input.projectId,
+  );
   const allKeywords = await ContentStrategyRepository.listKeywords(
     input.projectId,
   );
@@ -412,6 +426,9 @@ export async function dismissSuggestedKeywords(input: {
   projectId: string;
   keywordIds: string[];
 }): Promise<{ dismissed: number }> {
-  await ContentStrategyRepository.markKeywordsIgnored(input.keywordIds);
+  await ContentStrategyRepository.markKeywordsIgnored(
+    input.keywordIds,
+    input.projectId,
+  );
   return { dismissed: input.keywordIds.length };
 }

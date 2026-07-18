@@ -198,6 +198,7 @@ export function RankTrackingTable({
             <TableBulkActionButton
               icon={<FileText className="size-3.5" />}
               onClick={() => launchArticlesMutation.mutate()}
+              disabled={launchArticlesMutation.isPending}
             >
               Generate Article{selectedCount !== 1 ? "s" : ""}
             </TableBulkActionButton>

@@ -94,6 +94,49 @@ describe("launchFromKeywords", () => {
       }),
     ]);
   });
+
+  it("preserves an existing keyword's cluster role when re-launched solo", async () => {
+    mocks.listKeywords.mockResolvedValue([
+      {
+        id: "kw-existing",
+        projectId: "p1",
+        keyword: "satellite keyword",
+        normalizedKeyword: "satellite keyword",
+        status: "suggested",
+        role: "satellite",
+        clusterName: "some pillar",
+        source: "related",
+        searchVolume: 50,
+        difficulty: 10,
+        targetUrl: null,
+        title: null,
+        intent: null,
+        priority: null,
+      },
+    ]);
+    mocks.getExistingKeywords.mockResolvedValue(new Set());
+    mocks.upsertKeywords.mockImplementation(async (rows) =>
+      rows.map((row: Record<string, unknown>, i: number) => ({
+        id: `kw-${i}`,
+        ...row,
+      })),
+    );
+
+    const { launchFromKeywords } = await import("./contentStrategyImports");
+    await launchFromKeywords({
+      projectId: "p1",
+      sourceName: "Rank Tracking",
+      keywords: [{ keyword: "satellite keyword", searchVolume: 50 }],
+    });
+
+    expect(mocks.upsertKeywords).toHaveBeenCalledWith([
+      expect.objectContaining({
+        keyword: "satellite keyword",
+        role: "satellite",
+        clusterName: "some pillar",
+      }),
+    ]);
+  });
 });
 
 describe("importSuggestedKeywords", () => {
@@ -114,9 +157,8 @@ describe("importSuggestedKeywords", () => {
     mocks.getExistingKeywords.mockResolvedValue(new Set());
     mocks.getOrCreateCluster.mockResolvedValue("cluster-1");
 
-    const { importSuggestedKeywords } = await import(
-      "./contentStrategyImports"
-    );
+    const { importSuggestedKeywords } =
+      await import("./contentStrategyImports");
     const result = await importSuggestedKeywords({
       projectId: "p1",
       keywordIds: ["kw-1"],
@@ -124,18 +166,22 @@ describe("importSuggestedKeywords", () => {
 
     expect(result.imported).toBe(1);
     expect(result.queued).toBe(1);
+    expect(mocks.markKeywordsPlanned).toHaveBeenCalledWith(["kw-1"], "p1");
   });
 });
 
 describe("dismissSuggestedKeywords", () => {
   it("marks the given keywords ignored", async () => {
-    const { dismissSuggestedKeywords } = await import(
-      "./contentStrategyImports"
-    );
+    const { dismissSuggestedKeywords } =
+      await import("./contentStrategyImports");
     const result = await dismissSuggestedKeywords({
       projectId: "p1",
       keywordIds: ["kw-1", "kw-2"],
     });
     expect(result).toEqual({ dismissed: 2 });
+    expect(mocks.markKeywordsIgnored).toHaveBeenCalledWith(
+      ["kw-1", "kw-2"],
+      "p1",
+    );
   });
 });

@@ -336,6 +336,7 @@ function SavedKeywordsPage() {
           selectedCount={selectedCount}
           exportingSelection={exporter.exportingSelection}
           onGenerateArticles={() => launchArticlesMutation.mutate(selectedRows)}
+          generatingArticles={launchArticlesMutation.isPending}
           onCopy={() => {
             void navigator.clipboard.writeText(
               selectedRows.map((row) => row.keyword).join("\n"),

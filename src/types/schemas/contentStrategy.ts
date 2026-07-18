@@ -74,10 +74,10 @@ export const runRelatedDiscoverySchema = z.object({
 
 export const importSuggestedKeywordsSchema = z.object({
   projectId: z.string().min(1),
-  keywordIds: z.array(z.string().min(1)).min(1).max(200),
+  keywordIds: z.array(z.string().min(1)).min(1).max(1000),
 });
 
 export const dismissSuggestedKeywordsSchema = z.object({
   projectId: z.string().min(1),
-  keywordIds: z.array(z.string().min(1)).min(1).max(200),
+  keywordIds: z.array(z.string().min(1)).min(1).max(1000),
 });

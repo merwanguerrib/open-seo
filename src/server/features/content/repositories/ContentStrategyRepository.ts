@@ -223,20 +223,36 @@ async function markKeywordsCovered(keywordIds: string[]): Promise<void> {
     .where(inArray(contentKeywords.id, keywordIds));
 }
 
-async function markKeywordsPlanned(keywordIds: string[]): Promise<void> {
+async function markKeywordsPlanned(
+  keywordIds: string[],
+  projectId: string,
+): Promise<void> {
   if (keywordIds.length === 0) return;
   await db
     .update(contentKeywords)
     .set({ status: "planned", ...touchUpdatedAt })
-    .where(inArray(contentKeywords.id, keywordIds));
+    .where(
+      and(
+        inArray(contentKeywords.id, keywordIds),
+        eq(contentKeywords.projectId, projectId),
+      ),
+    );
 }
 
-async function markKeywordsIgnored(keywordIds: string[]): Promise<void> {
+async function markKeywordsIgnored(
+  keywordIds: string[],
+  projectId: string,
+): Promise<void> {
   if (keywordIds.length === 0) return;
   await db
     .update(contentKeywords)
     .set({ status: "ignored", ...touchUpdatedAt })
-    .where(inArray(contentKeywords.id, keywordIds));
+    .where(
+      and(
+        inArray(contentKeywords.id, keywordIds),
+        eq(contentKeywords.projectId, projectId),
+      ),
+    );
 }
 
 async function upsertAssets(

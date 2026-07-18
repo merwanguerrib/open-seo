@@ -16,6 +16,7 @@ import {
 export function SavedKeywordsBulkActionBar({
   selectedCount,
   onGenerateArticles,
+  generatingArticles,
   onCopy,
   onOpenTags,
   onAnalyzeCompetitors,
@@ -27,6 +28,7 @@ export function SavedKeywordsBulkActionBar({
 }: {
   selectedCount: number;
   onGenerateArticles: () => void;
+  generatingArticles: boolean;
   onCopy: () => void;
   onOpenTags: () => void;
   onAnalyzeCompetitors: () => void;
@@ -49,6 +51,7 @@ export function SavedKeywordsBulkActionBar({
             <TableBulkActionButton
               icon={<FileText className="size-3.5" />}
               onClick={onGenerateArticles}
+              disabled={generatingArticles}
             >
               Generate Article{selectedCount !== 1 ? "s" : ""}
             </TableBulkActionButton>
