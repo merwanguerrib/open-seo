@@ -392,3 +392,26 @@ export async function importUrls(input: {
   await ContentPlanRepository.dismissTopicsForKeywords(coveredIds);
   return { imported: urls.length };
 }
+
+export async function importSuggestedKeywords(input: {
+  projectId: string;
+  keywordIds: string[];
+}): Promise<{ imported: number; queued: number }> {
+  await ContentStrategyRepository.markKeywordsPlanned(input.keywordIds);
+  const allKeywords = await ContentStrategyRepository.listKeywords(
+    input.projectId,
+  );
+  const justImported = allKeywords.filter((keyword) =>
+    input.keywordIds.includes(keyword.id),
+  );
+  const queued = await queueKeywords(justImported);
+  return { imported: justImported.length, queued };
+}
+
+export async function dismissSuggestedKeywords(input: {
+  projectId: string;
+  keywordIds: string[];
+}): Promise<{ dismissed: number }> {
+  await ContentStrategyRepository.markKeywordsIgnored(input.keywordIds);
+  return { dismissed: input.keywordIds.length };
+}

@@ -95,3 +95,47 @@ describe("launchFromKeywords", () => {
     ]);
   });
 });
+
+describe("importSuggestedKeywords", () => {
+  it("marks the given keywords planned and queues them as topics", async () => {
+    mocks.listKeywords.mockResolvedValue([
+      {
+        id: "kw-1",
+        projectId: "p1",
+        keyword: "trail running shoes",
+        normalizedKeyword: "trail running shoes",
+        status: "planned",
+        clusterName: null,
+        searchVolume: 300,
+        difficulty: 20,
+        source: "related",
+      },
+    ]);
+    mocks.getExistingKeywords.mockResolvedValue(new Set());
+    mocks.getOrCreateCluster.mockResolvedValue("cluster-1");
+
+    const { importSuggestedKeywords } = await import(
+      "./contentStrategyImports"
+    );
+    const result = await importSuggestedKeywords({
+      projectId: "p1",
+      keywordIds: ["kw-1"],
+    });
+
+    expect(result.imported).toBe(1);
+    expect(result.queued).toBe(1);
+  });
+});
+
+describe("dismissSuggestedKeywords", () => {
+  it("marks the given keywords ignored", async () => {
+    const { dismissSuggestedKeywords } = await import(
+      "./contentStrategyImports"
+    );
+    const result = await dismissSuggestedKeywords({
+      projectId: "p1",
+      keywordIds: ["kw-1", "kw-2"],
+    });
+    expect(result).toEqual({ dismissed: 2 });
+  });
+});

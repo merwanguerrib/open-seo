@@ -71,3 +71,13 @@ export const runCompetitorDiscoverySchema = z.object({
 export const runRelatedDiscoverySchema = z.object({
   projectId: z.string().min(1),
 });
+
+export const importSuggestedKeywordsSchema = z.object({
+  projectId: z.string().min(1),
+  keywordIds: z.array(z.string().min(1)).min(1).max(200),
+});
+
+export const dismissSuggestedKeywordsSchema = z.object({
+  projectId: z.string().min(1),
+  keywordIds: z.array(z.string().min(1)).min(1).max(200),
+});

@@ -5,7 +5,9 @@ import {
 } from "@/server/features/content/services/contentStrategyAnalysis";
 import {
   deleteDocument,
+  dismissSuggestedKeywords,
   importKeywords,
+  importSuggestedKeywords,
   importUrls,
   launchFromKeywords,
   saveDocument,
@@ -61,6 +63,8 @@ export const ContentStrategyService = {
   deleteDocument,
   importUrls,
   launchFromKeywords,
+  importSuggestedKeywords,
+  dismissSuggestedKeywords,
   analyzeExistingContent,
   getWorkspace,
   buildPromptContext,

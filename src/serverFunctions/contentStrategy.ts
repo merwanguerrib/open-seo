@@ -4,9 +4,11 @@ import { requireProjectContext } from "@/serverFunctions/middleware";
 import {
   analyzeExistingContentSchema,
   deleteContentDocumentSchema,
+  dismissSuggestedKeywordsSchema,
   getContentStrategyWorkspaceSchema,
   importContentKeywordsSchema,
   importContentUrlsSchema,
+  importSuggestedKeywordsSchema,
   launchArticlesFromKeywordsSchema,
   runCompetitorDiscoverySchema,
   runRelatedDiscoverySchema,
@@ -114,5 +116,27 @@ export const runRelatedDiscovery = createServerFn({ method: "POST" })
       billingCustomer: context,
       locationCode: context.project.locationCode,
       languageCode: context.project.languageCode,
+    });
+  });
+
+export const importSuggestedKeywords = createServerFn({ method: "POST" })
+  .middleware(requireProjectContext)
+  .inputValidator((data: unknown) => importSuggestedKeywordsSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    return ContentStrategyService.importSuggestedKeywords({
+      projectId: context.projectId,
+      keywordIds: data.keywordIds,
+    });
+  });
+
+export const dismissSuggestedKeywords = createServerFn({ method: "POST" })
+  .middleware(requireProjectContext)
+  .inputValidator((data: unknown) =>
+    dismissSuggestedKeywordsSchema.parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    return ContentStrategyService.dismissSuggestedKeywords({
+      projectId: context.projectId,
+      keywordIds: data.keywordIds,
     });
   });
