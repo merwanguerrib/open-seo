@@ -231,6 +231,14 @@ async function markKeywordsPlanned(keywordIds: string[]): Promise<void> {
     .where(inArray(contentKeywords.id, keywordIds));
 }
 
+async function markKeywordsIgnored(keywordIds: string[]): Promise<void> {
+  if (keywordIds.length === 0) return;
+  await db
+    .update(contentKeywords)
+    .set({ status: "ignored", ...touchUpdatedAt })
+    .where(inArray(contentKeywords.id, keywordIds));
+}
+
 async function upsertAssets(
   rows: Array<{
     projectId: string;
@@ -302,6 +310,7 @@ export const ContentStrategyRepository = {
   listKeywordSeeds,
   markKeywordsCovered,
   markKeywordsPlanned,
+  markKeywordsIgnored,
   upsertAssets,
   listAssets,
 };
