@@ -9,6 +9,7 @@ import {
   importContentUrlsSchema,
   launchArticlesFromKeywordsSchema,
   runCompetitorDiscoverySchema,
+  runRelatedDiscoverySchema,
   saveContentDocumentSchema,
 } from "@/types/schemas/contentStrategy";
 
@@ -98,6 +99,18 @@ export const runCompetitorDiscovery = createServerFn({ method: "POST" })
     return ContentStrategyService.runCompetitorDiscovery({
       projectId: context.projectId,
       projectDomain: context.project.domain,
+      billingCustomer: context,
+      locationCode: context.project.locationCode,
+      languageCode: context.project.languageCode,
+    });
+  });
+
+export const runRelatedDiscovery = createServerFn({ method: "POST" })
+  .middleware(requireProjectContext)
+  .inputValidator((data: unknown) => runRelatedDiscoverySchema.parse(data))
+  .handler(async ({ context }) => {
+    return ContentStrategyService.runRelatedDiscovery({
+      projectId: context.projectId,
       billingCustomer: context,
       locationCode: context.project.locationCode,
       languageCode: context.project.languageCode,

@@ -13,6 +13,7 @@ import {
 import { buildPromptContext } from "@/server/features/content/services/contentStrategyPromptContext";
 import { ContentPlanRepository } from "@/server/features/content/repositories/ContentPlanRepository";
 import { discoverCompetitorKeywords } from "@/server/features/content/services/competitorDiscovery";
+import { discoverRelatedKeywords } from "@/server/features/content/services/relatedDiscovery";
 
 async function runCompetitorDiscovery(input: {
   projectId: string;
@@ -35,6 +36,25 @@ async function runCompetitorDiscovery(input: {
   });
 }
 
+async function runRelatedDiscovery(input: {
+  projectId: string;
+  billingCustomer: BillingCustomerContext;
+  locationCode: number;
+  languageCode: string;
+}) {
+  const plan = await ContentPlanRepository.getOrCreatePlan(input.projectId);
+  return discoverRelatedKeywords({
+    projectId: input.projectId,
+    billingCustomer: input.billingCustomer,
+    locationCode: input.locationCode,
+    languageCode: input.languageCode,
+    plan: {
+      minSearchVolume: plan.minSearchVolume,
+      maxDifficulty: plan.maxDifficulty,
+    },
+  });
+}
+
 export const ContentStrategyService = {
   importKeywords,
   saveDocument,
@@ -45,4 +65,5 @@ export const ContentStrategyService = {
   getWorkspace,
   buildPromptContext,
   runCompetitorDiscovery,
+  runRelatedDiscovery,
 };

@@ -67,3 +67,7 @@ export const launchArticlesFromKeywordsSchema = z.object({
 export const runCompetitorDiscoverySchema = z.object({
   projectId: z.string().min(1),
 });
+
+export const runRelatedDiscoverySchema = z.object({
+  projectId: z.string().min(1),
+});
