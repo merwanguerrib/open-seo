@@ -23,7 +23,6 @@ import {
   AUTUMN_WEBHOOK_PATH,
   handleAutumnWebhookRequest,
 } from "@/server/billing/autumn-webhook";
-import { maybeSendSelfHostHeartbeat } from "@/server/lib/self-host-telemetry";
 
 const appFetch = createStartHandler(defaultStreamHandler);
 const openSeoOAuthProvider = createOpenSeoOAuthProvider(appFetch);
@@ -139,8 +138,13 @@ function handleFetch(
   env: Env,
   ctx: ExecutionContext,
 ): Response | Promise<Response> {
-  ctx.waitUntil(maybeSendSelfHostHeartbeat());
-
+  // Fork-local: le heartbeat self-host d'upstream est débranché ici. C'est la
+  // seule sortie réseau de la télémétrie (PostHog via `sendHeartbeat`), donc le
+  // couper à l'appelant suffit et laisse `self-host-telemetry.ts` intact — ses
+  // tests continuent de passer et les évolutions upstream s'y fusionnent sans
+  // bruit. `OPENSEO_TELEMETRY_DISABLED` est posé en second rideau (.env.example),
+  // ce qui neutralise aussi le compteur MCP local. Pour réactiver : restaurer
+  // cet appel et retirer la variable.
   const authMode = getAuthMode(env.AUTH_MODE);
   const publicRequest = requestWithPublicOrigin(request);
   const pathname = new URL(publicRequest.url).pathname;
