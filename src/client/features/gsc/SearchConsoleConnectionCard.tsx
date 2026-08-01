@@ -97,6 +97,14 @@ export function SearchConsoleConnectionCard({
       void queryClient.invalidateQueries({
         queryKey: ["searchPerformanceTable", projectId],
       });
+      // The dashboard embeds this card and swaps it for the Search
+      // performance stats card once activation reports the connection.
+      void queryClient.invalidateQueries({
+        queryKey: ["dashboardActivation", projectId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["dashboardGscReport", projectId],
+      });
     },
     onError: (error) => toast.error(getStandardErrorMessage(error)),
   });
@@ -116,6 +124,12 @@ export function SearchConsoleConnectionCard({
       });
       void queryClient.invalidateQueries({
         queryKey: ["searchPerformanceTable", projectId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["dashboardActivation", projectId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["dashboardGscReport", projectId],
       });
     },
     onError: (error) => toast.error(getStandardErrorMessage(error)),
@@ -193,7 +207,8 @@ export function SearchConsoleConnectionCard({
       ) : (
         <div className="space-y-4">
           <p className="text-sm text-base-content/70">
-            Connect your Google Search Console to get insights in OpenSEO.
+            Connect GSC to see how your website is actually performing in Google
+            Search.
           </p>
           <button
             type="button"
