@@ -10,12 +10,7 @@ const contentDocumentKindSchema = z.enum([
 
 const contentDocumentFormatSchema = z.enum(["markdown", "json", "text"]);
 
-const contentAssetTypeSchema = z.enum([
-  "blog",
-  "pillar",
-  "product",
-  "other",
-]);
+const contentAssetTypeSchema = z.enum(["blog", "pillar", "product", "other"]);
 
 export const getContentStrategyWorkspaceSchema = z.object({
   projectId: z.string().min(1),
