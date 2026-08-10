@@ -17,7 +17,7 @@ export const graphifyGraphJsonSchema = z
   })
   .loose();
 
-export type GraphifyGraphJson = z.infer<typeof graphifyGraphJsonSchema>;
+type GraphifyGraphJson = z.infer<typeof graphifyGraphJsonSchema>;
 
 /** "graphify-input/pages/about.md" | "./pages/about.md" | "pages/about.md" → "about" */
 function slugFromFileRef(ref: string): string | null {

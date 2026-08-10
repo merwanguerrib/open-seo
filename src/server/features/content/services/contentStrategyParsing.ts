@@ -1,7 +1,7 @@
-export type ContentKeywordRole = "pillar" | "satellite" | "standalone";
+type ContentKeywordRole = "pillar" | "satellite" | "standalone";
 export type ContentAssetType = "blog" | "pillar" | "product" | "other";
 
-export type ParsedContentKeyword = {
+type ParsedContentKeyword = {
   keyword: string;
   normalizedKeyword: string;
   role: ContentKeywordRole;
@@ -15,7 +15,7 @@ export type ParsedContentKeyword = {
   contentType: ContentAssetType;
 };
 
-export type ContentHealth = {
+type ContentHealth = {
   status: "planned" | "unknown" | "healthy" | "needs_attention" | "critical";
   issues: string[];
 };

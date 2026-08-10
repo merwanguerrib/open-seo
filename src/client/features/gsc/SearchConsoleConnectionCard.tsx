@@ -232,7 +232,11 @@ function IntegrationCard({
   status,
   children,
 }: {
-  status?: "connected" | "disconnected" | "setup_required" | "reconnect_required";
+  status?:
+    | "connected"
+    | "disconnected"
+    | "setup_required"
+    | "reconnect_required";
   children: React.ReactNode;
 }) {
   return (
@@ -251,10 +255,15 @@ function IntegrationCard({
 function StatusPill({
   status,
 }: {
-  status: "connected" | "disconnected" | "setup_required" | "reconnect_required";
+  status:
+    | "connected"
+    | "disconnected"
+    | "setup_required"
+    | "reconnect_required";
 }) {
   const connected = status === "connected";
-  const needsAttention = status === "setup_required" || status === "reconnect_required";
+  const needsAttention =
+    status === "setup_required" || status === "reconnect_required";
   return (
     <span
       className={[

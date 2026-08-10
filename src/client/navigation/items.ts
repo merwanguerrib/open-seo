@@ -160,7 +160,10 @@ export function getProjectNavGroups(projectId: string) {
     },
     {
       label: "Content",
-      items: [byPath("/p/$projectId/content"), byPath("/p/$projectId/autopilot")],
+      items: [
+        byPath("/p/$projectId/content"),
+        byPath("/p/$projectId/autopilot"),
+      ],
     },
     {
       label: "Tools",

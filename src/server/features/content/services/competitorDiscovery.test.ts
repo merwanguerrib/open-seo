@@ -11,11 +11,7 @@ vi.mock("cloudflare:workers", () => ({ env: {} }));
 describe("tallyCompetitorDomains", () => {
   it("ranks domains by how many keyword-competitor-sets they appear in", () => {
     const result = tallyCompetitorDomains(
-      [
-        ["a.com", "b.com", "c.com"],
-        ["a.com", "b.com"],
-        ["a.com"],
-      ],
+      [["a.com", "b.com", "c.com"], ["a.com", "b.com"], ["a.com"]],
       null,
     );
     expect(result).toEqual(["a.com", "b.com", "c.com"]);
@@ -23,10 +19,7 @@ describe("tallyCompetitorDomains", () => {
 
   it("counts a domain once per set even if repeated within it", () => {
     const result = tallyCompetitorDomains(
-      [
-        ["a.com", "a.com", "b.com"],
-        ["a.com"],
-      ],
+      [["a.com", "a.com", "b.com"], ["a.com"]],
       null,
     );
     expect(result).toEqual(["a.com", "b.com"]);

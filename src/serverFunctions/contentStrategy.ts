@@ -131,9 +131,7 @@ export const importSuggestedKeywords = createServerFn({ method: "POST" })
 
 export const dismissSuggestedKeywords = createServerFn({ method: "POST" })
   .middleware(requireProjectContext)
-  .inputValidator((data: unknown) =>
-    dismissSuggestedKeywordsSchema.parse(data),
-  )
+  .inputValidator((data: unknown) => dismissSuggestedKeywordsSchema.parse(data))
   .handler(async ({ data, context }) => {
     return ContentStrategyService.dismissSuggestedKeywords({
       projectId: context.projectId,

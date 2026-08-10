@@ -227,7 +227,9 @@ function SuggestionsSection({
       onChanged();
     },
     onError: (error) =>
-      toast.error(getStandardErrorMessage(error, "Competitor discovery failed")),
+      toast.error(
+        getStandardErrorMessage(error, "Competitor discovery failed"),
+      ),
   });
 
   const discoverRelated = useMutation({

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const contentDocumentKindSchema = z.enum([
+const contentDocumentKindSchema = z.enum([
   "master_plan",
   "editorial_guidelines",
   "agent_instructions",
@@ -8,9 +8,9 @@ export const contentDocumentKindSchema = z.enum([
   "reference",
 ]);
 
-export const contentDocumentFormatSchema = z.enum(["markdown", "json", "text"]);
+const contentDocumentFormatSchema = z.enum(["markdown", "json", "text"]);
 
-export const contentAssetTypeSchema = z.enum([
+const contentAssetTypeSchema = z.enum([
   "blog",
   "pillar",
   "product",
