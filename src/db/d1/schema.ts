@@ -9,3 +9,4 @@ export * from "../billing.schema";
 export * from "../gsc.schema";
 export * from "../reddit-attribution.schema";
 export * from "../content.schema";
+export * from "../telemetry.schema";

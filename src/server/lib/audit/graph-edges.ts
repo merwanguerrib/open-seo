@@ -4,7 +4,7 @@ import type {
   CrawledPageResult,
 } from "./types";
 
-export interface EdgeRow {
+interface EdgeRow {
   id: string;
   auditId: string;
   fromPageId: string;

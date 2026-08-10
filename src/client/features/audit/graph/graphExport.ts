@@ -3,7 +3,7 @@ import { deriveCategory } from "@/client/features/audit/graph/pageCategories";
 import type { AuditGraphPayload } from "@/server/lib/audit/types";
 import type { CsvValue } from "@/client/lib/csv";
 
-export interface GraphExportMetrics {
+interface GraphExportMetrics {
   depthByNode: Map<string, number>;
   pagerank: Record<string, number>;
 }
@@ -50,7 +50,7 @@ export function buildGraphExportRows(
   return { headers: GRAPH_EXPORT_HEADERS, rows };
 }
 
-export interface GraphExportNode {
+interface GraphExportNode {
   id: string;
   url: string;
   title: string | null;
@@ -66,7 +66,7 @@ export interface GraphExportNode {
   canonicalUrl: string | null;
 }
 
-export interface GraphExportJson {
+interface GraphExportJson {
   meta: AuditGraphPayload["meta"];
   nodes: GraphExportNode[];
   edges: AuditGraphPayload["edges"];

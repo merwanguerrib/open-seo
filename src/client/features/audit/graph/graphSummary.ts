@@ -1,6 +1,6 @@
 import type { AuditGraphPayload } from "@/server/lib/audit/types";
 
-export interface GraphSummary {
+interface GraphSummary {
   pagesCrawled: number;
   orphanCount: number;
   brokenCount: number;

@@ -4,6 +4,7 @@ import {
   ClipboardCheck,
   FileText,
   Globe,
+  LayoutDashboard,
   Link2,
   MapPin,
   MessageSquare,
@@ -18,6 +19,14 @@ import { linkOptions } from "@tanstack/react-router";
 import { GoogleGlyphMuted } from "@/client/features/gsc/GoogleGlyph";
 
 const projectNavItems = [
+  {
+    to: "/p/$projectId" as const,
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    // Without exact matching, the index path is a prefix of every project
+    // route and the Dashboard item would render active everywhere.
+    activeOptions: { exact: true, includeSearch: false },
+  },
   {
     to: "/p/$projectId/keywords" as const,
     label: "Keyword Research",
@@ -126,6 +135,10 @@ export function getProjectNavGroups(projectId: string) {
 
   return [
     {
+      label: "Overview",
+      items: [byPath("/p/$projectId")],
+    },
+    {
       label: "Research",
       items: [
         byPath("/p/$projectId/keywords"),
@@ -147,7 +160,10 @@ export function getProjectNavGroups(projectId: string) {
     },
     {
       label: "Content",
-      items: [byPath("/p/$projectId/content"), byPath("/p/$projectId/autopilot")],
+      items: [
+        byPath("/p/$projectId/content"),
+        byPath("/p/$projectId/autopilot"),
+      ],
     },
     {
       label: "Tools",

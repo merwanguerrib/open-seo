@@ -21,12 +21,14 @@
 ## File Structure
 
 **New files:**
+
 - `src/server/features/content/services/competitorDiscovery.ts` — competitor domain detection + ranked-keyword gap discovery
 - `src/server/features/content/services/competitorDiscovery.test.ts`
 - `src/server/features/content/services/relatedDiscovery.ts` — related-keyword discovery for covered keywords
 - `src/server/features/content/services/relatedDiscovery.test.ts`
 
 **Modified files:**
+
 - `src/db/content.schema.ts`, `src/db/pg/content.schema.ts` — enum extensions
 - `src/server/features/content/repositories/ContentStrategyRepository.ts` — add `insertSuggestedKeywords`, `markKeywordsPlanned`, `markKeywordsIgnored`
 - `src/server/features/rank-tracking/repositories/RankTrackingRepository.ts` — add `listTopTrackedKeywordStrings`
@@ -44,11 +46,13 @@
 ### Task 1: Schema — extend `content_keywords` enums, both dialects
 
 **Files:**
+
 - Modify: `src/db/content.schema.ts:145-224` (the `contentKeywords` table def)
 - Modify: `src/db/pg/content.schema.ts:130-173` (the `contentKeywords` table def)
 - Test: `src/db/schema-parity.test.ts` (existing, no changes — must stay green)
 
 **Interfaces:**
+
 - Produces: `content_keywords.source` accepts `"competitor" | "related"` in addition to existing values; `content_keywords.status` accepts `"suggested"` in addition to existing values. Both are consumed by every task below.
 
 - [ ] **Step 1: Edit the SQLite schema**
@@ -60,7 +64,9 @@ In `src/db/content.schema.ts`, find the `contentKeywords` table definition and c
       enum: ["manual", "file", "master_plan"],
     }).notNull(),
 ```
+
 to
+
 ```ts
     source: text("source", {
       enum: ["manual", "file", "master_plan", "competitor", "related"],
@@ -68,16 +74,19 @@ to
 ```
 
 and change:
+
 ```ts
-    status: text("status", {
-      enum: ["planned", "covered", "ignored"],
-    })
+status: text("status", {
+  enum: ["planned", "covered", "ignored"],
+});
 ```
+
 to
+
 ```ts
-    status: text("status", {
-      enum: ["planned", "covered", "ignored", "suggested"],
-    })
+status: text("status", {
+  enum: ["planned", "covered", "ignored", "suggested"],
+});
 ```
 
 - [ ] **Step 2: Edit the Postgres mirror identically**
@@ -92,10 +101,12 @@ Expected: PASS (parity test compares structure, not enum values, so this shouldn
 - [ ] **Step 4: Regenerate migrations for both dialects**
 
 Run:
+
 ```bash
 pnpm db:generate:d1
 pnpm db:generate:pg
 ```
+
 Expected: Two new migration files appear under `drizzle/` and `drizzle-pg/` altering the `content_keywords_status_check`/`content_keywords_source` constraints (Postgres) or no-op (SQLite `text` columns don't have a DB-level CHECK for the enum — drizzle-kit may still emit a no-op or comment-only diff; if the D1 command reports "No changes detected", that's correct and expected since SQLite enums are TypeScript-only).
 
 - [ ] **Step 5: Typecheck**
@@ -115,10 +126,12 @@ git commit -m "feat(content): extend content_keywords source/status enums for co
 ### Task 2: `RankTrackingRepository.listTopTrackedKeywordStrings`
 
 **Files:**
+
 - Modify: `src/server/features/rank-tracking/repositories/RankTrackingRepository.ts`
 - Test: `src/server/features/rank-tracking/repositories/RankTrackingRepository.test.ts` (create if it doesn't exist; check first — if it exists, add to it)
 
 **Interfaces:**
+
 - Consumes: `db` from `@/db`, `rankTrackingKeywords`, `rankTrackingConfigs` from `@/db/schema` (already imported in this file)
 - Produces: `RankTrackingRepository.listTopTrackedKeywordStrings(projectId: string, limit: number): Promise<string[]>` — used by Task 7 (competitor discovery seeds)
 
@@ -179,10 +192,12 @@ git commit -m "feat(rank-tracking): add listTopTrackedKeywordStrings for competi
 ### Task 3: `contentStrategyImports.ts` — export `queueKeywords`, add `launchFromKeywords`
 
 **Files:**
+
 - Modify: `src/server/features/content/services/contentStrategyImports.ts`
 - Test: `src/server/features/content/services/contentStrategyImports.test.ts` (create — check first if a test file already exists for this module and extend it instead)
 
 **Interfaces:**
+
 - Consumes: `ContentStrategyRepository.upsertKeywords`, `ContentStrategyRepository.markKeywordsPlanned` (added in Task 8), `normalizeKeyword` from `contentStrategyParsing.ts`
 - Produces: `launchFromKeywords(input: { projectId: string; sourceName: "Saved Keywords" | "Rank Tracking"; keywords: Array<{ keyword: string; searchVolume: number | null }> }): Promise<{ imported: number; queued: number }>` — consumed by Task 4's server function
 
@@ -360,7 +375,9 @@ export async function launchFromKeywords(input: {
   // A keyword may already exist with a non-"planned" status (e.g. a
   // discovery "suggested" row the user never reviewed) — launching it is a
   // deliberate action, so force it into the queueable state regardless.
-  await ContentStrategyRepository.markKeywordsPlanned(rows.map((row) => row.id));
+  await ContentStrategyRepository.markKeywordsPlanned(
+    rows.map((row) => row.id),
+  );
   const queued = await queueKeywords(
     rows.map((row) => ({ ...row, status: "planned" as const })),
   );
@@ -409,11 +426,13 @@ git commit -m "feat(content): add launchFromKeywords for direct article launch f
 ### Task 4: Server function `launchArticlesFromKeywords`
 
 **Files:**
+
 - Modify: `src/types/schemas/contentStrategy.ts`
 - Modify: `src/serverFunctions/contentStrategy.ts`
 - Modify: `src/server/features/content/services/ContentStrategyService.ts`
 
 **Interfaces:**
+
 - Consumes: `launchFromKeywords` from Task 3
 - Produces: `launchArticlesFromKeywords({ data: { projectId, sourceName, keywords } })` TanStack server function, consumed by Task 5 and Task 6 client code
 
@@ -450,6 +469,7 @@ import {
   saveDocument,
 } from "@/server/features/content/services/contentStrategyImports";
 ```
+
 ```ts
 export const ContentStrategyService = {
   importKeywords,
@@ -478,6 +498,7 @@ import {
   saveContentDocumentSchema,
 } from "@/types/schemas/contentStrategy";
 ```
+
 ```ts
 export const launchArticlesFromKeywords = createServerFn({ method: "POST" })
   .middleware(requireProjectContext)
@@ -515,10 +536,12 @@ git commit -m "feat(content): expose launchArticlesFromKeywords server function"
 ### Task 5: Saved Keywords — "Generate Article(s)" bulk action
 
 **Files:**
+
 - Modify: `src/client/features/saved-keywords/SavedKeywordsBulkActionBar.tsx`
 - Modify: `src/routes/_project/p/$projectId/saved.tsx`
 
 **Interfaces:**
+
 - Consumes: `launchArticlesFromKeywords` server function (Task 4), existing `selectedRows: SavedKeywordRow[]` / `selectedCount` state already in `saved.tsx`
 
 - [ ] **Step 1: Add the button to the bulk action bar**
@@ -526,8 +549,17 @@ git commit -m "feat(content): expose launchArticlesFromKeywords server function"
 In `src/client/features/saved-keywords/SavedKeywordsBulkActionBar.tsx`, add a new prop `onGenerateArticles: () => void` to the props type, and a new `TableBulkActionButton` before the "Tag" button:
 
 ```tsx
-import { Copy, FileDown, FileText, Sheet, Swords, Tags, Trash2 } from "lucide-react";
+import {
+  Copy,
+  FileDown,
+  FileText,
+  Sheet,
+  Swords,
+  Tags,
+  Trash2,
+} from "lucide-react";
 ```
+
 (add `FileText` to the existing lucide-react import)
 
 ```tsx
@@ -559,12 +591,12 @@ export function SavedKeywordsBulkActionBar({
 Inside the `actions` JSX, in the first `<div className="flex items-center gap-0.5 px-1.5">` block, add before the "Tag" `TableBulkActionButton`:
 
 ```tsx
-            <TableBulkActionButton
-              icon={<FileText className="size-3.5" />}
-              onClick={onGenerateArticles}
-            >
-              Generate Article{selectedCount !== 1 ? "s" : ""}
-            </TableBulkActionButton>
+<TableBulkActionButton
+  icon={<FileText className="size-3.5" />}
+  onClick={onGenerateArticles}
+>
+  Generate Article{selectedCount !== 1 ? "s" : ""}
+</TableBulkActionButton>
 ```
 
 - [ ] **Step 2: Wire the mutation and prop in the route**
@@ -579,13 +611,17 @@ Add a mutation next to `removeMutation` (same pattern — `useMutation` + `inval
 
 ```ts
 const launchArticlesMutation = useMutation({
-  mutationFn: (keywords: Array<{ keyword: string; searchVolume: number | null }>) =>
+  mutationFn: (
+    keywords: Array<{ keyword: string; searchVolume: number | null }>,
+  ) =>
     launchArticlesFromKeywords({
       data: { projectId, sourceName: "Saved Keywords", keywords },
     }),
   onSuccess: (result) => {
     setRowSelection({});
-    toast.success(`Queued ${result.queued} new topic${result.queued !== 1 ? "s" : ""}`);
+    toast.success(
+      `Queued ${result.queued} new topic${result.queued !== 1 ? "s" : ""}`,
+    );
   },
   onError: (error) =>
     toast.error(getStandardErrorMessage(error, "Could not queue articles")),
@@ -613,6 +649,7 @@ Expected: no errors
 - [ ] **Step 4: Manual verification**
 
 Start the dev server (`pnpm dev`), open a project's Saved Keywords page, select 2+ rows with different search volumes, click "Generate Articles", and confirm:
+
 - A success toast reading "Queued N new topic(s)" appears
 - The `content_topics` table gains rows for these keywords (check via the Autopilot page's topic queue, or query the local D1 sqlite file directly)
 - Selection clears after the action
@@ -629,9 +666,11 @@ git commit -m "feat(content): add Generate Article(s) bulk action to Saved Keywo
 ### Task 6: Rank Tracking — "Generate Article(s)" bulk action
 
 **Files:**
+
 - Modify: `src/client/features/rank-tracking/RankTrackingTable.tsx`
 
 **Interfaces:**
+
 - Consumes: `launchArticlesFromKeywords` server function (Task 4), existing `selectedRows`/`selectedRankRows`/`selectedCount` already computed in this file from `table.getSelectedRowModel()`
 
 - [ ] **Step 1: Add the mutation and button**
@@ -639,10 +678,12 @@ git commit -m "feat(content): add Generate Article(s) bulk action to Saved Keywo
 In `src/client/features/rank-tracking/RankTrackingTable.tsx`:
 
 Add imports:
+
 ```ts
 import { FileText } from "lucide-react";
 import { launchArticlesFromKeywords } from "@/serverFunctions/contentStrategy";
 ```
+
 (merge `FileText` into the existing `lucide-react` import line)
 
 Add a mutation next to `removeMutation`:
@@ -674,12 +715,12 @@ const launchArticlesMutation = useMutation({
 In the `<TableBulkActionBar actions={...}>` JSX, add before the "Remove" button:
 
 ```tsx
-            <TableBulkActionButton
-              icon={<FileText className="size-3.5" />}
-              onClick={() => launchArticlesMutation.mutate()}
-            >
-              Generate Article{selectedCount !== 1 ? "s" : ""}
-            </TableBulkActionButton>
+<TableBulkActionButton
+  icon={<FileText className="size-3.5" />}
+  onClick={() => launchArticlesMutation.mutate()}
+>
+  Generate Article{selectedCount !== 1 ? "s" : ""}
+</TableBulkActionButton>
 ```
 
 - [ ] **Step 2: Typecheck**
@@ -703,9 +744,11 @@ git commit -m "feat(content): add Generate Article(s) bulk action to Rank Tracki
 ### Task 7: `ContentStrategyRepository.insertSuggestedKeywords`
 
 **Files:**
+
 - Modify: `src/server/features/content/repositories/ContentStrategyRepository.ts`
 
 **Interfaces:**
+
 - Produces: `ContentStrategyRepository.insertSuggestedKeywords(rows: Array<{projectId, keyword, normalizedKeyword, source: "competitor" | "related", sourceName: string, role: ContentKeywordRow["role"], clusterName: string | null, searchVolume: number | null, difficulty: number | null}>): Promise<void>` — insert-only (never overwrites an existing row's status), consumed by Task 9 and Task 11
 
 - [ ] **Step 1: Add the function**
@@ -773,10 +816,12 @@ git commit -m "feat(content): add insert-only ContentStrategyRepository.insertSu
 ### Task 8: `ContentStrategyRepository.markKeywordsIgnored` + finish Task 3's `markKeywordsPlanned`
 
 **Files:**
+
 - Modify: `src/server/features/content/repositories/ContentStrategyRepository.ts`
 - Test: `src/server/features/content/repositories/ContentStrategyRepository.test.ts` (create if none exists — check first)
 
 **Interfaces:**
+
 - Produces: `ContentStrategyRepository.markKeywordsIgnored(keywordIds: string[]): Promise<void>`, consumed by Task 12
 
 - [ ] **Step 1: Confirm `markKeywordsPlanned` exists**
@@ -821,10 +866,12 @@ git commit -m "feat(content): add ContentStrategyRepository.markKeywordsIgnored"
 ### Task 9: `competitorDiscovery.ts`
 
 **Files:**
+
 - Create: `src/server/features/content/services/competitorDiscovery.ts`
 - Create: `src/server/features/content/services/competitorDiscovery.test.ts`
 
 **Interfaces:**
+
 - Consumes: `KeywordResearchRepository.listTopSavedKeywordStrings`, `RankTrackingRepository.listTopTrackedKeywordStrings` (Task 2), `createDataforseoClient`, `mapKeywordItem` from `src/server/features/domain/services/domainKeywordMapper.ts`, `normalizeDomainInput` from `@/server/lib/domainUtils`, `normalizeKeyword` from `contentStrategyParsing.ts`, `ContentStrategyRepository.listKeywords` / `insertSuggestedKeywords` (Task 7)
 - Produces: `tallyCompetitorDomains(competitorSets: string[][], excludeDomain: string | null): string[]` (pure, exported for the test), `discoverCompetitorKeywords(input): Promise<{ suggested: number }>` — consumed by Task 10
 
@@ -839,11 +886,7 @@ import { tallyCompetitorDomains } from "./competitorDiscovery";
 describe("tallyCompetitorDomains", () => {
   it("ranks domains by how many keyword-competitor-sets they appear in", () => {
     const result = tallyCompetitorDomains(
-      [
-        ["a.com", "b.com", "c.com"],
-        ["a.com", "b.com"],
-        ["a.com"],
-      ],
+      [["a.com", "b.com", "c.com"], ["a.com", "b.com"], ["a.com"]],
       null,
     );
     expect(result).toEqual(["a.com", "b.com", "c.com"]);
@@ -851,10 +894,7 @@ describe("tallyCompetitorDomains", () => {
 
   it("counts a domain once per set even if repeated within it", () => {
     const result = tallyCompetitorDomains(
-      [
-        ["a.com", "a.com", "b.com"],
-        ["a.com"],
-      ],
+      [["a.com", "a.com", "b.com"], ["a.com"]],
       null,
     );
     expect(result).toEqual(["a.com", "b.com"]);
@@ -1060,11 +1100,13 @@ git commit -m "feat(content): add competitor keyword gap discovery"
 ### Task 10: Server function `runCompetitorDiscovery`
 
 **Files:**
+
 - Modify: `src/types/schemas/contentStrategy.ts`
 - Modify: `src/server/features/content/services/ContentStrategyService.ts`
 - Modify: `src/serverFunctions/contentStrategy.ts`
 
 **Interfaces:**
+
 - Consumes: `discoverCompetitorKeywords` from Task 9, `ContentPlanRepository.getOrCreatePlan` (existing)
 
 - [ ] **Step 1: Add the zod schema**
@@ -1080,6 +1122,7 @@ export const runCompetitorDiscoverySchema = z.object({
 - [ ] **Step 2: Add a thin wrapper in `ContentStrategyService.ts`**
 
 Add the imports (this file has no `BillingCustomerContext` import yet — add it as a new top-level type import):
+
 ```ts
 import type { BillingCustomerContext } from "@/server/billing/subscription";
 import { ContentPlanRepository } from "@/server/features/content/repositories/ContentPlanRepository";
@@ -1149,21 +1192,26 @@ git commit -m "feat(content): expose runCompetitorDiscovery server function"
 ### Task 11: `relatedDiscovery.ts`
 
 **Files:**
+
 - Modify: `src/server/features/content/services/topicDiscovery.ts` (export `readSuggestion`)
 - Create: `src/server/features/content/services/relatedDiscovery.ts`
 - Create: `src/server/features/content/services/relatedDiscovery.test.ts`
 
 **Interfaces:**
+
 - Consumes: `readSuggestion` (now exported) from `topicDiscovery.ts`, `ContentStrategyRepository.listKeywords` / `insertSuggestedKeywords`, `createDataforseoClient`, `normalizeKeyword`
 - Produces: `discoverRelatedKeywords(input): Promise<{ suggested: number }>` — consumed by Task 12
 
 - [ ] **Step 1: Export `readSuggestion`**
 
 In `src/server/features/content/services/topicDiscovery.ts`, change:
+
 ```ts
 function readSuggestion(raw: unknown): {
 ```
+
 to
+
 ```ts
 export function readSuggestion(raw: unknown): {
 ```
@@ -1393,11 +1441,13 @@ git commit -m "feat(content): add related-keyword discovery for already-covered 
 ### Task 12: Server function `runRelatedDiscovery`
 
 **Files:**
+
 - Modify: `src/types/schemas/contentStrategy.ts`
 - Modify: `src/server/features/content/services/ContentStrategyService.ts`
 - Modify: `src/serverFunctions/contentStrategy.ts`
 
 **Interfaces:**
+
 - Consumes: `discoverRelatedKeywords` from Task 11
 
 - [ ] **Step 1: Add the zod schema**
@@ -1478,6 +1528,7 @@ git commit -m "feat(content): expose runRelatedDiscovery server function"
 ### Task 13: Server functions `importSuggestedKeywords` / `dismissSuggestedKeywords`
 
 **Files:**
+
 - Modify: `src/server/features/content/services/contentStrategyImports.ts`
 - Modify: `src/server/features/content/services/ContentStrategyService.ts`
 - Modify: `src/types/schemas/contentStrategy.ts`
@@ -1485,6 +1536,7 @@ git commit -m "feat(content): expose runRelatedDiscovery server function"
 - Test: `src/server/features/content/services/contentStrategyImports.test.ts` (extend from Task 3)
 
 **Interfaces:**
+
 - Consumes: `queueKeywords` (exported in Task 3), `ContentStrategyRepository.markKeywordsPlanned` / `markKeywordsIgnored`
 - Produces: `importSuggestedKeywords({projectId, keywordIds}): Promise<{imported, queued}>`, `dismissSuggestedKeywords({projectId, keywordIds}): Promise<{dismissed: number}>` — consumed by Task 14
 
@@ -1511,9 +1563,8 @@ describe("importSuggestedKeywords", () => {
     mocks.getExistingKeywords.mockResolvedValue(new Set());
     mocks.getOrCreateCluster.mockResolvedValue("cluster-1");
 
-    const { importSuggestedKeywords } = await import(
-      "./contentStrategyImports"
-    );
+    const { importSuggestedKeywords } =
+      await import("./contentStrategyImports");
     const result = await importSuggestedKeywords({
       projectId: "p1",
       keywordIds: ["kw-1"],
@@ -1526,9 +1577,8 @@ describe("importSuggestedKeywords", () => {
 
 describe("dismissSuggestedKeywords", () => {
   it("marks the given keywords ignored", async () => {
-    const { dismissSuggestedKeywords } = await import(
-      "./contentStrategyImports"
-    );
+    const { dismissSuggestedKeywords } =
+      await import("./contentStrategyImports");
     const result = await dismissSuggestedKeywords({
       projectId: "p1",
       keywordIds: ["kw-1", "kw-2"],
@@ -1596,6 +1646,7 @@ import {
   saveDocument,
 } from "@/server/features/content/services/contentStrategyImports";
 ```
+
 ```ts
 export const ContentStrategyService = {
   importKeywords,
@@ -1644,9 +1695,7 @@ export const importSuggestedKeywords = createServerFn({ method: "POST" })
 
 export const dismissSuggestedKeywords = createServerFn({ method: "POST" })
   .middleware(requireProjectContext)
-  .inputValidator((data: unknown) =>
-    dismissSuggestedKeywordsSchema.parse(data),
-  )
+  .inputValidator((data: unknown) => dismissSuggestedKeywordsSchema.parse(data))
   .handler(async ({ data, context }) => {
     return ContentStrategyService.dismissSuggestedKeywords({
       projectId: context.projectId,
@@ -1672,9 +1721,11 @@ git commit -m "feat(content): expose importSuggestedKeywords/dismissSuggestedKey
 ### Task 14: Keywords tab — Suggestions review section
 
 **Files:**
+
 - Modify: `src/client/features/content/ContentStrategyKeywordsTab.tsx`
 
 **Interfaces:**
+
 - Consumes: `workspace.keywords` (each row now may have `status: "suggested"`), `runCompetitorDiscovery`, `runRelatedDiscovery`, `importSuggestedKeywords`, `dismissSuggestedKeywords` server functions (Tasks 10, 12, 13)
 
 - [ ] **Step 1: Exclude suggestions from the main keyword table**
@@ -1682,51 +1733,62 @@ git commit -m "feat(content): expose importSuggestedKeywords/dismissSuggestedKey
 In `src/client/features/content/ContentStrategyKeywordsTab.tsx`, the `KeywordTable` component currently renders `workspace.keywords.slice(0, 200)` unconditionally. Change the parent `ContentStrategyKeywordsTab` to split keywords by status before rendering:
 
 ```tsx
-  const approvedKeywords = workspace.keywords.filter(
-    (keyword) => keyword.status !== "suggested",
-  );
-  const suggestedKeywords = workspace.keywords.filter(
-    (keyword) => keyword.status === "suggested",
-  );
+const approvedKeywords = workspace.keywords.filter(
+  (keyword) => keyword.status !== "suggested",
+);
+const suggestedKeywords = workspace.keywords.filter(
+  (keyword) => keyword.status === "suggested",
+);
 ```
 
 Replace the existing:
-```tsx
-      {workspace.keywords.length === 0 ? (
-        <EmptyState
-          icon={<ListPlus className="size-6" />}
-          text="No approved keywords yet. Import a flat list or add a master plan."
-        />
-      ) : (
-        <KeywordTable workspace={workspace} />
-      )}
-      {workspace.keywords.length > 200 && (
-        <p className="text-xs text-base-content/50">
-          Showing the first 200 of {workspace.keywords.length} keywords.
-        </p>
-      )}
-```
-with:
-```tsx
-      <SuggestionsSection
-        projectId={projectId}
-        suggestions={suggestedKeywords}
-        onChanged={onChanged}
-      />
 
-      {approvedKeywords.length === 0 ? (
-        <EmptyState
-          icon={<ListPlus className="size-6" />}
-          text="No approved keywords yet. Import a flat list or add a master plan."
-        />
-      ) : (
-        <KeywordTable keywords={approvedKeywords} />
-      )}
-      {approvedKeywords.length > 200 && (
-        <p className="text-xs text-base-content/50">
-          Showing the first 200 of {approvedKeywords.length} keywords.
-        </p>
-      )}
+```tsx
+{
+  workspace.keywords.length === 0 ? (
+    <EmptyState
+      icon={<ListPlus className="size-6" />}
+      text="No approved keywords yet. Import a flat list or add a master plan."
+    />
+  ) : (
+    <KeywordTable workspace={workspace} />
+  );
+}
+{
+  workspace.keywords.length > 200 && (
+    <p className="text-xs text-base-content/50">
+      Showing the first 200 of {workspace.keywords.length} keywords.
+    </p>
+  );
+}
+```
+
+with:
+
+```tsx
+<SuggestionsSection
+  projectId={projectId}
+  suggestions={suggestedKeywords}
+  onChanged={onChanged}
+/>;
+
+{
+  approvedKeywords.length === 0 ? (
+    <EmptyState
+      icon={<ListPlus className="size-6" />}
+      text="No approved keywords yet. Import a flat list or add a master plan."
+    />
+  ) : (
+    <KeywordTable keywords={approvedKeywords} />
+  );
+}
+{
+  approvedKeywords.length > 200 && (
+    <p className="text-xs text-base-content/50">
+      Showing the first 200 of {approvedKeywords.length} keywords.
+    </p>
+  );
+}
 ```
 
 Update `KeywordTable`'s props to take `keywords` directly instead of `workspace` (change `{ workspace }: { workspace: Workspace }` to `{ keywords }: { keywords: Workspace["keywords"] }` and replace every `workspace.keywords` reference inside it with `keywords`).
@@ -1734,6 +1796,7 @@ Update `KeywordTable`'s props to take `keywords` directly instead of `workspace`
 - [ ] **Step 2: Add discovery trigger buttons and the `SuggestionsSection` component**
 
 Add imports:
+
 ```tsx
 import { Search, Sparkles, X } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -1745,6 +1808,7 @@ import {
 } from "@/serverFunctions/contentStrategy";
 import type { Workspace } from "@/client/features/content/contentStrategyTypes";
 ```
+
 (merge `Search`, `Sparkles`, `X` into the existing `lucide-react` import; the `Workspace` type import already exists — just note it's now also used for `Workspace["keywords"]`)
 
 Add this component at the bottom of the file, after `KeywordTable`:
@@ -1764,21 +1828,29 @@ function SuggestionsSection({
   const discoverCompetitors = useMutation({
     mutationFn: () => runCompetitorDiscovery({ data: { projectId } }),
     onSuccess: (result) => {
-      toast.success(`Found ${result.suggested} competitor keyword suggestion${result.suggested !== 1 ? "s" : ""}`);
+      toast.success(
+        `Found ${result.suggested} competitor keyword suggestion${result.suggested !== 1 ? "s" : ""}`,
+      );
       onChanged();
     },
     onError: (error) =>
-      toast.error(getStandardErrorMessage(error, "Competitor discovery failed")),
+      toast.error(
+        getStandardErrorMessage(error, "Competitor discovery failed"),
+      ),
   });
 
   const discoverRelated = useMutation({
     mutationFn: () => runRelatedDiscovery({ data: { projectId } }),
     onSuccess: (result) => {
-      toast.success(`Found ${result.suggested} related keyword suggestion${result.suggested !== 1 ? "s" : ""}`);
+      toast.success(
+        `Found ${result.suggested} related keyword suggestion${result.suggested !== 1 ? "s" : ""}`,
+      );
       onChanged();
     },
     onError: (error) =>
-      toast.error(getStandardErrorMessage(error, "Related-keyword discovery failed")),
+      toast.error(
+        getStandardErrorMessage(error, "Related-keyword discovery failed"),
+      ),
   });
 
   const importSelected = useMutation({
@@ -1786,7 +1858,9 @@ function SuggestionsSection({
       importSuggestedKeywords({ data: { projectId, keywordIds } }),
     onSuccess: (result) => {
       setSelected(new Set());
-      toast.success(`Imported ${result.imported} keyword${result.imported !== 1 ? "s" : ""}, queued ${result.queued}`);
+      toast.success(
+        `Imported ${result.imported} keyword${result.imported !== 1 ? "s" : ""}, queued ${result.queued}`,
+      );
       onChanged();
     },
     onError: (error) =>
@@ -1920,6 +1994,7 @@ Expected: no errors
 - [ ] **Step 4: Manual verification**
 
 Start the dev server, open a project's Content > Autopilot/Keywords tab (`/p/$projectId/content` or wherever `ContentStrategyKeywordsTab` is rendered — check `ContentStrategyWorkspace.tsx` for the exact route), confirm:
+
 - "Discover from competitors" and "Discover related keywords" buttons appear and show a toast after running
 - Discovered suggestions render in the new Suggestions table, separate from the main approved-keywords table
 - Selecting rows and clicking "Import selected" moves them into the main table and shows a "queued" toast

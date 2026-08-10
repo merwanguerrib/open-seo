@@ -1,4 +1,4 @@
-export interface GraphifyExportFile {
+interface GraphifyExportFile {
   path: string;
   content: string;
 }

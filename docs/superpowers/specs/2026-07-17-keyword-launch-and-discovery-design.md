@@ -30,14 +30,14 @@ This spec builds entirely on the existing `content_keywords` /
 
 ## Decisions (from brainstorming)
 
-| Decision | Choice |
-| --- | --- |
-| Launch entry points | Saved Keywords **and** Rank Tracking pages, checkbox multi-select |
-| Multi-keyword grouping | Cluster together (1 pillar + satellites), not independent articles |
-| Pillar selection | Highest search volume among the selected keywords, automatic |
+| Decision                    | Choice                                                                                                                 |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Launch entry points         | Saved Keywords **and** Rank Tracking pages, checkbox multi-select                                                      |
+| Multi-keyword grouping      | Cluster together (1 pillar + satellites), not independent articles                                                     |
+| Pillar selection            | Highest search volume among the selected keywords, automatic                                                           |
 | Competitor domain selection | Auto-detected from existing SERP Competitors data over the project's own top tracked keywords — no manual domain entry |
-| Discovery review | Competitor + related discoveries land as `suggested`, reviewed and explicitly imported — not auto-queued |
-| Direct launch review | No review step — selecting keywords and clicking "Generate" is already the deliberate action |
+| Discovery review            | Competitor + related discoveries land as `suggested`, reviewed and explicitly imported — not auto-queued               |
+| Direct launch review        | No review step — selecting keywords and clicking "Generate" is already the deliberate action                           |
 
 ## Data model changes
 
@@ -103,10 +103,12 @@ export async function launchFromKeywords(input: {
   sourceName: "Saved Keywords" | "Rank Tracking";
   keywords: Array<{ keyword: string; searchVolume: number | null }>;
 }) {
-  const pillar = input.keywords.length > 1
-    ? input.keywords.reduce((max, k) =>
-        (k.searchVolume ?? 0) > (max.searchVolume ?? 0) ? k : max)
-    : null;
+  const pillar =
+    input.keywords.length > 1
+      ? input.keywords.reduce((max, k) =>
+          (k.searchVolume ?? 0) > (max.searchVolume ?? 0) ? k : max,
+        )
+      : null;
   const clusterName = pillar?.keyword ?? null;
 
   // upsertKeywords with role/clusterName derived above, status: "planned"
@@ -125,10 +127,11 @@ export async function discoverCompetitorKeywords(input: {
   projectId: string;
   billingCustomer: BillingCustomerContext;
   plan: { minSearchVolume: number; maxDifficulty: number };
-}): Promise<{ suggested: number }>
+}): Promise<{ suggested: number }>;
 ```
 
 Steps:
+
 1. Pull the project's top ~20 tracked keywords by volume (Saved Keywords +
    Rank Tracking, via `KeywordResearchRepository` /
    `RankTrackingRepository`).
@@ -153,10 +156,11 @@ export async function discoverRelatedKeywords(input: {
   projectId: string;
   billingCustomer: BillingCustomerContext;
   plan: { minSearchVolume: number; maxDifficulty: number };
-}): Promise<{ suggested: number }>
+}): Promise<{ suggested: number }>;
 ```
 
 Steps:
+
 1. Pull `content_keywords` where `status === "covered"`, capped to the top
    ~15 by search volume.
 2. For each, call `client.keywords.related` (existing, metered), filtered

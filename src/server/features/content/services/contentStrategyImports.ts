@@ -18,9 +18,7 @@ import {
 } from "@/server/features/content/services/contentStrategyShared";
 import { AppError } from "@/server/lib/errors";
 
-export async function queueKeywords(
-  rows: ContentKeywordRow[],
-): Promise<number> {
+async function queueKeywords(rows: ContentKeywordRow[]): Promise<number> {
   const planned = rows.filter((row) => row.status === "planned");
   const first = planned[0];
   if (!first) return 0;
